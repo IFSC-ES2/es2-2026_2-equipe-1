@@ -11,6 +11,7 @@ Data: 05/08/2026
 Ferramenta: ChatGPT
 Uso: Sugestão de nome para o sistema e melhoria da organização e formatação do README a partir da ideia proposta pela equipe.
 Artefato: README.md
+```
 
 ```text
 Registro de uso 2
