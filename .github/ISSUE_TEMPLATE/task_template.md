@@ -1,6 +1,6 @@
 ---
-name: Tarefa
-about: Nova funcionalidade, documento ou ajuste
+Nome: Tarefa
+Sobre: Nova funcionalidade, documento ou ajuste
 ---
 
 ## 🎯 Descrição
