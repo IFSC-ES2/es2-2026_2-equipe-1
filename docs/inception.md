@@ -5,8 +5,8 @@
 ### (a) Problema que o sistema pretende resolver
 A contratação de serviços autônomos (como encanadores, eletricistas, pintores e diaristas) ainda ocorre de forma descentralizada e informal, resultando em falta de previsibilidade de preços, insegurança no atendimento e dificuldades de pagamento para ambas as partes.
 
-### (b) Área de aplicação
-O projeto está situado na linha de **Gestão de serviços e processos institucionais** e economia sob demanda (*on-demand services*).
+### (b) Área de aplicação e Contexto Regional
+O projeto está situado na linha de **Gestão de serviços e processos institucionais** e na economia sob demanda (*on-demand services*), tendo como foco inicial o atendimento à comunidade externa de **São José e da Grande Florianópolis**, conectando moradores locais a prestadores autônomos da região.
 
 ### (c) Usuários principais e interessados
 - **Clientes:** Pessoas físicas ou jurídicas que necessitam da prestação pontual de serviços domésticos ou de manutenção.
