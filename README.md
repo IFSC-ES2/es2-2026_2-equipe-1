@@ -4,10 +4,10 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software II** do curso
 
 ## Integrantes
 
-* Ana Clara Teixeira Ronzani - Engenheira de Qualidade
-* Davi Israel Quirino - Scrum Master & Front End
-* João Vitor Schmitt - DevOps/Infra
-* Leonardo Victor Muller De Morais - Arquiteto de Software
+* Ana Clara Teixeira Ronzani (202510703694) - Engenheira de Qualidade
+* Davi Israel Quirino (202510703620) - Scrum Master & Front End
+* João Vitor Schmitt (202510703638) - DevOps/Infra
+* Leonardo Victor Muller De Morais (202510703650) - Arquiteto de Software
 
 ## Tema do Projeto
 
