@@ -21,3 +21,12 @@ Ferramenta: Gemini
 Uso: Ajuda na criação de templates.
 Artefato: .github
 ```
+
+```text
+Registro de uso 3
+
+Data: 13/08/2026
+Ferramenta: Gemini
+Uso: Ajuda na criação das documentações necessárias na entrega-2.
+Artefato: .docs e README.md
+```

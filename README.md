@@ -23,29 +23,24 @@ O projeto está relacionado à linha:
 
 **2. Gestão de serviços e processos institucionais.**
 
-## Escopo Inicial (MVP)
+## Escopo do MVP (Minimum Viable Product)
 
-O MVP terá como objetivo validar a proposta da plataforma por meio das funcionalidades essenciais.
+### 🟢 Dentro do Escopo
+- Cadastro e login (perfis de Cliente e Prestador).
+- Cadastro e publicação de solicitações de serviços.
+- Notificação/envio para profissionais disponíveis.
+- Aceite ou recusa da solicitação pelo prestador.
+- Acompanhamento do ciclo/status do serviço.
+- Pagamento integrado via API Asaas.
 
-### Funcionalidades
+### 🔴 Fora do Escopo (Nesta versão)
+- Geolocalização em tempo real dos profissionais e clientes no mapa.
+- Chat em tempo real via WebSockets.
+- Sistema de avaliação e comentários.
+- Sistema de cupons e promoções.
+- Aplicativo mobile nativo.
 
-* Cadastro e login de clientes e prestadores de serviços;
-* Cadastro de solicitações de serviços;
-* Envio da solicitação para profissionais disponíveis;
-* Aceite ou recusa da solicitação pelo prestador;
-* Acompanhamento do status do serviço;
-* Pagamento pela plataforma utilizando integração com o Asaas.
-* Geolocalização em tempo real dos profissionais e clientes;
-* Chat em tempo real;
-* Avaliações de clientes e prestadores;
-
-### Fora do Escopo
-
-Nesta primeira versão, não serão implementadas as seguintes funcionalidades:
-
-* Sistema de promoções e cupons;
-* Aplicativo mobile;
-* Painel financeiro avançado para prestadores;
+---
 
 ## Tecnologias (previstas)
 
@@ -57,3 +52,15 @@ Nesta primeira versão, não serão implementadas as seguintes funcionalidades:
 * Asaas API
 * Docker
 * Git e GitHub
+
+## Artefatos da Inception (Entrega 2)
+
+- **Documento Completo de Inception:** [docs/inception.md](docs/inception.md)
+- **Definition of Done (DoD):** [docs/dod.md](docs/dod.md)
+- **Decisões Arquiteturais (ADRs):**
+  - [ADR-0001: Definição da Stack Tecnológica (Java Spring Boot, React, Postgres)](docs/adrs/ADR-0001-stack-tecnologica.md)
+  - [ADR-0002: Escolha do Gateway de Pagamentos Asaas](docs/adrs/ADR-0002-integracao-pagamentos-asaas.md)
+- **Uso de Inteligência Artificial:** [USO-IA.md](USO-IA.md)
+- **Quadro de Acompanhamento (Board & Backlog):** [Acessar GitHub Projects da Equipe](https://github.com/orgs/IFSC-ES2/projects/32/views/2)
+
+---
