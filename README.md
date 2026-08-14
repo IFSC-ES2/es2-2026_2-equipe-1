@@ -11,11 +11,34 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software II** do curso
 
 ## Tema do Projeto
 
-O **ServiceHub** é uma plataforma inspirada no modelo do Uber para conectar clientes e prestadores de serviços, como encanadores, eletricistas, pintores, diaristas e outros profissionais autônomos.
+O **ServiceHub** é uma plataforma para conectar clientes e prestadores de serviços, como encanadores, eletricistas, pintores e diaristas.
 
-O sistema busca facilitar a contratação de serviços, permitindo que o cliente faça uma solicitação e que profissionais cadastrados possam aceitar ou recusar o atendimento. Além disso, os pagamentos serão realizados pela própria plataforma por meio da integração com o gateway de pagamentos **Asaas**.
+### (a) Qual problema o sistema pretende resolver?
 
-O projeto pretende tornar o processo de contratação mais rápido, seguro e organizado, ao mesmo tempo em que amplia as oportunidades de trabalho para prestadores de serviços.
+Facilitar a **busca e contratação de profissionais autônomos**, que muitas vezes ocorre de forma informal e desorganizada.
+
+### (b) Em qual área de aplicação?
+
+Na área de **contratação e prestação de serviços autônomos**.
+
+### (c) Quem são os usuários?
+
+* **Clientes:** solicitam serviços.
+* **Prestadores:** recebem, aceitam ou recusam solicitações.
+* **Administradores:** gerenciam a plataforma.
+
+### (d) Onde o sistema pode ser aplicado?
+
+Pode ser utilizado **em qualquer cidade ou comunidade** que tenha clientes procurando serviços e profissionais disponíveis para realizá-los.
+
+### (e) Por que o tema é relevante?
+
+Porque facilita a contratação de profissionais e ajuda prestadores autônomos a encontrar **novas oportunidades de trabalho**.
+
+### (f) Qual é a proposta do sistema?
+
+O ServiceHub permite que o cliente **solicite um serviço**, que prestadores possam **aceitar ou recusar o atendimento** e que o **pagamento seja realizado pela plataforma**, por meio da integração com o Asaas. Assim, o processo de contratação fica mais simples e organizado.
+
 
 ## Linha do Projeto
 
