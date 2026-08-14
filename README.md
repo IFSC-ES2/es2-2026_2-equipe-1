@@ -54,7 +54,6 @@ O projeto está relacionado à linha:
 - Notificação/envio para profissionais disponíveis.
 - Aceite ou recusa da solicitação pelo prestador.
 - Acompanhamento do ciclo/status do serviço.
-- Pagamento integrado via API Asaas.
 
 ### 🔴 Fora do Escopo (Nesta versão)
 - Geolocalização em tempo real dos profissionais e clientes no mapa.
@@ -75,6 +74,14 @@ O projeto está relacionado à linha:
 * Asaas API
 * Docker
 * Git e GitHub
+
+## Política de Branches e Pull Requests
+
+* A branch `main` é **protegida** e não permite alterações diretas.
+* Toda alteração destinada à `main` deve ser realizada por meio de um **Pull Request (PR)**.
+* O PR deve ser revisado antes de ser integrado à `main`.
+* Commits diretamente na `main` são bloqueados.
+* Alterações na `main` devem passar pelo fluxo de Pull Request definido no GitHub.
 
 ## Artefatos da Inception (Entrega 2)
 
