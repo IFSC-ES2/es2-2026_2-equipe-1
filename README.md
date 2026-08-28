@@ -93,4 +93,13 @@ O projeto está relacionado à linha:
 - **Uso de Inteligência Artificial:** [USO-IA.md](USO-IA.md)
 - **Quadro de Acompanhamento (Board & Backlog):** [Acessar GitHub Projects da Equipe](https://github.com/orgs/IFSC-ES2/projects/32/views/2)
 
+## Artefatos da Entrega 3 (Estimativas e Métricas)
+
+- **Linha de Base do Planejamento:** [docs/BASELINE.md](docs/BASELINE.md)
+- **Processo de Estimativas (Planning Poker):** [docs/ESTIMATIVAS.md](docs/ESTIMATIVAS.md)
+- **Definição de Métricas:** [docs/METRICAS.md](docs/METRICAS.md)
+- **Fichas de Métricas:**
+  - [M-01: Cobertura de Testes Automatizados](docs/metricas/M-01.md)
+  - [M-02: Lead Time de Pull Requests](docs/metricas/M-02.md)
+  - [M-03: Progresso do MVP](docs/metricas/M-03.md)
 ---
