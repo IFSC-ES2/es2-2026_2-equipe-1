@@ -15,8 +15,8 @@ O escopo selecionado para o MVP da plataforma **ServiceHub** prioriza o fluxo es
 | **#8** | Criação e publicação de solicitação de serviço | Alta | 16h |
 | **#9** | Aceite ou recusa de solicitação pelo prestador | Alta | 8h |
 | **#10**| Conclusão do serviço e pagamento via API Asaas | Média | 24h |
-| **INFRA** | Configuração de infraestrutura (Docker, PostgreSQL, CI/GitHub Actions) | Alta | 16h |
-| **DOC** | Documentação viva (Inception, ADRs, Métricas, Baseline) | Alta | 8h |
+| **#13** | Configuração de infraestrutura (Docker, PostgreSQL, CI/GitHub Actions) | Alta | 16h |
+| **#14** | Documentação viva (Inception, ADRs, Métricas, Baseline) | Alta | 8h |
 
 **Total de Esforço Estimado do MVP:** **88 Horas**
 
