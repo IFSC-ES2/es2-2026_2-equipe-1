@@ -103,3 +103,7 @@ O projeto está relacionado à linha:
   - [M-02: Lead Time de Pull Requests](docs/metricas/M-02.md)
   - [M-03: Progresso do MVP](docs/metricas/M-03.md)
 ---
+
+## Artefatos da Entrega 4 - Riscos e Qualidade
+
+* **Registro e análise de riscos:** [docs/riscos.md](docs/riscos.md)
