@@ -107,3 +107,8 @@ O projeto está relacionado à linha:
 ## Artefatos da Entrega 4 - Riscos e Qualidade
 
 * **Registro e análise de riscos:** [docs/riscos.md](docs/riscos.md)
+* **Fluxo de trabalho:** [docs/fluxo-de-trabalho.md](docs/fluxo-de-trabalho.md)
+* **CI mínimo:** [docs/ci.md](docs/ci.md)
+* **Pipeline do CI:** [.github/workflows/ci.yml](.github/workflows/ci.yml)
+* **Critérios iniciais de qualidade:** [docs/qualidade.md](docs/qualidade.md)
+* **Template de Pull Request:** [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md)

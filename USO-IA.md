@@ -43,3 +43,13 @@ Uso: Auxílio na estruturação e geração dos documentos de planejamento da En
 Artefato: docs/BASELINE.md, docs/ESTIMATIVAS.md, docs/METRICAS.md, docs/metricas/M-01.md, M-02.md e M-03.md
 Validação: A equipe revisou as estimativas de horas, ajustou a capacidade semanal para 6h por integrante e validou as fórmulas e métricas propostas em relação ao escopo do MVP.
 ```
+
+```text
+Registro de uso 5
+
+Data: 03/09/2026
+Ferramenta: ChatGPT
+Uso: Auxílio na estruturação da documentação de riscos, fluxo de trabalho, CI e critérios iniciais de qualidade.
+Artefatos: docs/riscos.md, docs/fluxo-de-trabalho.md, docs/ci.md, docs/qualidade.md e README.md
+Validação: A equipe revisou os documentos gerados e verificou se os requisitos da Entrega 4 estavam sendo atendidos de acordo com o enunciado da disciplina.
+```
