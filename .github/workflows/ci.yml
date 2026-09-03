@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar arquivos
+        run: |
+          test -f README.md
+          test -f .github/PULL_REQUEST_TEMPLATE.md
+
+      - name: CI concluído
+        run: echo "Checks básicos executados com sucesso."
