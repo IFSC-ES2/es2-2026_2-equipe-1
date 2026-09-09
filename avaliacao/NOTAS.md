@@ -2,10 +2,11 @@
 
 ## Tabela de Notas
 
-| Entrega             | Peso | Nota | Nota máxima |
-| ------------------- | ---: | ---: | ----------: |
-| Entrega 1 - Kickoff |    5 |  3,6 |         5,0 |
+| Entrega               | Peso | Nota |
+| --------------------- | ---: | ---: |
+| Entrega 1 - Kickoff   |    5 |  7,2 |
+| Entrega 2 - Inception |    5 |  8,0 |
 
 ## Nota Parcial
 
-Nota parcial: 7,2 / 10,0
+Nota parcial: 7,6 / 10,0
