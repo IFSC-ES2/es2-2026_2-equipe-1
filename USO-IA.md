@@ -53,3 +53,12 @@ Uso: Auxílio na estruturação da documentação de riscos, fluxo de trabalho, 
 Artefatos: docs/riscos.md, docs/fluxo-de-trabalho.md, docs/ci.md, docs/qualidade.md e README.md
 Validação: A equipe revisou os documentos gerados e verificou se os requisitos da Entrega 4 estavam sendo atendidos de acordo com o enunciado da disciplina.
 ```
+
+```text
+Registro de uso 6
+
+Data: 14/09/2026
+Ferramenta: Gemini + Ilustrator
+Uso: Auxílio na construção da página Home e funcionamento dos links do react-router. Além disso, foi gerado imagens para logo do projeto
+Artefatos: Criação das imagens + páginas para o front-end ( bem básicas )
+Validação: A equipe irá validar o código e também a página. Quanto as imagens as mesmas já foram validadas por toda a equipe
