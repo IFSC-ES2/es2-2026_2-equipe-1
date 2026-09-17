@@ -22,7 +22,7 @@ function Home() {
                 <h1>Bem-vindo ao ServiceHub</h1>
                 <br />
                 <p>Esta é a página inicial do ServiceHub.</p>
-                <p>Clique <Link to="/appTela">aqui</Link> para acessar o Programa!</p>
+                <p>Clique <Link to="/escolhaUser">aqui</Link> para acessar o Programa!</p>
                 </div>
             </main>
         </div>

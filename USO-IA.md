@@ -62,3 +62,14 @@ Ferramenta: Gemini + Ilustrator
 Uso: Auxílio na construção da página Home e funcionamento dos links do react-router. Além disso, foi gerado imagens para logo do projeto
 Artefatos: Criação das imagens + páginas para o front-end ( bem básicas )
 Validação: A equipe irá validar o código e também a página. Quanto as imagens as mesmas já foram validadas por toda a equipe
+
+```text
+Registro de uso 7
+
+Data: 16/09/2026
+Ferramenta: Gemini 
+
+Uso: Auxílio na construção da página EscolhaUser para determinar a escolha do usuário ( Cliente ou Prestador de Serviço) + Criação de 2 funções, uma para adicionar imagens através do Props ( criado interfaces individuais para isso) e outra função para colocar uma imagem de plano de fundo. Além disso, foi gerado imagens para logo do projeto.
+
+Artefatos: Criação das imagens + páginas de seleção ( bem básicas )
+Validação: A equipe irá validar o código e também a página. Quanto as imagens as mesmas já foram validadas por toda a equipe
