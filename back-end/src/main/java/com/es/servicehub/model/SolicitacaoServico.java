@@ -2,10 +2,7 @@ package com.es.servicehub.model;
 
 import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.enums.StatusSolicitacao;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -24,6 +21,8 @@ public class SolicitacaoServico {
     private BigDecimal valorEstimado;
     private StatusSolicitacao statusSolicitacao;
     private LocalDateTime dataCriacao;
+
+    @OneToOne
     private Endereco enderecoAtendimento;
     private List<Especialidades> especialidadesRequiridas;
 }
