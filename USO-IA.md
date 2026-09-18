@@ -73,3 +73,12 @@ Uso: Auxílio na construção da página EscolhaUser para determinar a escolha d
 Artefatos: Criação das imagens + páginas de seleção ( bem básicas )
 Validação: A equipe irá validar o código e também a página. Quanto as imagens as mesmas já foram validadas por toda a equipe
 ```
+```text
+Registro de uso 6
+
+Data: 17/09/2026
+Ferramenta: DeepSeek
+Uso: Auxílio no aperfeiçoamento dos testes unitários.
+Artefatos: SolicitacaoServicoServiceTest.java e UsuarioServiceTest.java
+Validação: A equipe revisou os documentos gerados e verificou se os requisitos da Entrega 4 estavam sendo atendidos de acordo com o enunciado da disciplina.
+```
