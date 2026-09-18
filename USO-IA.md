@@ -74,7 +74,7 @@ Artefatos: Criação das imagens + páginas de seleção ( bem básicas )
 Validação: A equipe irá validar o código e também a página. Quanto as imagens as mesmas já foram validadas por toda a equipe
 ```
 ```text
-Registro de uso 6
+Registro de uso 8
 
 Data: 17/09/2026
 Ferramenta: DeepSeek
