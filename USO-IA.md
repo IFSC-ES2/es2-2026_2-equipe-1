@@ -82,3 +82,12 @@ Uso: Auxílio no aperfeiçoamento dos testes unitários.
 Artefatos: SolicitacaoServicoServiceTest.java e UsuarioServiceTest.java
 Validação: A equipe revisou os documentos gerados e verificou se os requisitos da Entrega 4 estavam sendo atendidos de acordo com o enunciado da disciplina.
 ```
+
+```text
+Registro de uso 9
+
+Data: 18/09/2026
+Ferramentas: GitHub Copilot e Gemini
+Uso: Auxílio na integração do frontend e backend para criação de solicitações, endereços e especialidades.
+Validação: A equipe revisou as alterações, executou os testes do backend e o build do frontend.
+```
