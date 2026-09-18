@@ -1,9 +1,6 @@
 /*Isso é um props, ou seja, como precisamos ajustar várias imagens 
 para não ficar poluindo o código e colocando diversos Componentes para cada
 imagem, podemos reutilizar como se fosse um Override */
-import React from "react";
-
-
 /* Precisamos criar uma interface para definir os tipos exatos 
 da propriedade assim, só colocamos o tipo dela na função
 */

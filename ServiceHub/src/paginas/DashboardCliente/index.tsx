@@ -1,10 +1,16 @@
-import { useState } from "react";
-import bigDecimal from 'js-big-decimal';
+import { useEffect, useState } from "react";
 import ModalCriarEndereco, { type Endereco } from '../../componentes/modal/ModalCriarEndereço';
 import ModalCriarSolicitacao, {
   type DadosSolicitacao,
   type EnderecoSelecionavel,
 } from '../../componentes/modal/ModalCriarSolicitacao';
+import {
+  criarEndereco,
+  criarSolicitacao as publicarSolicitacao,
+  listarEnderecos,
+  listarSolicitacoes,
+  type SolicitacaoApi,
+} from '../../servicos/api';
 
 type Solicitacao = {
   id: string;
@@ -14,7 +20,7 @@ type Solicitacao = {
   status: "Em andamento" | "Concluída";
   data: string;
   descricao:string;
-  valorEstimado: bigDecimal;
+  valorEstimado: number;
 };
 
 const servicos = [
@@ -28,34 +34,54 @@ export default function DashboardCliente() {
   const [modalAberto, setModalAberto] = useState(false);
   const [modalAbertoEndereco, setModalAbertoEndereco] = useState(false);
   const [enderecos, setEnderecos] = useState<EnderecoSelecionavel[]>([]);
-  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([
-    { id: "#SH-1842", titulo: "Reparo no chuveiro", descricao:"meu chuveiro foi pro krl do nada", valorEstimado: new bigDecimal(200), enderecoId: "endereco-demo", endereco: "Rua das Flores, 120", status: "Em andamento", data: "Hoje, 14:30" },
-    { id: "#SH-1798", titulo: "Instalação de tomada", descricao:"preciso de uma tomada nova no meu quarto", valorEstimado: new bigDecimal(200), enderecoId: "endereco-demo", endereco: "Rua das Flores, 120", status: "Concluída", data: "12 jun, 09:15" },
-  ]);
-  function criarSolicitacao(dados: DadosSolicitacao) {
-    const endereco = enderecos.find((item) => item.id === dados.enderecoId);
-    if (!endereco) return;
+  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
+  const [erro, setErro] = useState("");
 
-    setSolicitacoes((atuais) => [
-      {
-        id: `#SH-${Math.floor(Math.random() * 900 + 100)}`,
-        titulo: dados.titulo,
-        descricao: dados.descricao,
-        valorEstimado: dados.valorEstimado,
-        enderecoId: dados.enderecoId,
-        endereco: `${endereco.rua}, ${endereco.numero}`,
-        status: "Em andamento",
-        data: new Date().toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }),
-      },
-      ...atuais,
-    ]);
+  useEffect(() => {
+    Promise.all([listarEnderecos(), listarSolicitacoes()])
+      .then(([enderecosAtuais, solicitacoesAtuais]) => {
+        setEnderecos(enderecosAtuais);
+        setSolicitacoes(solicitacoesAtuais.map(formatarSolicitacao));
+      })
+      .catch(() => setErro("Não foi possível carregar seus dados. Verifique se o backend está ligado."));
+  }, []);
+
+  async function criarSolicitacao(dados: DadosSolicitacao) {
+    try {
+      const solicitacaoCriada = await publicarSolicitacao(dados);
+      setSolicitacoes((atuais) => [formatarSolicitacao(solicitacaoCriada), ...atuais]);
+      setErro("");
+    } catch {
+      setErro("Não foi possível publicar a solicitação.");
+      return;
+    }
     setModalAberto(false);
   }
 
-  function salvarEndereco(endereco: Endereco) {
-    const enderecoComId = { ...endereco, id: `endereco-${Date.now()}` };
-    setEnderecos((atuais) => [...atuais, enderecoComId]);
+  async function salvarEndereco(endereco: Endereco) {
+    try {
+      const enderecoCriado = await criarEndereco(endereco);
+      setEnderecos((atuais) => [...atuais, enderecoCriado]);
+      setErro("");
+    } catch {
+      setErro("Não foi possível salvar o endereço.");
+      return;
+    }
     setModalAbertoEndereco(false);
+  }
+
+  function formatarSolicitacao(solicitacao: SolicitacaoApi): Solicitacao {
+    const endereco = solicitacao.enderecoAtendimento;
+    return {
+      id: `#SH-${solicitacao.id}`,
+      titulo: solicitacao.titulo,
+      descricao: solicitacao.descricao,
+      valorEstimado: solicitacao.valorEstimado,
+      enderecoId: String(endereco.id),
+      endereco: `${endereco.logradouro}, ${endereco.numero}`,
+      status: solicitacao.statusSolicitacao === "CONCLUIDO" ? "Concluída" : "Em andamento",
+      data: new Date(solicitacao.dataCriacao).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }),
+    };
   }
 
   return (
@@ -125,6 +151,7 @@ export default function DashboardCliente() {
       </header>
 
       <div className="content">
+        {erro && <p role="alert" className="error">{erro}</p>}
         <section className="welcome">
           <div>
             <h1>Olá, Leonardo! 👋</h1>

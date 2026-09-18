@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import bigDecimal from 'js-big-decimal';
 
 export type EnderecoSelecionavel = {
   id: string;
@@ -13,7 +12,7 @@ export type EnderecoSelecionavel = {
 export type DadosSolicitacao = {
   titulo: string;
   descricao: string;
-  valorEstimado: bigDecimal;
+  valorEstimado: number;
   enderecoId: string;
 };
 
@@ -42,12 +41,10 @@ export default function ModalCriarSolicitacao({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const valorDecimal = new bigDecimal(valorEstimado || '0');
-
     onCriarSolicitacao({
       titulo,
       descricao,
-      valorEstimado: valorDecimal,
+      valorEstimado: Number(valorEstimado || '0'),
       enderecoId,
     });
 

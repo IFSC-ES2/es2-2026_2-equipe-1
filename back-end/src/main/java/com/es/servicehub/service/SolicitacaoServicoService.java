@@ -5,6 +5,8 @@ import com.es.servicehub.repository.SolicitacaoServiceRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.time.LocalDateTime;
+import com.es.servicehub.enums.StatusSolicitacao;
 
 @Service
 public class SolicitacaoServicoService {
@@ -24,6 +26,12 @@ public class SolicitacaoServicoService {
     }
 
     public SolicitacaoServico criar(SolicitacaoServico solicitacao) {
+        if (solicitacao.getStatusSolicitacao() == null) {
+            solicitacao.setStatusSolicitacao(StatusSolicitacao.SOLICITADO);
+        }
+        if (solicitacao.getDataCriacao() == null) {
+            solicitacao.setDataCriacao(LocalDateTime.now());
+        }
         return solicitacaoServiceRepository.save(solicitacao);
     }
 

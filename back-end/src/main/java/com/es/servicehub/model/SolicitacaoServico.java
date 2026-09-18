@@ -19,10 +19,13 @@ public class SolicitacaoServico {
     private String titulo;
     private String descricao;
     private BigDecimal valorEstimado;
+    @Enumerated(EnumType.STRING)
     private StatusSolicitacao statusSolicitacao;
     private LocalDateTime dataCriacao;
 
     @OneToOne
     private Endereco enderecoAtendimento;
+    @ElementCollection
+    @Enumerated(EnumType.STRING)
     private List<Especialidades> especialidadesRequiridas;
 }

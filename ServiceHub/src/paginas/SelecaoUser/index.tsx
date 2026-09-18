@@ -1,4 +1,3 @@
-import React from "react";
 import FundoPagina from "../../componentes/ImagemFundo";
 import imagemFundo from "../../assets/logo/ServiceHub_sem_nome.jpeg"
 import { useNavigate } from "react-router-dom";
