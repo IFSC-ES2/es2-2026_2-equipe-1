@@ -1,11 +1,20 @@
 import { useState } from "react";
+import bigDecimal from 'js-big-decimal';
+import ModalCriarEndereco, { type Endereco } from '../../componentes/modal/ModalCriarEndereço';
+import ModalCriarSolicitacao, {
+  type DadosSolicitacao,
+  type EnderecoSelecionavel,
+} from '../../componentes/modal/ModalCriarSolicitacao';
 
 type Solicitacao = {
   id: string;
-  servico: string;
+  titulo: string;
+  enderecoId: string;
   endereco: string;
   status: "Em andamento" | "Concluída";
   data: string;
+  descricao:string;
+  valorEstimado: bigDecimal;
 };
 
 const servicos = [
@@ -17,25 +26,36 @@ const servicos = [
 
 export default function DashboardCliente() {
   const [modalAberto, setModalAberto] = useState(false);
+  const [modalAbertoEndereco, setModalAbertoEndereco] = useState(false);
+  const [enderecos, setEnderecos] = useState<EnderecoSelecionavel[]>([]);
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([
-    { id: "#SH-1842", servico: "Reparo no chuveiro", endereco: "Rua das Flores, 120", status: "Em andamento", data: "Hoje, 14:30" },
-    { id: "#SH-1798", servico: "Instalação de tomada", endereco: "Rua das Flores, 120", status: "Concluída", data: "12 jun, 09:15" },
+    { id: "#SH-1842", titulo: "Reparo no chuveiro", descricao:"meu chuveiro foi pro krl do nada", valorEstimado: new bigDecimal(200), enderecoId: "endereco-demo", endereco: "Rua das Flores, 120", status: "Em andamento", data: "Hoje, 14:30" },
+    { id: "#SH-1798", titulo: "Instalação de tomada", descricao:"preciso de uma tomada nova no meu quarto", valorEstimado: new bigDecimal(200), enderecoId: "endereco-demo", endereco: "Rua das Flores, 120", status: "Concluída", data: "12 jun, 09:15" },
   ]);
-  const [servico, setServico] = useState("Encanamento");
+  function criarSolicitacao(dados: DadosSolicitacao) {
+    const endereco = enderecos.find((item) => item.id === dados.enderecoId);
+    if (!endereco) return;
 
-  function criarSolicitacao(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
     setSolicitacoes((atuais) => [
       {
         id: `#SH-${Math.floor(Math.random() * 900 + 100)}`,
-        servico: `Solicitação de ${servico.toLowerCase()}`,
-        endereco: "Meu endereço principal",
+        titulo: dados.titulo,
+        descricao: dados.descricao,
+        valorEstimado: dados.valorEstimado,
+        enderecoId: dados.enderecoId,
+        endereco: `${endereco.rua}, ${endereco.numero}`,
         status: "Em andamento",
-        data: "Agora",
+        data: new Date().toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }),
       },
       ...atuais,
     ]);
     setModalAberto(false);
+  }
+
+  function salvarEndereco(endereco: Endereco) {
+    const enderecoComId = { ...endereco, id: `endereco-${Date.now()}` };
+    setEnderecos((atuais) => [...atuais, enderecoComId]);
+    setModalAbertoEndereco(false);
   }
 
   return (
@@ -99,6 +119,9 @@ export default function DashboardCliente() {
           <span>Olá, Leonardo</span>
           <b className="avatar">L</b>
         </div>
+        <button className="primary" onClick={() => setModalAbertoEndereco(true)}>
+            ＋ Add endereço
+          </button>
       </header>
 
       <div className="content">
@@ -121,10 +144,7 @@ export default function DashboardCliente() {
             <button
               className="service"
               key={item.nome}
-              onClick={() => {
-                setServico(item.nome);
-                setModalAberto(true);
-              }}
+              onClick={() => setModalAberto(true)}
             >
               <span className="icon">{item.icone}</span>
               <strong>{item.nome}</strong>
@@ -148,7 +168,7 @@ export default function DashboardCliente() {
           {solicitacoes.map((item) => (
             <div className="row" key={item.id}>
               <span>
-                <b>{item.servico}</b>
+                <b>{item.titulo}</b>
                 <br />
                 <small className="muted">{item.id}</small>
               </span>
@@ -164,39 +184,21 @@ export default function DashboardCliente() {
         </section>
       </div>
 
-      {modalAberto && (
-        <div className="overlay" role="dialog" aria-modal="true">
-          {/* Alterado para modal-card para prevenir choque de classes CSS com Bootstrap */}
-          <form className="modal-card" onSubmit={criarSolicitacao}>
-            <div className="modal-header">
-              <h2>Nova solicitação</h2>
-              <button type="button" className="close" onClick={() => setModalAberto(false)}>
-                ×
-              </button>
-            </div>
-            <p>Conte o que precisa e encontre o profissional ideal.</p>
-
-            <label htmlFor="servico">Tipo de serviço</label>
-            <select id="servico" value={servico} onChange={(e) => setServico(e.target.value)}>
-              {servicos.map((item) => (
-                <option key={item.nome}>{item.nome}</option>
-              ))}
-            </select>
-
-            <label htmlFor="descricao">Descreva o problema</label>
-            <textarea id="descricao" required placeholder="Ex.: O chuveiro parou de esquentar..." />
-
-            <div className="modal-actions">
-              <button type="button" className="cancel" onClick={() => setModalAberto(false)}>
-                Cancelar
-              </button>
-              <button type="submit" className="primary">
-                Solicitar profissional
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      <ModalCriarSolicitacao
+        show={modalAberto}
+        handleClose={() => setModalAberto(false)}
+        enderecos={enderecos}
+        onCriarEndereco={() => {
+          setModalAberto(false);
+          setModalAbertoEndereco(true);
+        }}
+        onCriarSolicitacao={criarSolicitacao}
+      />
+      <ModalCriarEndereco
+        aberto={modalAbertoEndereco}
+        onFechar={() => setModalAbertoEndereco(false)}
+        onSalvar={salvarEndereco}
+      />
     </main>
   );
 }
