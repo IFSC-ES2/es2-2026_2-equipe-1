@@ -1,5 +1,6 @@
 import type { DadosSolicitacao, EnderecoSelecionavel } from "../componentes/modal/ModalCriarSolicitacao";
 import type { Endereco } from "../componentes/modal/ModalCriarEndereço";
+import type { Especialidade } from "./especialidades";
 
 const API_URL = "http://localhost:8080/api";
 
@@ -22,6 +23,7 @@ export type SolicitacaoApi = {
   statusSolicitacao: string;
   dataCriacao: string;
   enderecoAtendimento: EnderecoApi;
+  especialidadesRequiridas: Especialidade[];
 };
 
 async function requisicao<T>(rota: string, opcoes?: RequestInit): Promise<T> {
@@ -31,7 +33,8 @@ async function requisicao<T>(rota: string, opcoes?: RequestInit): Promise<T> {
   });
 
   if (!resposta.ok) {
-    throw new Error(`Não foi possível concluir a operação (${resposta.status}).`);
+    const detalhe = await resposta.text();
+    throw new Error(detalhe || `Não foi possível concluir a operação (${resposta.status}).`);
   }
 
   return resposta.json() as Promise<T>;
@@ -84,7 +87,7 @@ export async function criarSolicitacao(
       descricao: dados.descricao,
       valorEstimado: Number(dados.valorEstimado),
       enderecoAtendimento: { id: Number(dados.enderecoId) },
-      especialidadesRequiridas: [],
+      especialidadesRequiridas: dados.especialidadesRequiridas,
     }),
   });
 }

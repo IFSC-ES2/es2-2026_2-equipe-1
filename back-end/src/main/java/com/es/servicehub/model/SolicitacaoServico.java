@@ -23,7 +23,7 @@ public class SolicitacaoServico {
     private StatusSolicitacao statusSolicitacao;
     private LocalDateTime dataCriacao;
 
-    @OneToOne
+    @ManyToOne
     private Endereco enderecoAtendimento;
     @ElementCollection
     @Enumerated(EnumType.STRING)

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { especialidades, nomesEspecialidades, type Especialidade } from '../../servicos/especialidades';
 
 export type EnderecoSelecionavel = {
   id: string;
@@ -14,6 +15,7 @@ export type DadosSolicitacao = {
   descricao: string;
   valorEstimado: number;
   enderecoId: string;
+  especialidadesRequiridas: Especialidade[];
 };
 
 interface ModalProps {
@@ -21,7 +23,7 @@ interface ModalProps {
   handleClose: () => void;
   enderecos: EnderecoSelecionavel[];
   onCriarEndereco: () => void;
-  onCriarSolicitacao: (dados: DadosSolicitacao) => void;
+  onCriarSolicitacao: (dados: DadosSolicitacao) => Promise<boolean>;
 }
 
 export default function ModalCriarSolicitacao({
@@ -35,24 +37,47 @@ export default function ModalCriarSolicitacao({
   const [descricao, setDescricao] = useState('');
   const [valorEstimado, setValorEstimado] = useState('');
   const [enderecoId, setEnderecoId] = useState('');
+  const [especialidadesSelecionadas, setEspecialidadesSelecionadas] = useState<Especialidade[]>([]);
+  const [enviando, setEnviando] = useState(false);
+  const [validacao, setValidacao] = useState('');
 
   if (!show) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    onCriarSolicitacao({
-      titulo,
-      descricao,
-      valorEstimado: Number(valorEstimado || '0'),
-      enderecoId,
-    });
 
-    setTitulo('');
-    setDescricao('');
-    setValorEstimado('');
-    setEnderecoId('');
-    handleClose();
+    if (especialidadesSelecionadas.length === 0) {
+      setValidacao('Selecione pelo menos uma especialidade.');
+      return;
+    }
+
+    if (!enderecoId) {
+      setValidacao('Selecione um endereço para o atendimento.');
+      return;
+    }
+
+    setEnviando(true);
+    setValidacao('');
+    try {
+      const criada = await onCriarSolicitacao({
+        titulo,
+        descricao,
+        valorEstimado: Number(valorEstimado || '0'),
+        enderecoId,
+        especialidadesRequiridas: especialidadesSelecionadas,
+      });
+
+      if (criada) {
+        setTitulo('');
+        setDescricao('');
+        setValorEstimado('');
+        setEnderecoId('');
+        setEspecialidadesSelecionadas([]);
+        handleClose();
+      }
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -105,6 +130,36 @@ export default function ModalCriarSolicitacao({
               </div>
 
               <div className="mb-3">
+                <label className="form-label fw-semibold text-secondary">
+                  Especialidades necessárias
+                </label>
+                <div className="border rounded p-2" role="group" aria-label="Especialidades necessárias">
+                  {especialidades.map((especialidade) => (
+                    <div className="form-check" key={especialidade}>
+                      <input
+                        id={`especialidade-${especialidade}`}
+                        className="form-check-input"
+                        type="checkbox"
+                        checked={especialidadesSelecionadas.includes(especialidade)}
+                        onChange={() => {
+                          setEspecialidadesSelecionadas((atuais) =>
+                            atuais.includes(especialidade)
+                              ? atuais.filter((item) => item !== especialidade)
+                              : [...atuais, especialidade],
+                          );
+                          setValidacao('');
+                        }}
+                      />
+                      <label className="form-check-label" htmlFor={`especialidade-${especialidade}`}>
+                        {nomesEspecialidades[especialidade]}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                <small className="text-muted">Selecione uma ou mais especialidades.</small>
+              </div>
+
+              <div className="mb-3">
                 <label className="form-label fw-semibold text-secondary" htmlFor="endereco-solicitacao">
                   Endereço do serviço
                 </label>
@@ -113,7 +168,10 @@ export default function ModalCriarSolicitacao({
                     id="endereco-solicitacao"
                     className="form-select"
                     value={enderecoId}
-                    onChange={(e) => setEnderecoId(e.target.value)}
+                    onChange={(e) => {
+                      setEnderecoId(e.target.value);
+                      setValidacao('');
+                    }}
                     required
                   >
                     <option value="">Selecione um endereço</option>
@@ -135,11 +193,12 @@ export default function ModalCriarSolicitacao({
             </div>
 
             <div className="modal-footer border-top-0 pt-0">
-              <button type="button" className="btn btn-light" onClick={handleClose}>
+              {validacao && <div className="alert alert-warning w-100 mb-2">{validacao}</div>}
+              <button type="button" className="btn btn-light" onClick={handleClose} disabled={enviando}>
                 Cancelar
               </button>
-              <button type="submit" className="btn btn-primary px-4" disabled={enderecos.length === 0}>
-                Publicar Solicitação
+              <button type="submit" className="btn btn-primary px-4" disabled={enviando}>
+                {enviando ? 'Publicando...' : 'Publicar Solicitação'}
               </button>
             </div>
           </form>

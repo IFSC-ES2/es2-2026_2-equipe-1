@@ -51,11 +51,12 @@ export default function DashboardCliente() {
       const solicitacaoCriada = await publicarSolicitacao(dados);
       setSolicitacoes((atuais) => [formatarSolicitacao(solicitacaoCriada), ...atuais]);
       setErro("");
-    } catch {
-      setErro("Não foi possível publicar a solicitação.");
-      return;
+      setModalAberto(false);
+      return true;
+    } catch (erroApi) {
+      setErro(erroApi instanceof Error ? erroApi.message : "Não foi possível publicar a solicitação.");
+      return false;
     }
-    setModalAberto(false);
   }
 
   async function salvarEndereco(endereco: Endereco) {
