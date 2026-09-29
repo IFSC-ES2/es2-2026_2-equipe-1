@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ModalCriarEndereco, { type Endereco } from '../../componentes/modal/ModalCriarEndereço';
 import ModalCriarSolicitacao, {
   type DadosSolicitacao,
@@ -11,6 +12,7 @@ import {
   listarSolicitacoes,
   type SolicitacaoApi,
 } from '../../servicos/api';
+import { obterDashboardPorPerfil, obterUsuarioLogado } from '../../servicos/autenticacao';
 
 type Solicitacao = {
   id: string;
@@ -31,20 +33,33 @@ const servicos = [
 ];
 
 export default function DashboardCliente() {
+  const navigate = useNavigate();
   const [modalAberto, setModalAberto] = useState(false);
   const [modalAbertoEndereco, setModalAbertoEndereco] = useState(false);
   const [enderecos, setEnderecos] = useState<EnderecoSelecionavel[]>([]);
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [erro, setErro] = useState("");
 
+  const usuario = obterUsuarioLogado();
+
   useEffect(() => {
+    if (!usuario) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    if (usuario.perfil !== "CLIENTE") {
+      navigate(obterDashboardPorPerfil(usuario.perfil), { replace: true });
+      return;
+    }
+
     Promise.all([listarEnderecos(), listarSolicitacoes()])
       .then(([enderecosAtuais, solicitacoesAtuais]) => {
         setEnderecos(enderecosAtuais);
         setSolicitacoes(solicitacoesAtuais.map(formatarSolicitacao));
       })
       .catch(() => setErro("Não foi possível carregar seus dados. Verifique se o backend está ligado."));
-  }, []);
+  }, [navigate, usuario]);
 
   async function criarSolicitacao(dados: DadosSolicitacao) {
     try {
@@ -143,8 +158,8 @@ export default function DashboardCliente() {
           Service<span>Hub</span>
         </div>
         <div className="profile">
-          <span>Olá, Leonardo</span>
-          <b className="avatar">L</b>
+          <span>Olá, {usuario?.nome?.split(" ")[0] ?? "Cliente"}</span>
+          <b className="avatar">{(usuario?.nome ?? "C").charAt(0).toUpperCase()}</b>
         </div>
         <button className="primary" onClick={() => setModalAbertoEndereco(true)}>
             ＋ Add endereço
@@ -155,7 +170,7 @@ export default function DashboardCliente() {
         {erro && <p role="alert" className="error">{erro}</p>}
         <section className="welcome">
           <div>
-            <h1>Olá, Leonardo! 👋</h1>
+            <h1>Olá, {usuario?.nome?.split(" ")[0] ?? "Cliente"}! 👋</h1>
             <p>O que você precisa consertar hoje?</p>
           </div>
           <button className="primary" onClick={() => setModalAberto(true)}>
