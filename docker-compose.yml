@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    container_name: servicehub_backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./back-end:/app
+      - /app/node_modules
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+
+  frontend:
+    build:
+      context: ./ServiceHub
+      dockerfile: Dockerfile
+    container_name: servicehub_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./ServiceHub:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    depends_on:
+      - backend
