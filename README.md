@@ -112,3 +112,21 @@ O projeto está relacionado à linha:
 * **Pipeline do CI:** [.github/workflows/ci.yml](.github/workflows/ci.yml)
 * **Critérios iniciais de qualidade:** [docs/qualidade.md](docs/qualidade.md)
 * **Template de Pull Request:** [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md)
+
+---
+
+## Entrega 5 - Sprint 1
+
+- **Planejamento da Sprint 1:** [docs/entregas/sprint-1-planejamento.md](docs/entregas/sprint-1-planejamento.md)
+- **Incremento:** criação/publicação de pedidos e cadastro de endereços.
+
+---
+
+## Entrega 6 - Sprint 2 (em andamento)
+- **Relato da Sprint e situação do PR/release:** [docs/entregas/sprint-2.md](docs/entregas/sprint-2.md)
+- **Métricas e lacunas de coleta:** [docs/METRICAS.md](docs/METRICAS.md)
+- **Revisão dos riscos:** [docs/riscos.md](docs/riscos.md)
+- **Padrões de projeto OO:** [docs/PADROES-DE-PROJETO.md](docs/PADROES-DE-PROJETO.md)
+- **ADR-0003: Autenticação:** [docs/adrs/ADR-0003-autenticacao.md](docs/adrs/ADR-0003-autenticacao.md)
+O relato documenta o escopo e as evidências da Sprint e está pronto para acompanhar o PR. A release `v0.2.0` ainda não foi publicada.
+- **Registro de uso de IA:** [USO-IA.md](USO-IA.md)

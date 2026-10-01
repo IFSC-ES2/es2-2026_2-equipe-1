@@ -85,9 +85,18 @@ Validação: A equipe revisou os documentos gerados e verificou se os requisitos
 
 ```text
 Registro de uso 9
-
 Data: 18/09/2026
 Ferramentas: GitHub Copilot e Gemini
 Uso: Auxílio na integração do frontend e backend para criação de solicitações, endereços e especialidades.
 Validação: A equipe revisou as alterações, executou os testes do backend e o build do frontend.
+```
+
+```text
+Registro de uso 10
+
+Data: 01/10/2026
+Ferramenta: GitHub Copilot
+Uso: Apoio à análise do enunciado da Entrega 6 e à preparação de documentação de acompanhamento da Sprint 2, revisão das métricas, riscos e padrões OO.
+Artefatos: docs/BASELINE.md, docs/entregas/sprint-2.md, docs/METRICAS.md, docs/riscos.md, docs/PADROES-DE-PROJETO.md e README.md.
+Validação: Necessario a revisão e confirmação final pela equipe.
 ```

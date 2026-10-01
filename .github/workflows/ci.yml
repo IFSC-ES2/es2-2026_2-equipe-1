@@ -7,16 +7,61 @@ on:
 
 jobs:
   check:
+          types: [opened, synchronize, reopened]
+
+      permissions:
+        contents: read
     runs-on: ubuntu-latest
 
-    steps:
+        backend:
+          name: Backend tests
       - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Verificar arquivos
         run: |
           test -f README.md
-          test -f .github/PULL_REQUEST_TEMPLATE.md
+            - name: Set up Java
+              uses: actions/setup-java@v4
+              with:
+                distribution: temurin
+                java-version: '25'
 
-      - name: CI concluído
-        run: echo "Checks básicos executados com sucesso."
+            - name: Test backend
+              working-directory: back-end
+              run: ./gradlew test --no-daemon
+
+        frontend:
+          name: Frontend build and lint
+          runs-on: ubuntu-latest
+          steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up Node
+              uses: actions/setup-node@v4
+              with:
+                node-version: '24'
+                cache: npm
+                cache-dependency-path: ServiceHub/package-lock.json
+
+            - name: Install dependencies
+              working-directory: ServiceHub
+              run: npm ci
+
+            - name: Build frontend
+              working-directory: ServiceHub
+              run: npm run build
+
+            - name: Lint frontend
+              working-directory: ServiceHub
+              run: npm run lint
+
+        configuration:
+          name: Validate configuration
+          runs-on: ubuntu-latest
+          steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Validate Docker Compose
+              run: docker compose -f docker-compose.yml config --quiet

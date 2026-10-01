@@ -102,7 +102,7 @@ export default function Cadastro() {
             <div className="auth-grid">
               <label className="auth-field">
                 <span>Senha</span>
-                <input value={senha} onChange={(event) => setSenha(event.target.value)} type="password" placeholder="Mínimo 6 caracteres" required />
+                <input value={senha} onChange={(event) => setSenha(event.target.value)} type="password" placeholder="Mínimo 10 caracteres" required />
               </label>
 
               <label className="auth-field">

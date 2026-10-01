@@ -27,3 +27,11 @@ Para garantir a qualidade do software, a previsibilidade do processo de desenvol
 | **M-01** | Cobertura de Testes | Produto | 0% | $\ge 70\%$ | A cada PR / Sprint | Ana Clara (QA) |
 | **M-02** | Lead Time de PRs | Processo | 0h | $< 24\text{h}$ | Semanal | Davi Israel (SM) |
 | **M-03** | Progresso do MVP | Projeto | 0h / 88h | 88h / 88h | A cada Entrega | Leonardo (Arquiteto) |
+
+## Resultado das Sprints
+
+| Métrica | Sprint 1 | Sprint 2 |
+|:---|:---|:---|
+| Cobertura de testes | Não medida | Não medida; não há relatório JaCoCo. |
+| Lead time de PR | Não registrado | PR ainda não aberto; medir após merge. |
+| Horas realizadas | Não registradas | Não registradas. |

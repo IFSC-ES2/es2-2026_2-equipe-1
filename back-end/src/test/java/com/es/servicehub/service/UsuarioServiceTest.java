@@ -1,8 +1,11 @@
 package com.es.servicehub.service;
 
+import com.es.servicehub.dto.CadastroUsuarioRequest;
+import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.enums.TipoPerfil;
 import com.es.servicehub.model.Usuario;
 import com.es.servicehub.repository.UsuarioRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +41,136 @@ class UsuarioServiceTest {
         usuario.setEmail("joao@email.com");
         usuario.setSenha("123456");
         usuario.setTipoPerfil(TipoPerfil.CLIENTE);
+    }
+
+    @Test
+    void cadastrar_clienteValido_deveSalvarSenhaComHash() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Maria Silva");
+        request.setEmail(" MARIA@EMAIL.COM ");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.CLIENTE);
+
+        when(usuarioRepository.findByEmail("maria@email.com")).thenReturn(Optional.empty());
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+        Usuario resultado = usuarioService.cadastrar(request);
+
+        assertEquals("Maria Silva", resultado.getNome());
+        assertEquals("maria@email.com", resultado.getEmail());
+        assertNotEquals("senha-segura-123", resultado.getSenha());
+        assertTrue(new BCryptPasswordEncoder().matches("senha-segura-123", resultado.getSenha()));
+        verify(usuarioRepository).save(any(Usuario.class));
+    }
+
+    @Test
+    void cadastrar_semNome_deveRejeitarEnaoSalvar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setEmail("maria@email.com");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.CLIENTE);
+
+        assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_prestadorSemEspecialidade_deveRejeitar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@email.com");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+
+        assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_prestadorComEspecialidade_deveSalvarPerfilEEspecialidade() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@email.com");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+        request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+        when(usuarioRepository.findByEmail("pedro@email.com")).thenReturn(Optional.empty());
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+        Usuario resultado = usuarioService.cadastrar(request);
+
+        assertEquals(TipoPerfil.PRESTADOR, resultado.getTipoPerfil());
+        assertEquals(List.of(Especialidades.ELETRICISTA), resultado.getEspecialidades());
+    }
+
+    @Test
+    void cadastrar_emailDuplicado_deveRejeitar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Maria Silva");
+        request.setEmail("maria@email.com");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.CLIENTE);
+        when(usuarioRepository.findByEmail("maria@email.com")).thenReturn(Optional.of(usuario));
+
+        assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_admin_deveRejeitar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Admin");
+        request.setEmail("admin@email.com");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.ADMIN);
+
+        assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_senhaCurta_deveRejeitar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Maria Silva");
+        request.setEmail("maria@email.com");
+        request.setSenha("curta");
+        request.setTipoPerfil(TipoPerfil.CLIENTE);
+
+        assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void autenticar_credenciaisValidas_deveRetornarUsuario() {
+        usuario.setSenha(new BCryptPasswordEncoder().encode("senha-segura-123"));
+        when(usuarioRepository.findByEmail("joao@email.com")).thenReturn(Optional.of(usuario));
+
+        Usuario resultado = usuarioService.autenticar(" JOAO@EMAIL.COM ", "senha-segura-123");
+
+        assertSame(usuario, resultado);
+    }
+
+    @Test
+    void autenticar_senhaIncorreta_deveRejeitar() {
+        usuario.setSenha(new BCryptPasswordEncoder().encode("senha-segura-123"));
+        when(usuarioRepository.findByEmail("joao@email.com")).thenReturn(Optional.of(usuario));
+
+        assertThrows(RuntimeException.class,
+                () -> usuarioService.autenticar("joao@email.com", "senha-errada"));
+    }
+
+    @Test
+    void autenticar_usuarioInexistente_deveRejeitar() {
+        when(usuarioRepository.findByEmail("ausente@email.com")).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class,
+                () -> usuarioService.autenticar("ausente@email.com", "senha-segura-123"));
+    }
+
+    @Test
+    void autenticar_credenciaisEmBranco_deveRejeitarAntesDeConsultarRepositorio() {
+        assertThrows(RuntimeException.class, () -> usuarioService.autenticar(" ", " "));
+        verify(usuarioRepository, never()).findByEmail(any());
     }
 
     @Test

@@ -76,3 +76,17 @@ Por isso, esses riscos devem ser acompanhados com maior frequência.
 ## 5. Acompanhamento
 
 Os riscos serão revisados pela equipe a cada entrega ou Sprint. A probabilidade, o impacto e as ações de mitigação poderão ser atualizados conforme o andamento do projeto.
+
+## 6. Revisão da Sprint 2 - em andamento
+
+
+Registro do estado dos riscos em 01/10/2026, baseado no código, workflow e validações locais antes da abertura do PR da Entrega 6. Os riscos sem evidência de mitigação permanecem ativos; checks remotos e eventos do PR ainda não ocorreram. As probabilidades, impactos, prioridades e responsáveis do registro inicial são mantidos quando não há evidência suficiente para recalculá-los.
+
+| ID | Situação observada | Estado em 01/10 | Ação de resposta |
+|:---|:---|:---|:---|
+| R02 - Aumento do escopo | Comunicação cliente-prestador foi levantada; chat em tempo real permanece fora do MVP. | Monitorado; prioridade inicial 6 (alta). | Definir alternativa de comunicação no planejamento antes de assumir implementação ou ampliar escopo. |
+| R03 - Integração Asaas | Pagamento não foi implementado nesta Sprint e continua no backlog futuro. | Ativo para trabalho futuro; prioridade inicial 6 (alta). | Planejar teste antecipado no sandbox quando a integração for priorizada. |
+| R04 - Falhas no CI | Workflow ampliado no branch, ainda sem execução remota no PR. | Mitigação iniciada; ativo até checks remotos verdes; prioridade inicial 4 (média). | Verificar jobs no PR e exigir checks verdes antes do merge conforme regras disponíveis. |
+| R07 - Vulnerabilidade em dependência frontend | `npm ci` reportou uma vulnerabilidade de severidade alta, sem identificar o pacote no registro desta Sprint. | Novo; ainda não classificado numericamente por falta de triagem do pacote e advisory. | Consultar o relatório de auditoria do npm e decidir correção compatível antes da release. |
+
+Este registro descreve o estado comprovável no branch antes do PR e não declara riscos mitigados sem evidência. R07 permanece sem nota numérica até que o advisory seja identificado.
