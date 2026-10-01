@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listarSolicitacoes, type SolicitacaoApi } from "../../servicos/api";
 import { especialidades, nomesEspecialidades, type Especialidade } from "../../servicos/especialidades";
-import { obterDashboardPorPerfil, obterUsuarioLogado } from "../../servicos/autenticacao";
+import { obterDashboardPorPerfil, obterUsuarioLogado, validarUsuarioLogado, type Usuario } from "../../servicos/autenticacao";
 
 type Solicitacao = {
 	id: number;
@@ -16,27 +16,41 @@ type Solicitacao = {
 
 export default function DashboardPrestador() {
 	const navigate = useNavigate();
-	const usuario = obterUsuarioLogado();
+	const [usuario, setUsuario] = useState<Usuario | null>(() => obterUsuarioLogado());
 	const [disponivel, setDisponivel] = useState(true);
 	const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
 	const [filtroEspecialidade, setFiltroEspecialidade] = useState<Especialidade | "TODAS">("TODAS");
 	const [mensagem, setMensagem] = useState("");
 
 	useEffect(() => {
-		if (!usuario) {
-			navigate("/login", { replace: true });
-			return;
+		let cancelado = false;
+
+		async function carregarDashboard() {
+			const usuarioAtual = await validarUsuarioLogado();
+			if (cancelado) return;
+			setUsuario(usuarioAtual);
+
+			if (!usuarioAtual) {
+				navigate("/login", { replace: true });
+				return;
+			}
+
+			if (usuarioAtual.perfil !== "PRESTADOR") {
+				navigate(obterDashboardPorPerfil(usuarioAtual.perfil), { replace: true });
+				return;
+			}
+
+			try {
+				const solicitacoesAtuais = await listarSolicitacoes();
+				if (!cancelado) setSolicitacoes(solicitacoesAtuais.map(formatarSolicitacao));
+			} catch {
+				if (!cancelado) setMensagem("Não foi possível carregar as solicitações.");
+			}
 		}
 
-		if (usuario.perfil !== "PRESTADOR") {
-			navigate(obterDashboardPorPerfil(usuario.perfil), { replace: true });
-			return;
-		}
-
-		listarSolicitacoes()
-			.then((solicitacoesAtuais) => setSolicitacoes(solicitacoesAtuais.map(formatarSolicitacao)))
-			.catch(() => setMensagem("Não foi possível carregar as solicitações."));
-	}, [navigate, usuario]);
+		void carregarDashboard();
+		return () => { cancelado = true; };
+	}, [navigate]);
 
 	const solicitacoesFiltradas = filtroEspecialidade === "TODAS"
 		? solicitacoes

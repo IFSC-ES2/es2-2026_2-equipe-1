@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/enderecos")
-@CrossOrigin(origins = "http://localhost:5173")
 public class EnderecoController {
     private final EnderecoService enderecoService;
 

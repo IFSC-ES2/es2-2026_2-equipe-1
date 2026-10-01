@@ -32,6 +32,12 @@ public class UsuarioService {
     }
 
     @Transactional
+    public Usuario buscarPorEmail(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+    }
+
+    @Transactional
     public Usuario salvar(Usuario usuario) {
         if (usuario.getEmail() != null) {
             String email = usuario.getEmail().trim().toLowerCase();
@@ -71,8 +77,12 @@ public class UsuarioService {
             throw new RuntimeException("Selecione um perfil válido.");
         }
 
-        if (request.getSenha().length() < 6) {
-            throw new RuntimeException("A senha deve ter pelo menos 6 caracteres.");
+        if (request.getTipoPerfil() == TipoPerfil.ADMIN) {
+            throw new RuntimeException("Não é permitido criar contas administrativas pelo cadastro público.");
+        }
+
+        if (request.getSenha().length() < 10) {
+            throw new RuntimeException("A senha deve ter pelo menos 10 caracteres.");
         }
 
         if (request.getTipoPerfil() == TipoPerfil.PRESTADOR &&

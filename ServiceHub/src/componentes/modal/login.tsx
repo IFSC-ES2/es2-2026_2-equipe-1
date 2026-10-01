@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import marca from "../../assets/logo/ServiceHub_azul.png";
-import { entrarUsuario, obterDashboardPorPerfil, obterUsuarioLogado } from "../../servicos/autenticacao";
+import { entrarUsuario, obterDashboardPorPerfil, validarUsuarioLogado } from "../../servicos/autenticacao";
 import "../../paginas/Home/Home.css";
 
 function Login() {
@@ -13,16 +13,20 @@ function Login() {
   const [sucesso, setSucesso] = useState("");
 
   useEffect(() => {
-    const usuario = obterUsuarioLogado();
-    if (usuario) {
-      navigate(obterDashboardPorPerfil(usuario.perfil), { replace: true });
-      return;
-    }
+    let cancelado = false;
+    void validarUsuarioLogado().then((usuario) => {
+      if (cancelado) return;
+      if (usuario) {
+        navigate(obterDashboardPorPerfil(usuario.perfil), { replace: true });
+        return;
+      }
 
-    const params = new URLSearchParams(location.search);
-    if (params.get("cadastro") === "sucesso") {
-      setSucesso("Cadastro realizado com sucesso! Faça seu login para continuar.");
-    }
+      const params = new URLSearchParams(location.search);
+      if (params.get("cadastro") === "sucesso") {
+        setSucesso("Cadastro realizado com sucesso! Faça seu login para continuar.");
+      }
+    });
+    return () => { cancelado = true; };
   }, [location.search, navigate]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

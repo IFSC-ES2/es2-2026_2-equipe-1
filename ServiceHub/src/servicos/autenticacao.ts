@@ -1,4 +1,5 @@
 import type { Especialidade } from "./especialidades";
+import { requisitarApi } from "./api";
 
 export type PerfilUsuario = "CLIENTE" | "PRESTADOR";
 
@@ -21,8 +22,6 @@ export type UsuarioApi = {
 };
 
 const USUARIO_LOGADO_KEY = "servicehub.usuarioLogado";
-const API_URL = "http://localhost:8080/api/usuarios";
-
 function normalizarEmail(email: string) {
   return email.trim().toLowerCase();
 }
@@ -47,14 +46,14 @@ export function obterUsuarioLogado(): Usuario | null {
     return null;
   }
 
-  const usuario = window.sessionStorage.getItem(USUARIO_LOGADO_KEY);
-  if (!usuario) {
-    return null;
-  }
-
   try {
+    const usuario = window.sessionStorage.getItem(USUARIO_LOGADO_KEY);
+    if (!usuario) {
+      return null;
+    }
     return JSON.parse(usuario) as Usuario;
   } catch {
+    window.sessionStorage.removeItem(USUARIO_LOGADO_KEY);
     return null;
   }
 }
@@ -64,12 +63,33 @@ export function definirUsuarioLogado(usuario: Usuario | null) {
     return;
   }
 
-  if (!usuario) {
-    window.sessionStorage.removeItem(USUARIO_LOGADO_KEY);
-    return;
-  }
+  try {
+    if (!usuario) {
+      window.sessionStorage.removeItem(USUARIO_LOGADO_KEY);
+      return;
+    }
 
-  window.sessionStorage.setItem(USUARIO_LOGADO_KEY, JSON.stringify(usuario));
+    window.sessionStorage.setItem(USUARIO_LOGADO_KEY, JSON.stringify(usuario));
+  } catch {
+    // O armazenamento local é apenas um cache de apresentação.
+  }
+}
+
+export async function validarUsuarioLogado(): Promise<Usuario | null> {
+  try {
+    const resposta = await requisitarApi("/usuarios/me");
+    if (!resposta.ok) {
+      definirUsuarioLogado(null);
+      return null;
+    }
+
+    const usuario = mapearUsuario(await resposta.json() as UsuarioApi);
+    definirUsuarioLogado(usuario);
+    return usuario;
+  } catch {
+    definirUsuarioLogado(null);
+    return null;
+  }
 }
 
 function extrairMensagemErro(payload: unknown): string {
@@ -97,10 +117,10 @@ export async function cadastrarUsuario(dados: {
   const nome = dados.nome.trim();
   const email = normalizarEmail(dados.email);
   const telefone = dados.telefone.trim();
-  const senha = dados.senha.trim();
-  const confirmarSenha = dados.confirmarSenha.trim();
+  const senha = dados.senha;
+  const confirmarSenha = dados.confirmarSenha;
 
-  if (!nome || !email || !telefone || !dados.perfil || !senha) {
+  if (!nome || !email || !telefone || !dados.perfil || !senha.trim()) {
     return { ok: false, mensagem: "Preencha todos os campos obrigatórios." };
   }
 
@@ -108,8 +128,8 @@ export async function cadastrarUsuario(dados: {
     return { ok: false, mensagem: "Informe um e-mail válido." };
   }
 
-  if (senha.length < 6) {
-    return { ok: false, mensagem: "A senha deve ter pelo menos 6 caracteres." };
+  if (senha.length < 10) {
+    return { ok: false, mensagem: "A senha deve ter pelo menos 10 caracteres." };
   }
 
   if (senha !== confirmarSenha) {
@@ -121,7 +141,7 @@ export async function cadastrarUsuario(dados: {
   }
 
   try {
-    const resposta = await fetch(`${API_URL}/cadastro`, {
+    const resposta = await requisitarApi("/usuarios/cadastro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -155,14 +175,14 @@ export async function entrarUsuario(
   senha: string,
 ): Promise<{ ok: true; usuario: Usuario } | { ok: false; mensagem: string }> {
   const emailNormalizado = normalizarEmail(email);
-  const senhaInformada = senha.trim();
+  const senhaInformada = senha;
 
   if (!emailNormalizado || !senhaInformada) {
     return { ok: false, mensagem: "Informe e-mail e senha para continuar." };
   }
 
   try {
-    const resposta = await fetch(`${API_URL}/login`, {
+    const resposta = await requisitarApi("/usuarios/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: emailNormalizado, senha: senhaInformada }),
@@ -185,6 +205,10 @@ export async function entrarUsuario(
   }
 }
 
-export function sairUsuario() {
-  definirUsuarioLogado(null);
+export async function sairUsuario() {
+  try {
+    await requisitarApi("/usuarios/logout", { method: "POST" });
+  } finally {
+    definirUsuarioLogado(null);
+  }
 }

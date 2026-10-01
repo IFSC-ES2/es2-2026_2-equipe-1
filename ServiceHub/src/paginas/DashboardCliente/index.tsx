@@ -12,7 +12,7 @@ import {
   listarSolicitacoes,
   type SolicitacaoApi,
 } from '../../servicos/api';
-import { obterDashboardPorPerfil, obterUsuarioLogado } from '../../servicos/autenticacao';
+import { obterDashboardPorPerfil, obterUsuarioLogado, validarUsuarioLogado, type Usuario } from '../../servicos/autenticacao';
 
 type Solicitacao = {
   id: string;
@@ -40,26 +40,39 @@ export default function DashboardCliente() {
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [erro, setErro] = useState("");
 
-  const usuario = obterUsuarioLogado();
+  const [usuario, setUsuario] = useState<Usuario | null>(() => obterUsuarioLogado());
 
   useEffect(() => {
-    if (!usuario) {
-      navigate("/login", { replace: true });
-      return;
-    }
+    let cancelado = false;
 
-    if (usuario.perfil !== "CLIENTE") {
-      navigate(obterDashboardPorPerfil(usuario.perfil), { replace: true });
-      return;
-    }
+    async function carregarDashboard() {
+      const usuarioAtual = await validarUsuarioLogado();
+      if (cancelado) return;
+      setUsuario(usuarioAtual);
 
-    Promise.all([listarEnderecos(), listarSolicitacoes()])
-      .then(([enderecosAtuais, solicitacoesAtuais]) => {
+      if (!usuarioAtual) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      if (usuarioAtual.perfil !== "CLIENTE") {
+        navigate(obterDashboardPorPerfil(usuarioAtual.perfil), { replace: true });
+        return;
+      }
+
+      try {
+        const [enderecosAtuais, solicitacoesAtuais] = await Promise.all([listarEnderecos(), listarSolicitacoes()]);
+        if (cancelado) return;
         setEnderecos(enderecosAtuais);
         setSolicitacoes(solicitacoesAtuais.map(formatarSolicitacao));
-      })
-      .catch(() => setErro("Não foi possível carregar seus dados. Verifique se o backend está ligado."));
-  }, [navigate, usuario]);
+      } catch {
+        if (!cancelado) setErro("Não foi possível carregar seus dados. Verifique se o backend está ligado.");
+      }
+    }
+
+    void carregarDashboard();
+    return () => { cancelado = true; };
+  }, [navigate]);
 
   async function criarSolicitacao(dados: DadosSolicitacao) {
     try {
