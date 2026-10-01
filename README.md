@@ -40,6 +40,23 @@ Porque facilita a contratação de profissionais e ajuda prestadores autônomos 
 O ServiceHub permite que o cliente **solicite um serviço**, que prestadores possam **aceitar ou recusar o atendimento** e que o **pagamento seja realizado pela plataforma**, por meio da integração com o Asaas. Assim, o processo de contratação fica mais simples e organizado.
 
 
+## Como executar
+
+```bash
+# Backend (JDK 25) - http://localhost:8080
+cd back-end && ./gradlew bootRun
+
+# Frontend (Node 24) - http://localhost:5173
+cd ServiceHub && npm ci && npm run dev
+```
+
+## Como testar
+
+```bash
+cd back-end && ./gradlew test --no-daemon
+cd ServiceHub && npm run build && npm run lint
+```
+
 ## Linha do Projeto
 
 O projeto está relacionado à linha:
