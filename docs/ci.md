@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-O CI tem como objetivo executar verificações automaticamente nos Pull Requests destinados à branch `main`.
+Executar verificações automáticas em todo Pull Request destinado à `main`, evitando regressões simples: código que não compila, testes quebrados, configuração inválida e ausência de documentos obrigatórios.
 
 ## 2. Ferramenta
 
