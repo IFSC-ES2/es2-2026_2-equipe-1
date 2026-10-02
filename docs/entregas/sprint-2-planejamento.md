@@ -1,44 +1,48 @@
-# Sprint 2 - Entrega 6
+# Planejamento Inicial - Sprint 2 (Entrega 6)
 
-**Período:** até 01/10/2026  
-**Branch:** `entrega-6`
+**Projeto:** ServiceHub  
+**Data da reunião:** 01/10/2026  
+**Participantes:** Ana Clara Teixeira Ronzani, Davi Israel Quirino, João Vitor Schmitt, Leonardo Victor Muller De Morais
 
-## Meta
+---
 
-Implementar cadastro e autenticação segura para clientes e prestadores, identificando o perfil de cada usuário. Também foram feitos ajustes visuais na página inicial, no cadastro/login e nos dashboards.
+## 1. Meta da Sprint 2
 
-## Escopo por Sprint
+Concluir o item de maior prioridade restante no MVP: o **cadastro e a autenticação segura de clientes e prestadores**, com identificação do perfil de cada usuário e controle de acesso por tipo de conta. A funcionalidade de criação e publicação de solicitações já foi priorizada na Sprint 1, e a Sprint 2 consolida a parte de segurança e autenticação necessária para o uso real do sistema. Além disso, foi feito também as alterações de melhoria no Front-End
 
-| Sprint | Trabalho principal |
-|:---|:---|
-| Sprint 1 / Entrega 5 | Fluxo de pedidos e serviços: criação/publicação, endereços e trabalho de aceite pelo prestador. |
-| Sprint 2 / Entrega 6 | Cadastro, login e autenticação de clientes e prestadores. Ajustes visuais foram complementares. |
+## 2. Itens do backlog selecionados para a sprint
 
-O fluxo de pedidos pertence à Sprint 1 e não faz parte da meta de autenticação da Sprint 2. No código atual, o botão de aceite ainda não grava a decisão no backend.
+| ID | Item do Backlog | Prioridade | Estimativa |
+|:---|:---|:---:|:---:|
+| #7 | Cadastro e autenticação de usuários (Cliente e Prestador) | Alta | 16h |
 
-## O que foi implementado
+**Capacidade planejada para a sprint:** 48h úteis (conforme `docs/BASELINE.md`).  
+**Esforço total selecionado:** 16h, deixando margem para revisão, testes e ajustes.
 
-- Cadastro e login conectados ao backend.
-- Senhas protegidas com BCrypt, sessão, proteção CSRF e regras de acesso por perfil.
-- Ajustes visuais na Home, no cadastro/login e nos dashboards de cliente e prestador.
-- Dockerfiles e Docker Compose foram adicionados como trabalho complementar. A configuração foi validada, mas os containers não foram iniciados.
+## 3. Justificativa da escolha
 
-## Testes executados localmente
+- O item #7 é classificado como **prioridade Alta** no backlog priorizado do MVP (`docs/BASELINE.md`).
+- O replanejamento realizado após a Sprint 1 manteve a autenticação como foco central da Sprint 2, pois o item #8 (criação e publicação de solicitação) foi adiantado e entregue na etapa anterior.
+- O cadastro e a autenticação são fundamentais para distinguir clientes e prestadores, respeitar regras de acesso e habilitar o fluxo real de uso do ServiceHub de forma segura.
+- A funcionalidade é um pré-requisito para o avanço do MVP: sem autenticação e controle de perfil, não é possível validar corretamente o uso do sistema em cenários de negócio reais e nem garantir a separação de papéis.
 
-- Testes do backend: passaram. Foram adicionados casos para cadastro de cliente e prestador, senha protegida, dados inválidos, e-mail duplicado e login válido/inválido.
-- Build e lint do frontend: passaram.
-- Validação da configuração do Docker Compose: passou com aviso de `version` obsoleto.
+## 4. Decisões tomadas e ajustes de escopo
 
-Os testes ainda não cobrem o fluxo HTTP completo de login, sessão e autorização. O `npm ci` também reportou uma vulnerabilidade alta em dependência, ainda sem triagem.
+- **Ajuste de escopo em relação ao `BASELINE.md`:** o item #7 permanece no foco principal da Sprint 2 junto com as melhorias pedidas pelo PO no Front-End, enquanto os itens de criação/publicação de solicitação (#8) e demais fluxos de negócio foram concluídos ou priorizados em etapas anteriores conforme replanejamento da equipe.
+- **Decisão de arquitetura e segurança:** a autenticação foi tratada com foco em segurança, perfil de usuário, sessão e controle de acesso por papel, conforme decisão registrada no ADR da autenticação (`docs/adrs/ADR-0003-autenticacao.md`).
+- **Divisão de tarefas entre os integrantes:**
+  - **João Vitor Schmitt** — DevOps / Infra: suporte de CI, Docker, configuração e ajuste de ambiente de execução.
+  - **Davi Quirino** — Front-end: Documentação, ajustes nas Issues e revisão das documentações das sprints anteriores.
+  - **Leonardo Victor Muller** — Arquitetura: implementação das telas de cadastro, login, seleção de perfil e dashboards de cliente/prestador + Auxilio na Documentação.
+  - **Ana Clara Teixeira Ronzani** — Engenharia de Qualidade: testes automatizados, validação de regras de negócio, revisão e documentação da sprint.
 
-## Métricas
+- **Escopo complementar observado:** ajustes visuais na página inicial, no cadastro/login e nos dashboards foram tratados como complementares ao item principal.
 
-As métricas da Sprint 1 não foram registradas. Nesta Sprint também não há apontamento de horas nem relatório de cobertura. Por isso, não dá para comparar numericamente a produtividade entre Sprints. O histórico mostra trabalho funcional relevante, mas commits não permitem calcular horas ou produtividade individual. Ver [METRICAS.md](../METRICAS.md).
+## 5. Definição de pronto para a sprint
 
-## Padrões e decisão técnica
-
-Os padrões Strategy e Adapter estão resumidos em [PADROES-DE-PROJETO.md](../PADROES-DE-PROJETO.md). A decisão sobre sessão, CSRF e perfis está em [ADR-0003](../adrs/ADR-0003-autenticacao.md).
-
-## PR e release
-
-O PR da Entrega 6 ainda será aberto. Aprovação, checks remotos, merge na `main` e release/tag `v0.2.0` ainda vão ocorrer.
+Um item é considerado concluído quando:
+- o código está integrado à `main` via Pull Request revisado e aprovado;
+- os checks obrigatórios do CI passaram;
+- há testes automatizados cobrindo os cenários principais de cadastro, login e validação de dados;
+- a funcionalidade é demonstrável por meio da interface, da API ou de scripts de validação;
+- o perfil do usuário e as regras de acesso ficam consistentes com a arquitetura definida para o sistema.
