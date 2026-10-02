@@ -13,6 +13,7 @@ Uso: Sugestão de nome para o sistema e melhoria da organização e formatação
 Artefato: README.md
 Validação: Análise dos nomes sugeridos e verificação se a formatação retornada estava de acordo com a proposta exigida. 
 ```
+## Entrega 2
 
 ```text
 Registro de uso 2
@@ -33,6 +34,7 @@ Uso: Ajuda na criação das documentações necessárias na entrega-2.
 Artefato: .docs e README.md
 Validação: Verificação se os textos criados estão no formato exigidos na entrega.
 ```
+## Entrega 3
 
 ```text
 Registro de uso 4
@@ -43,6 +45,8 @@ Uso: Auxílio na estruturação e geração dos documentos de planejamento da En
 Artefato: docs/BASELINE.md, docs/ESTIMATIVAS.md, docs/METRICAS.md, docs/metricas/M-01.md, M-02.md e M-03.md
 Validação: A equipe revisou as estimativas de horas, ajustou a capacidade semanal para 6h por integrante e validou as fórmulas e métricas propostas em relação ao escopo do MVP.
 ```
+
+## Entrega 4
 
 ```text
 Registro de uso 5
@@ -63,6 +67,7 @@ Uso: Auxílio na construção da página Home e funcionamento dos links do react
 Artefatos: Criação das imagens + páginas para o front-end ( bem básicas )
 Validação: A equipe irá validar o código e também a página. Quanto as imagens as mesmas já foram validadas por toda a equipe
 ```
+## Entrega 5
 
 ```text
 Registro de uso 7
@@ -90,6 +95,7 @@ Ferramentas: GitHub Copilot e Gemini
 Uso: Auxílio na integração do frontend e backend para criação de solicitações, endereços e especialidades.
 Validação: A equipe revisou as alterações, executou os testes do backend e o build do frontend.
 ```
+## Entrega 6
 
 ```text
 Registro de uso 10
