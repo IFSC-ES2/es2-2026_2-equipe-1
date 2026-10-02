@@ -7,10 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: servicehub_backend
     ports:
-      - "3000:3000"
-    volumes:
-      - ./back-end:/app
-      - /app/node_modules
+      - "8080:8080"
     environment:
       - PORT=3000
       - NODE_ENV=development
@@ -26,6 +23,6 @@ services:
       - ./ServiceHub:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:3000
+      - VITE_API_URL=http://localhost:8080
     depends_on:
       - backend
