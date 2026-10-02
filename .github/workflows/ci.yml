@@ -4,64 +4,72 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
 
 jobs:
-  check:
-          types: [opened, synchronize, reopened]
-
-      permissions:
-        contents: read
+  check_files:
+    name: Verificar arquivos básicos
     runs-on: ubuntu-latest
-
-        backend:
-          name: Backend tests
+    steps:
       - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Verificar arquivos
         run: |
           test -f README.md
-            - name: Set up Java
-              uses: actions/setup-java@v4
-              with:
-                distribution: temurin
-                java-version: '25'
 
-            - name: Test backend
-              working-directory: back-end
-              run: ./gradlew test --no-daemon
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        frontend:
-          name: Frontend build and lint
-          runs-on: ubuntu-latest
-          steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
 
-            - name: Set up Node
-              uses: actions/setup-node@v4
-              with:
-                node-version: '24'
-                cache: npm
-                cache-dependency-path: ServiceHub/package-lock.json
+      - name: Test backend
+        working-directory: back-end
+        run: ./gradlew test --no-daemon
 
-            - name: Install dependencies
-              working-directory: ServiceHub
-              run: npm ci
+  frontend:
+    name: Frontend build and lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Build frontend
-              working-directory: ServiceHub
-              run: npm run build
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: ServiceHub/package-lock.json
 
-            - name: Lint frontend
-              working-directory: ServiceHub
-              run: npm run lint
+      - name: Install dependencies
+        working-directory: ServiceHub
+        run: npm ci
 
-        configuration:
-          name: Validate configuration
-          runs-on: ubuntu-latest
-          steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+      - name: Build frontend
+        working-directory: ServiceHub
+        run: npm run build
 
-            - name: Validate Docker Compose
-              run: docker compose -f docker-compose.yml config --quiet
+      - name: Lint frontend
+        working-directory: ServiceHub
+        run: npm run lint
+
+  configuration:
+    name: Validate configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose
+        run: docker compose -f docker-compose.yml config --quiet
