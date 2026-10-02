@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-O CI tem como objetivo executar verificações automaticamente nos Pull Requests destinados à branch `main`.
+Executar verificações automáticas em todo Pull Request destinado à `main`, evitando regressões simples: código que não compila, testes quebrados, configuração inválida e ausência de documentos obrigatórios.
 
 ## 2. Ferramenta
 
@@ -10,9 +10,7 @@ Foi utilizado o **GitHub Actions** para executar o pipeline.
 
 ## 3. Funcionamento
 
-O pipeline é executado automaticamente quando um Pull Request é aberto ou atualizado para a branch `main`.
-
-Atualmente são realizados checks básicos para verificar a estrutura mínima do projeto.
+O workflow é executado quando um Pull Request para `main` é aberto, atualizado ou reaberto. Ele roda os testes do backend, o build e o lint do frontend, e valida a configuração do Docker Compose.
 
 ## 4. Arquivo
 
@@ -22,8 +20,8 @@ O workflow está localizado em:
 
 ## 5. Evidência
 
-A execução do pipeline deve ser verificada nos Pull Requests da Entrega 4, onde os checks devem aparecer como concluídos.
+Os resultados locais passaram em 01/10/2026. Os checks do GitHub ainda precisam aparecer no PR da Entrega 6, que será aberto ao final do dia.
 
 ## 6. Evolução
 
-Nas próximas etapas, o pipeline poderá ser ampliado para executar build, testes automatizados, lint e análise de cobertura.
+O workflow ainda não gera relatório de cobertura de testes.

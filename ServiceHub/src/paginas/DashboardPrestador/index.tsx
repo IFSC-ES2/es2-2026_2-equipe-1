@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { listarSolicitacoes, type SolicitacaoApi } from "../../servicos/api";
 import { especialidades, nomesEspecialidades, type Especialidade } from "../../servicos/especialidades";
+import { obterDashboardPorPerfil, obterUsuarioLogado, validarUsuarioLogado, type Usuario } from "../../servicos/autenticacao";
 
 type Solicitacao = {
 	id: number;
@@ -13,16 +15,42 @@ type Solicitacao = {
 };
 
 export default function DashboardPrestador() {
+	const navigate = useNavigate();
+	const [usuario, setUsuario] = useState<Usuario | null>(() => obterUsuarioLogado());
 	const [disponivel, setDisponivel] = useState(true);
 	const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
 	const [filtroEspecialidade, setFiltroEspecialidade] = useState<Especialidade | "TODAS">("TODAS");
 	const [mensagem, setMensagem] = useState("");
 
 	useEffect(() => {
-		listarSolicitacoes()
-			.then((solicitacoesAtuais) => setSolicitacoes(solicitacoesAtuais.map(formatarSolicitacao)))
-			.catch(() => setMensagem("Não foi possível carregar as solicitações."));
-	}, []);
+		let cancelado = false;
+
+		async function carregarDashboard() {
+			const usuarioAtual = await validarUsuarioLogado();
+			if (cancelado) return;
+			setUsuario(usuarioAtual);
+
+			if (!usuarioAtual) {
+				navigate("/login", { replace: true });
+				return;
+			}
+
+			if (usuarioAtual.perfil !== "PRESTADOR") {
+				navigate(obterDashboardPorPerfil(usuarioAtual.perfil), { replace: true });
+				return;
+			}
+
+			try {
+				const solicitacoesAtuais = await listarSolicitacoes();
+				if (!cancelado) setSolicitacoes(solicitacoesAtuais.map(formatarSolicitacao));
+			} catch {
+				if (!cancelado) setMensagem("Não foi possível carregar as solicitações.");
+			}
+		}
+
+		void carregarDashboard();
+		return () => { cancelado = true; };
+	}, [navigate]);
 
 	const solicitacoesFiltradas = filtroEspecialidade === "TODAS"
 		? solicitacoes
@@ -53,12 +81,12 @@ export default function DashboardPrestador() {
 					<span style={styles.logo}>ServiceHub</span>
 					<p style={styles.subtitle}>Painel do prestador</p>
 				</div>
-				<button style={styles.profileButton}>Olá, João ▾</button>
+				<button style={styles.profileButton}>Olá, {usuario?.nome?.split(" ")[0] ?? "Prestador"} ▾</button>
 			</header>
 
 			<section style={styles.welcome}>
 				<div>
-					<h1 style={styles.title}>Bom dia, João!</h1>
+					<h1 style={styles.title}>Bom dia, {usuario?.nome?.split(" ")[0] ?? "Prestador"}!</h1>
 					<p style={styles.muted}>Encontre novos serviços e acompanhe seus atendimentos.</p>
 				</div>
 				<button

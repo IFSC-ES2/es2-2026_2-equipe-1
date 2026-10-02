@@ -5,9 +5,9 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software II** do curso
 ## Integrantes
 
 * Ana Clara Teixeira Ronzani (202510703694) - Engenheira de Qualidade
-* Davi Israel Quirino (202510703620) - Scrum Master & Front End
+* Davi Israel Quirino (202510703620) - Front End
 * João Vitor Schmitt (202510703638) - DevOps/Infra
-* Leonardo Victor Muller De Morais (202510703650) - Arquiteto de Software
+* Leonardo Victor Muller De Morais (202510703650) - Scrum Master & Arquiteto de Software
 
 ## Tema do Projeto
 
@@ -39,6 +39,23 @@ Porque facilita a contratação de profissionais e ajuda prestadores autônomos 
 
 O ServiceHub permite que o cliente **solicite um serviço**, que prestadores possam **aceitar ou recusar o atendimento** e que o **pagamento seja realizado pela plataforma**, por meio da integração com o Asaas. Assim, o processo de contratação fica mais simples e organizado.
 
+
+## Como executar
+
+```bash
+# Backend (JDK 25) - http://localhost:8080
+cd back-end && ./gradlew bootRun
+
+# Frontend (Node 24) - http://localhost:5173
+cd ServiceHub && npm ci && npm run dev
+```
+
+## Como testar
+
+```bash
+cd back-end && ./gradlew test --no-daemon
+cd ServiceHub && npm run build && npm run lint
+```
 
 ## Linha do Projeto
 
@@ -112,3 +129,21 @@ O projeto está relacionado à linha:
 * **Pipeline do CI:** [.github/workflows/ci.yml](.github/workflows/ci.yml)
 * **Critérios iniciais de qualidade:** [docs/qualidade.md](docs/qualidade.md)
 * **Template de Pull Request:** [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md)
+
+---
+
+## Entrega 5 - Sprint 1
+
+- **Planejamento da Sprint 1:** [docs/entregas/sprint-1-planejamento.md](docs/entregas/sprint-1-planejamento.md)
+- **Incremento:** criação/publicação de pedidos e cadastro de endereços.
+
+---
+
+## Entrega 6 - Sprint 2 (em andamento)
+- **Relato da Sprint e situação do PR/release:** [docs/entregas/sprint-2.md](docs/entregas/sprint-2.md)
+- **Métricas e lacunas de coleta:** [docs/METRICAS.md](docs/METRICAS.md)
+- **Revisão dos riscos:** [docs/riscos.md](docs/riscos.md)
+- **Padrões de projeto OO:** [docs/PADROES-DE-PROJETO.md](docs/PADROES-DE-PROJETO.md)
+- **ADR-0003: Autenticação:** [docs/adrs/ADR-0003-autenticacao.md](docs/adrs/ADR-0003-autenticacao.md)
+O relato documenta o escopo e as evidências da Sprint e está pronto para acompanhar o PR. A release `v0.2.0` ainda não foi publicada.
+- **Registro de uso de IA:** [USO-IA.md](USO-IA.md)

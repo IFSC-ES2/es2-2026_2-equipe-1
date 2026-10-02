@@ -13,6 +13,7 @@ Uso: Sugestão de nome para o sistema e melhoria da organização e formatação
 Artefato: README.md
 Validação: Análise dos nomes sugeridos e verificação se a formatação retornada estava de acordo com a proposta exigida. 
 ```
+## Entrega 2
 
 ```text
 Registro de uso 2
@@ -33,6 +34,7 @@ Uso: Ajuda na criação das documentações necessárias na entrega-2.
 Artefato: .docs e README.md
 Validação: Verificação se os textos criados estão no formato exigidos na entrega.
 ```
+## Entrega 3
 
 ```text
 Registro de uso 4
@@ -43,6 +45,8 @@ Uso: Auxílio na estruturação e geração dos documentos de planejamento da En
 Artefato: docs/BASELINE.md, docs/ESTIMATIVAS.md, docs/METRICAS.md, docs/metricas/M-01.md, M-02.md e M-03.md
 Validação: A equipe revisou as estimativas de horas, ajustou a capacidade semanal para 6h por integrante e validou as fórmulas e métricas propostas em relação ao escopo do MVP.
 ```
+
+## Entrega 4
 
 ```text
 Registro de uso 5
@@ -63,6 +67,7 @@ Uso: Auxílio na construção da página Home e funcionamento dos links do react
 Artefatos: Criação das imagens + páginas para o front-end ( bem básicas )
 Validação: A equipe irá validar o código e também a página. Quanto as imagens as mesmas já foram validadas por toda a equipe
 ```
+## Entrega 5
 
 ```text
 Registro de uso 7
@@ -85,9 +90,39 @@ Validação: A equipe revisou os documentos gerados e verificou se os requisitos
 
 ```text
 Registro de uso 9
-
 Data: 18/09/2026
 Ferramentas: GitHub Copilot e Gemini
 Uso: Auxílio na integração do frontend e backend para criação de solicitações, endereços e especialidades.
 Validação: A equipe revisou as alterações, executou os testes do backend e o build do frontend.
+```
+## Entrega 6
+
+```text
+Registro de uso 10
+
+Data: 01/10/2026
+Ferramenta: GitHub Copilot
+Uso: Apoio à análise do enunciado da Entrega 6 e à preparação de documentação de acompanhamento da Sprint 2, revisão das métricas, riscos e padrões OO.
+Artefatos: docs/BASELINE.md, docs/entregas/sprint-2.md, docs/METRICAS.md, docs/riscos.md, docs/PADROES-DE-PROJETO.md e README.md.
+Validação: Necessario a revisão e confirmação final pela equipe.
+```
+
+```text
+Registro de uso 11
+
+Data: 01/10/2026
+Ferramenta: DeepSeek
+Uso: Apoio à análise da análise do repositório da Entrega 6 contra o enunciado e rascunho dos documentos faltantes: métricas, riscos, padrões de projeto, ADR-0004 e contribuições.
+Artefatos: docs/METRICAS.md, docs/riscos.md, docs/PADROES-DE-PROJETO.md, docs/adrs/ADR-0004-padroes-de-projeto.md.
+Validação: Necessario a revisão e confirmação final pela equipe.
+```
+
+```text
+Registro de uso 12
+
+Data: 01/10/2026
+Ferramenta: Copilot
+Uso: Auxilio na correção e estrutura do planejamento.md faltantes: métricas, riscos, padrões de projeto, ADR-0004 e contribuições.
+Artefatos:docs/entregas/sprint-2-planejamento.md
+Validação: Necessario a revisão e confirmação final pela equipe.
 ```

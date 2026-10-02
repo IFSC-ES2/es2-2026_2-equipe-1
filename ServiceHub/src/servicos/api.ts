@@ -4,6 +4,49 @@ import type { Especialidade } from "./especialidades";
 
 const API_URL = "http://localhost:8080/api";
 
+function obterCookie(nome: string): string | null {
+  const prefixo = `${nome}=`;
+  const cookie = document.cookie.split(";").map((parte) => parte.trim()).find((parte) => parte.startsWith(prefixo));
+  return cookie ? decodeURIComponent(cookie.slice(prefixo.length)) : null;
+}
+
+async function obterTokenCsrf(): Promise<string> {
+  let token = obterCookie("XSRF-TOKEN");
+  if (token) {
+    return token;
+  }
+
+  const resposta = await fetch(`${API_URL}/usuarios/csrf`, { credentials: "include" });
+  if (!resposta.ok) {
+    throw new Error("Não foi possível iniciar uma sessão segura.");
+  }
+
+  token = obterCookie("XSRF-TOKEN");
+  if (!token) {
+    throw new Error("O servidor não forneceu o token de segurança.");
+  }
+  return token;
+}
+
+export async function requisitarApi(rota: string, opcoes: RequestInit = {}): Promise<Response> {
+  const metodo = (opcoes.method ?? "GET").toUpperCase();
+  const headers = new Headers(opcoes.headers);
+  if (opcoes.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (!["GET", "HEAD", "OPTIONS"].includes(metodo)) {
+    headers.set("X-XSRF-TOKEN", await obterTokenCsrf());
+  }
+
+  return fetch(`${API_URL}${rota}`, {
+    ...opcoes,
+    method: metodo,
+    headers,
+    credentials: "include",
+  });
+}
+
 type EnderecoApi = {
   id: number;
   logradouro: string;
@@ -27,7 +70,7 @@ export type SolicitacaoApi = {
 };
 
 async function requisicao<T>(rota: string, opcoes?: RequestInit): Promise<T> {
-  const resposta = await fetch(`${API_URL}${rota}`, {
+  const resposta = await requisitarApi(rota, {
     headers: { "Content-Type": "application/json" },
     ...opcoes,
   });

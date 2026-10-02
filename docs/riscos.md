@@ -76,3 +76,27 @@ Por isso, esses riscos devem ser acompanhados com maior frequência.
 ## 5. Acompanhamento
 
 Os riscos serão revisados pela equipe a cada entrega ou Sprint. A probabilidade, o impacto e as ações de mitigação poderão ser atualizados conforme o andamento do projeto.
+
+## 6. Revisão da Sprint 2 (01/10/2026)
+
+Critério: prioridade = probabilidade x impacto (escala 1 a 3). "Prop." indica valor proposto nesta revisão; a equipe deve confirmar na reunião de fechamento.
+
+### 6.1 Riscos do registro original
+
+| ID | Situação | Prob. | Impacto | Prioridade | Evidência | Ação para a Sprint 3 | Resp. |
+|:---|:---|:---:|:---:|:---:|:---|:---|:---|
+| R01 Atraso | **Concretizado parcialmente** | 3 (prop.) | 3 | 9 - Alta | Item #9, previsto para a Sprint 2 no baseline, não foi entregue; 36,4% do MVP concluído | Registrar horas; limitar a sprint a #9 + correções de segurança + testes | Leonardo |
+| R02 Aumento do escopo | Ativo | 2 | 3 | 6 - Alta | Ajustes visuais e Dockerfiles consumiram esforço fora do backlog | Todo trabalho fora do backlog exige issue e justificativa; decisão de comunicação cliente-prestador apenas como ADR | Davi |
+| R03 Integração Asaas | Ativo, **piorou** | 3 (prop.) | 3 | 9 - Alta | Nenhum teste em sandbox; pagamento fica para a Sprint 4, com 24h estimadas e inexperiência com webhooks | Spike de 2h no sandbox na Sprint 3 | João |
+| R04 Falhas no CI | **Concretizado e corrigido** | 2 | 2 | 4 - Média | O `ci.yml` anterior era YAML inválido e não executaria; versão nova validada por parser | Manter ativo até os checks do PR ficarem verdes; depois reclassificar como mitigado | João |
+| R05 Baixa cobertura | Ativo, **piorou** | 3 (prop.) | 2 | 6 - Alta | Cobertura não medida; sem testes HTTP de login, sessão, CSRF e autorização | JaCoCo + testes `MockMvc` | Ana Clara |
+| R06 Comunicação | Ativo | 1 | 2 | 2 - Baixa | Sem evidência de falha; board e issues devem refletir o estado real | Revisar board antes do fechamento | Davi |
+
+### 6.2 Riscos novos
+
+| ID | Risco | Causa | Consequência | Prob. | Impacto | Prioridade | Mitigação | Resp. |
+|:---|:---|:---|:---|:---:|:---:|:---:|:---|:---|
+| R07 | Vulnerabilidade em dependência do frontend | `npm ci` reportou 1 vulnerabilidade alta. Triagem: pacote `brace-expansion`, transitivo de `eslint` (via `minimatch`), advisories GHSA-qhr7-859c-m2p7 e GHSA-6j4f-fj2g-mc7p (DoS por recursão). É dependência de **ferramenta de desenvolvimento**, não vai para o bundle | Impacto limitado a build/lint | 1 | 2 | 2 - Baixa | `npm audit fix` (correção disponível); rodar `npm run build` e `npm run lint` depois | João |
+| R08 | Autorização incompleta na API | Só `POST /api/solicitacao` e `POST /api/enderecos` exigem CLIENTE; `PUT`/`DELETE` de solicitação e `GET /api/enderecos` exigem só autenticação, sem checar o dono | Qualquer usuário logado altera/apaga solicitações de outros e lista endereços de todos (privacidade) | 3 | 3 | 9 - Alta | Restringir por perfil e por dono do recurso; testes `MockMvc` | Leonardo |
+| R09 | Ambiente Docker inconsistente com a stack | `docker-compose.yml` usa porta 3000 e volumes de Node para o backend Spring (porta 8080) e não tem PostgreSQL; app usa H2 em memória | Ambiente de staging (Sprint 4) sem base; perda de dados a cada reinício | 3 | 2 | 6 - Alta | Corrigir compose; decidir PostgreSQL x H2 em novo ADR | João |
+| R10 | Uso de IA sem validação humana registrada | `USO-IA.md` registros 6, 7 e 10 dizem "a equipe irá validar" / "necessário revisão" | Código ou documentos incorretos entrarem na release; infração ao protocolo de IA | 2 | 2 | 4 - Média | Registrar quem validou e como em cada entrada de IA antes do merge | Ana Clara |
