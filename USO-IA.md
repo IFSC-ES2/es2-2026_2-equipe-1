@@ -100,3 +100,13 @@ Uso: Apoio à análise do enunciado da Entrega 6 e à preparação de documenta�
 Artefatos: docs/BASELINE.md, docs/entregas/sprint-2.md, docs/METRICAS.md, docs/riscos.md, docs/PADROES-DE-PROJETO.md e README.md.
 Validação: Necessario a revisão e confirmação final pela equipe.
 ```
+
+```text
+Registro de uso 11
+
+Data: 01/10/2026
+Ferramenta: DeepSeek
+Uso: Apoio à análise da análise do repositório da Entrega 6 contra o enunciado e rascunho dos documentos faltantes: métricas, riscos, padrões de projeto, ADR-0004 e contribuições.
+Artefatos: docs/METRICAS.md, docs/riscos.md, docs/PADROES-DE-PROJETO.md, docs/adrs/ADR-0004-padroes-de-projeto.md.
+Validação: Necessario a revisão e confirmação final pela equipe.
+```
