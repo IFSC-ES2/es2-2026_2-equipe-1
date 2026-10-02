@@ -110,3 +110,13 @@ Uso: Apoio à análise da análise do repositório da Entrega 6 contra o enuncia
 Artefatos: docs/METRICAS.md, docs/riscos.md, docs/PADROES-DE-PROJETO.md, docs/adrs/ADR-0004-padroes-de-projeto.md.
 Validação: Necessario a revisão e confirmação final pela equipe.
 ```
+
+```text
+Registro de uso 12
+
+Data: 01/10/2026
+Ferramenta: Copilot
+Uso: Auxilio na correção e estrutura do planejamento.md faltantes: métricas, riscos, padrões de projeto, ADR-0004 e contribuições.
+Artefatos:docs/entregas/sprint-2-planejamento.md
+Validação: Necessario a revisão e confirmação final pela equipe.
+```
