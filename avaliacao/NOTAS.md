@@ -7,7 +7,8 @@
 | Entrega 1 - Kickoff   |    5 |  7,2 |
 | Entrega 2 - Inception |    5 |  8,0 |
 | Entrega 3 - Estimativas e Métricas |    5 |  7,8 |
+| Entrega 4 - Riscos e Consolidação  |    5 |  7,6 |
 
 ## Nota Parcial
 
-Nota parcial: 7,7 / 10
+Nota parcial: 7,7 / 10,0
