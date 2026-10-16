@@ -1,8 +1,11 @@
 package com.es.servicehub.service;
 
 import com.es.servicehub.enums.StatusSolicitacao;
+import com.es.servicehub.enums.TipoPerfil;
 import com.es.servicehub.model.SolicitacaoServico;
+import com.es.servicehub.model.Usuario;
 import com.es.servicehub.repository.SolicitacaoServiceRepository;
+import com.es.servicehub.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +28,9 @@ class SolicitacaoServicoServiceTest {
 
     @Mock
     private SolicitacaoServiceRepository solicitacaoServiceRepository;
+
+    @Mock
+    private UsuarioRepository usuarioRepository;
 
     @InjectMocks
     private SolicitacaoServicoService solicitacaoServicoService;
@@ -80,6 +86,43 @@ class SolicitacaoServicoServiceTest {
         assertNotNull(resultado);
         assertEquals("Conserto de torneira", resultado.getTitulo());
         verify(solicitacaoServiceRepository, times(1)).save(solicitacao);
+    }
+
+    @Test
+    void aceitarSolicitacao_deveAssociarPrestadorAtualizarValorEStatus() {
+        Usuario prestador = new Usuario();
+        prestador.setId(7L);
+        prestador.setTipoPerfil(TipoPerfil.PRESTADOR);
+        when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(prestador));
+        when(solicitacaoServiceRepository.save(any(SolicitacaoServico.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        SolicitacaoServico resultado = solicitacaoServicoService.aceitarSolicitacao(
+                1L, 7L, new BigDecimal("175.50"));
+
+        assertSame(prestador, resultado.getPrestador());
+        assertEquals(new BigDecimal("175.50"), resultado.getValorEstimado());
+        assertEquals(StatusSolicitacao.EM_ANDAMENTO, resultado.getStatusSolicitacao());
+        verify(solicitacaoServiceRepository).save(solicitacao);
+    }
+
+    @Test
+    void aceitarSolicitacao_quandoJaAceita_deveRejeitar() {
+        solicitacao.setStatusSolicitacao(StatusSolicitacao.EM_ANDAMENTO);
+        when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> solicitacaoServicoService.aceitarSolicitacao(1L, 7L, new BigDecimal("175.50")));
+        verify(usuarioRepository, never()).findById(anyLong());
+        verify(solicitacaoServiceRepository, never()).save(any());
+    }
+
+    @Test
+    void aceitarSolicitacao_quandoValorNaoForPositivo_deveRejeitar() {
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> solicitacaoServicoService.aceitarSolicitacao(1L, 7L, BigDecimal.ZERO));
+        verify(solicitacaoServiceRepository, never()).findByIdForUpdate(anyLong());
     }
 
     @Test

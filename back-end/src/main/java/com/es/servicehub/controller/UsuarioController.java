@@ -16,6 +16,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -88,6 +89,29 @@ public class UsuarioController {
     @GetMapping("/csrf")
     public ResponseEntity<Map<String, String>> csrf(CsrfToken csrfToken) {
         return ResponseEntity.ok(Map.of("token", csrfToken.getToken()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        var sessao = httpRequest.getSession(false);
+        if (sessao != null) {
+            sessao.invalidate();
+        }
+
+        SecurityContextHolder.clearContext();
+        String caminhoCookie = httpRequest.getContextPath().isEmpty() ? "/" : httpRequest.getContextPath();
+        expirarCookie(httpResponse, "JSESSIONID", true, caminhoCookie);
+        expirarCookie(httpResponse, "XSRF-TOKEN", false, caminhoCookie);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    private void expirarCookie(HttpServletResponse response, String nome, boolean httpOnly, String caminho) {
+        Cookie cookie = new Cookie(nome, "");
+        cookie.setPath(caminho);
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly(httpOnly);
+        response.addCookie(cookie);
     }
 
     @GetMapping("/me")

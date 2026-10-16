@@ -19,6 +19,8 @@ function Rotas() {
                 <Route path="/cadastro" element={<Cadastro />} />
                 <Route path="/prestador/dashboard" element={<DashboardPrestador />} />
                 <Route path="/cliente/dashboard" element={<DashboardCliente />} />
+                <Route path="/dashboard-prestador" element={<DashboardPrestador />} />
+                <Route path="/dashboard-cliente" element={<DashboardCliente />} />
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="*" element={<h1>Página não encontrada (404)</h1>} />
             </Routes>

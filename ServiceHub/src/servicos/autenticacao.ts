@@ -1,5 +1,5 @@
 import type { Especialidade } from "./especialidades";
-import { requisitarApi } from "./api";
+import { logout, requisitarApi } from "./api";
 
 export type PerfilUsuario = "CLIENTE" | "PRESTADOR";
 
@@ -38,7 +38,7 @@ function mapearUsuario(usuario: UsuarioApi): Usuario {
 }
 
 export function obterDashboardPorPerfil(perfil: PerfilUsuario) {
-  return perfil === "CLIENTE" ? "/cliente/dashboard" : "/prestador/dashboard";
+  return perfil === "CLIENTE" ? "/dashboard-cliente" : "/dashboard-prestador";
 }
 
 export function obterUsuarioLogado(): Usuario | null {
@@ -206,9 +206,6 @@ export async function entrarUsuario(
 }
 
 export async function sairUsuario() {
-  try {
-    await requisitarApi("/usuarios/logout", { method: "POST" });
-  } finally {
-    definirUsuarioLogado(null);
-  }
+  await logout();
+  definirUsuarioLogado(null);
 }

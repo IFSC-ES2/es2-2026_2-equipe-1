@@ -25,6 +25,13 @@ public class SolicitacaoServico {
 
     @ManyToOne
     private Endereco enderecoAtendimento;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Usuario cliente;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Usuario prestador;
+
     @ElementCollection
     @Enumerated(EnumType.STRING)
     private List<Especialidades> especialidadesRequiridas;

@@ -21,6 +21,9 @@ public class UsuarioRespostaDTO {
     private List<Especialidades> especialidades;
 
     public static UsuarioRespostaDTO fromEntity(Usuario usuario) {
+        if (usuario == null) {
+            return null;
+        }
         return new UsuarioRespostaDTO(
                 usuario.getId(),
                 usuario.getNome(),
