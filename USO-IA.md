@@ -126,3 +126,16 @@ Uso: Auxilio na correção e estrutura do planejamento.md faltantes: métricas, 
 Artefatos:docs/entregas/sprint-2-planejamento.md
 Validação: Necessario a revisão e confirmação final pela equipe.
 ```
+## Entrega 7
+
+```text
+Registro de uso 10
+
+Data: 20/10/2026
+Ferramenta: Chat GPT
+Uso: Resolução de bugs do carrossel + correções no CSS ( referentes aos Links )
+Artefatos: Conforme o Commit, foi realizado algumas melhorias no 1 primeiro carrossel e uma tentativa
+de correção no carrossel secundário, porém sem sucesso. Referente aos Links, deixado padronizado em 
+ambas as páginas, na verdade era apenas um ajuste relativamente simples no CSS.
+Validação: Necessario a revisão e confirmação final pela equipe.
+```
