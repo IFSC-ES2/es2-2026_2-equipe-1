@@ -154,7 +154,7 @@ export default function DashboardCliente() {
           <img src={marca} alt="" />
           <span>Service<span>Hub</span></span>
         </Link>
-        <div className="dashboard-intro-actions">
+        <div className="dashboard-nav-actions">
           <span>Olá, {usuario?.nome.split(" ")[0] ?? "Cliente"}</span>
           <button type="button" onClick={() => void sair()} disabled={saindo}>
             {saindo ? "Saindo..." : "Sair"}
