@@ -104,6 +104,10 @@ export type SolicitacaoApi = {
   especialidadesRequiridas: Especialidade[];
   cliente: Pick<UsuarioSolicitacaoApi, "id" | "nome"> | null;
   prestador: UsuarioSolicitacaoApi | null;
+  propostas: {
+    valorProposto: number;
+    prestador: Pick<UsuarioSolicitacaoApi, "id" | "nome">;
+  }[];
 };
 
 async function requisicao<T>(rota: string, opcoes?: RequestInit): Promise<T> {
@@ -168,10 +172,16 @@ export async function listarMeusChamados(): Promise<SolicitacaoApi[]> {
   return requisicao<SolicitacaoApi[]>("/solicitacoes/meus-chamados");
 }
 
-export async function aceitarSolicitacao(id: number, valorProposto: number): Promise<SolicitacaoApi> {
-  return requisicao<SolicitacaoApi>(`/solicitacoes/${id}/aceitar`, {
+export async function enviarProposta(id: number, valorProposto: number): Promise<SolicitacaoApi> {
+  return requisicao<SolicitacaoApi>(`/solicitacoes/${id}/propostas`, {
     method: "POST",
     body: JSON.stringify({ valorProposto }),
+  });
+}
+
+export async function clienteAceitarProposta(id: number, prestadorId: number): Promise<SolicitacaoApi> {
+  return requisicao<SolicitacaoApi>(`/solicitacoes/${id}/propostas/${prestadorId}/aceitar`, {
+    method: "POST",
   });
 }
 

@@ -1,6 +1,6 @@
 package com.es.servicehub.controller;
 
-import com.es.servicehub.dto.AceitarSolicitacaoRequest;
+import com.es.servicehub.dto.EnviarPropostaRequest;
 import com.es.servicehub.dto.SolicitacaoServicoRespostaDTO;
 import com.es.servicehub.model.SolicitacaoServico;
 import com.es.servicehub.model.Usuario;
@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -72,22 +73,33 @@ public class SolicitacaoServicoController {
             @RequestBody SolicitacaoServico solicitacao, Authentication authentication) {
         solicitacao.setCliente(usuarioAutenticado(authentication));
         solicitacao.setPrestador(null);
+        solicitacao.setPropostas(new ArrayList<>());
         solicitacao.setStatusSolicitacao(null);
         solicitacao.setDataCriacao(null);
         return ResponseEntity.ok(solicitacaoServicoService.criarComoResposta(solicitacao));
     }
 
-    @PostMapping("/{id}/aceitar")
-    public ResponseEntity<SolicitacaoServicoRespostaDTO> aceitar(
+    @PostMapping("/{id}/propostas")
+    public ResponseEntity<SolicitacaoServicoRespostaDTO> enviarProposta(
             @PathVariable Long id,
-            @RequestBody AceitarSolicitacaoRequest request,
+            @RequestBody EnviarPropostaRequest request,
             Authentication authentication) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe o valor proposto.");
         }
         Usuario prestador = usuarioAutenticado(authentication);
-        return ResponseEntity.ok(solicitacaoServicoService.aceitarSolicitacaoComoResposta(
+        return ResponseEntity.ok(solicitacaoServicoService.enviarPropostaComoResposta(
                 id, prestador.getId(), request.valorProposto()));
+    }
+
+    @PostMapping("/{id}/propostas/{prestadorId}/aceitar")
+    public ResponseEntity<SolicitacaoServicoRespostaDTO> clienteAceitarProposta(
+            @PathVariable Long id,
+            @PathVariable Long prestadorId,
+            Authentication authentication) {
+        Usuario cliente = usuarioAutenticado(authentication);
+        return ResponseEntity.ok(solicitacaoServicoService.clienteAceitarPropostaComoResposta(
+                id, cliente.getId(), prestadorId));
     }
 
     @PutMapping("/{id}")

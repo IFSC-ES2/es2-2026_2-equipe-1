@@ -9,6 +9,7 @@ import ModalCriarSolicitacao, {
 import {
   criarEndereco,
   criarSolicitacao,
+  clienteAceitarProposta,
   listarEnderecos,
   listarMinhasSolicitacoes,
   type SolicitacaoApi,
@@ -49,6 +50,7 @@ export default function DashboardCliente() {
   const [erro, setErro] = useState("");
   const [erroEndereco, setErroEndereco] = useState("");
   const [sucesso, setSucesso] = useState("");
+  const [aceitandoProposta, setAceitandoProposta] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelado = false;
@@ -113,6 +115,22 @@ export default function DashboardCliente() {
       setErro(mensagem);
       setErroEndereco(mensagem);
       return false;
+    }
+  }
+
+  async function aceitarProposta(solicitacaoId: number, prestadorId: number) {
+    const chave = `${solicitacaoId}-${prestadorId}`;
+    setAceitandoProposta(chave);
+    setErro("");
+    setSucesso("");
+    try {
+      const atualizada = await clienteAceitarProposta(solicitacaoId, prestadorId);
+      setSolicitacoes((atuais) => atuais.map((item) => item.id === atualizada.id ? atualizada : item));
+      setSucesso("Proposta aceita. O contrato foi confirmado.");
+    } catch (erroApi) {
+      setErro(erroApi instanceof Error ? erroApi.message : "Não foi possível aceitar a proposta.");
+    } finally {
+      setAceitandoProposta(null);
     }
   }
 
@@ -213,7 +231,38 @@ export default function DashboardCliente() {
                       </span>
                     </div>
                   ) : (
-                    <span className="dashboard-status">Aguardando profissional</span>
+                    <>
+                      {solicitacao.statusSolicitacao === "SOLICITADO" && solicitacao.propostas.length > 0 ? (
+                        <div className="dashboard-provider">
+                          <strong>Propostas recebidas</strong>
+                          {solicitacao.propostas.map((proposta) => {
+                            const chave = `${solicitacao.id}-${proposta.prestador.id}`;
+                            return (
+                              <div className="dashboard-proposal" key={proposta.prestador.id}>
+                                <span>De: <b>{proposta.prestador.nome}</b></span>
+                                <span>Valor proposto: <b>{formatarMoeda(proposta.valorProposto)}</b></span>
+                                <button
+                                  className="dashboard-button"
+                                  type="button"
+                                  disabled={aceitandoProposta !== null}
+                                  onClick={() => void aceitarProposta(solicitacao.id, proposta.prestador.id)}
+                                >
+                                  {aceitandoProposta === chave
+                                    ? "Confirmando..."
+                                    : `Aceitar Proposta de ${formatarMoeda(proposta.valorProposto)}`}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className="dashboard-status">
+                          {solicitacao.statusSolicitacao === "SOLICITADO"
+                            ? "Aguardando profissional"
+                            : rotuloStatus(solicitacao.statusSolicitacao)}
+                        </span>
+                      )}
+                    </>
                   )}
                 </article>
               ))}

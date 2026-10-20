@@ -2,6 +2,7 @@ package com.es.servicehub.service;
 
 import com.es.servicehub.enums.StatusSolicitacao;
 import com.es.servicehub.enums.TipoPerfil;
+import com.es.servicehub.model.PropostaServico;
 import com.es.servicehub.model.SolicitacaoServico;
 import com.es.servicehub.model.Usuario;
 import com.es.servicehub.repository.SolicitacaoServiceRepository;
@@ -89,7 +90,7 @@ class SolicitacaoServicoServiceTest {
     }
 
     @Test
-    void aceitarSolicitacao_deveAssociarPrestadorAtualizarValorEStatus() {
+    void enviarProposta_deveManterValorOriginalEStatusSolicitado() {
         Usuario prestador = new Usuario();
         prestador.setId(7L);
         prestador.setTipoPerfil(TipoPerfil.PRESTADOR);
@@ -98,8 +99,33 @@ class SolicitacaoServicoServiceTest {
         when(solicitacaoServiceRepository.save(any(SolicitacaoServico.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        SolicitacaoServico resultado = solicitacaoServicoService.aceitarSolicitacao(
+        SolicitacaoServico resultado = solicitacaoServicoService.enviarProposta(
                 1L, 7L, new BigDecimal("175.50"));
+
+        assertNull(resultado.getPrestador());
+        assertEquals(new BigDecimal("100.00"), resultado.getValorEstimado());
+        assertEquals(StatusSolicitacao.SOLICITADO, resultado.getStatusSolicitacao());
+        assertEquals(1, resultado.getPropostas().size());
+        assertEquals(new BigDecimal("175.50"), resultado.getPropostas().getFirst().getValorProposto());
+        verify(solicitacaoServiceRepository).save(solicitacao);
+    }
+
+    @Test
+    void clienteAceitarProposta_deveAssociarPrestadorEAtualizarValorEStatus() {
+        Usuario cliente = new Usuario();
+        cliente.setId(3L);
+        solicitacao.setCliente(cliente);
+        Usuario prestador = new Usuario();
+        prestador.setId(7L);
+        PropostaServico proposta = new PropostaServico();
+        proposta.setPrestador(prestador);
+        proposta.setValorProposto(new BigDecimal("175.50"));
+        solicitacao.adicionarProposta(proposta);
+        when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
+        when(solicitacaoServiceRepository.save(any(SolicitacaoServico.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        SolicitacaoServico resultado = solicitacaoServicoService.clienteAceitarProposta(1L, 3L, 7L);
 
         assertSame(prestador, resultado.getPrestador());
         assertEquals(new BigDecimal("175.50"), resultado.getValorEstimado());
@@ -108,20 +134,34 @@ class SolicitacaoServicoServiceTest {
     }
 
     @Test
-    void aceitarSolicitacao_quandoJaAceita_deveRejeitar() {
-        solicitacao.setStatusSolicitacao(StatusSolicitacao.EM_ANDAMENTO);
+    void clienteAceitarProposta_quandoNaoForClienteDono_deveRejeitar() {
+        Usuario cliente = new Usuario();
+        cliente.setId(3L);
+        solicitacao.setCliente(cliente);
         when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
 
         assertThrows(org.springframework.web.server.ResponseStatusException.class,
-                () -> solicitacaoServicoService.aceitarSolicitacao(1L, 7L, new BigDecimal("175.50")));
-        verify(usuarioRepository, never()).findById(anyLong());
+                () -> solicitacaoServicoService.clienteAceitarProposta(1L, 4L, 7L));
         verify(solicitacaoServiceRepository, never()).save(any());
     }
 
     @Test
-    void aceitarSolicitacao_quandoValorNaoForPositivo_deveRejeitar() {
+    void clienteAceitarProposta_quandoJaAceita_deveRejeitar() {
+        Usuario cliente = new Usuario();
+        cliente.setId(3L);
+        solicitacao.setCliente(cliente);
+        solicitacao.setStatusSolicitacao(StatusSolicitacao.EM_ANDAMENTO);
+        when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
+
         assertThrows(org.springframework.web.server.ResponseStatusException.class,
-                () -> solicitacaoServicoService.aceitarSolicitacao(1L, 7L, BigDecimal.ZERO));
+                () -> solicitacaoServicoService.clienteAceitarProposta(1L, 3L, 7L));
+        verify(solicitacaoServiceRepository, never()).save(any());
+    }
+
+    @Test
+    void enviarProposta_quandoValorNaoForPositivo_deveRejeitar() {
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> solicitacaoServicoService.enviarProposta(1L, 7L, BigDecimal.ZERO));
         verify(solicitacaoServiceRepository, never()).findByIdForUpdate(anyLong());
     }
 

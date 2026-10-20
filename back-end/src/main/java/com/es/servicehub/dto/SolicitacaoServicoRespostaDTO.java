@@ -3,6 +3,7 @@ package com.es.servicehub.dto;
 import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.enums.StatusSolicitacao;
 import com.es.servicehub.model.Endereco;
+import com.es.servicehub.model.PropostaServico;
 import com.es.servicehub.model.SolicitacaoServico;
 import com.es.servicehub.model.Usuario;
 
@@ -20,9 +21,11 @@ public record SolicitacaoServicoRespostaDTO(
         EnderecoRespostaDTO enderecoAtendimento,
         List<Especialidades> especialidadesRequiridas,
         UsuarioResumoDTO cliente,
-        UsuarioRespostaDTO prestador) {
+        UsuarioRespostaDTO prestador,
+        List<PropostaRespostaDTO> propostas) {
 
-    public static SolicitacaoServicoRespostaDTO fromEntity(SolicitacaoServico solicitacao) {
+    public static SolicitacaoServicoRespostaDTO fromEntity(
+            SolicitacaoServico solicitacao, boolean incluirPropostas) {
         return new SolicitacaoServicoRespostaDTO(
                 solicitacao.getId(),
                 solicitacao.getTitulo(),
@@ -35,7 +38,18 @@ public record SolicitacaoServicoRespostaDTO(
                         ? List.of()
                         : List.copyOf(solicitacao.getEspecialidadesRequiridas()),
                 UsuarioResumoDTO.fromEntity(solicitacao.getCliente()),
-                UsuarioRespostaDTO.fromEntity(solicitacao.getPrestador()));
+                UsuarioRespostaDTO.fromEntity(solicitacao.getPrestador()),
+                incluirPropostas
+                        ? solicitacao.getPropostas().stream().map(PropostaRespostaDTO::fromEntity).toList()
+                        : List.of());
+    }
+
+    public record PropostaRespostaDTO(BigDecimal valorProposto, UsuarioResumoDTO prestador) {
+        private static PropostaRespostaDTO fromEntity(PropostaServico proposta) {
+            return new PropostaRespostaDTO(
+                    proposta.getValorProposto(),
+                    UsuarioResumoDTO.fromEntity(proposta.getPrestador()));
+        }
     }
 
     public record UsuarioResumoDTO(Long id, String nome) {

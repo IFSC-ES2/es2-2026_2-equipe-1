@@ -286,6 +286,17 @@
 	text-decoration: none;
 }
 
+.dashboard-proposal {
+	display: grid;
+	gap: 8px;
+	padding: 12px 0;
+	border-top: 1px solid rgba(32, 45, 42, .12);
+}
+
+.dashboard-proposal .dashboard-button {
+	justify-self: start;
+}
+
 .dashboard-empty {
 	padding: 30px 18px;
 	border: 1px dashed rgba(32, 45, 42, .2);

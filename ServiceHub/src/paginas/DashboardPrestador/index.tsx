@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import marca from "../../assets/logo/ServiceHub_azul.png";
 import ModalAceitarSolicitacao from "../../componentes/modal/ModalAceitarSolicitacao";
 import {
-  aceitarSolicitacao,
+  enviarProposta,
   listarMeusChamados,
   listarSolicitacoesDisponiveis,
   type SolicitacaoApi,
@@ -30,6 +30,7 @@ export default function DashboardPrestador() {
   const [aceitando, setAceitando] = useState(false);
   const [saindo, setSaindo] = useState(false);
   const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
   useEffect(() => {
     let cancelado = false;
@@ -67,17 +68,16 @@ export default function DashboardPrestador() {
     return () => { cancelado = true; };
   }, [navigate]);
 
-  async function confirmarAceite(valorProposto: number) {
+  async function confirmarProposta(valorProposto: number) {
     if (!solicitacaoSelecionada) return;
     setAceitando(true);
     try {
-      const aceita = await aceitarSolicitacao(solicitacaoSelecionada.id, valorProposto);
-      setDisponiveis((atuais) => atuais.filter((item) => item.id !== aceita.id));
-      setMeusChamados((atuais) => [aceita, ...atuais]);
+      await enviarProposta(solicitacaoSelecionada.id, valorProposto);
       setSolicitacaoSelecionada(null);
       setErro("");
+      setSucesso("Sua proposta foi enviada ao cliente.");
     } catch (erroApi) {
-      const mensagem = erroApi instanceof Error ? erroApi.message : "Não foi possível aceitar a solicitação.";
+      const mensagem = erroApi instanceof Error ? erroApi.message : "Não foi possível enviar a proposta.";
       setErro(mensagem);
       throw new Error(mensagem);
     } finally {
@@ -126,7 +126,7 @@ export default function DashboardPrestador() {
             type="button"
             onClick={() => setSolicitacaoSelecionada(solicitacao)}
           >
-            Aceitar e propor valor <span aria-hidden="true">↗</span>
+            Enviar Proposta (R$) <span aria-hidden="true">↗</span>
           </button>
         ) : (
           <span className="dashboard-status">Em andamento · {formatarMoeda(solicitacao.valorEstimado)}</span>
@@ -160,6 +160,7 @@ export default function DashboardPrestador() {
         </section>
 
         {erro && <p className="dashboard-error" role="alert">{erro}</p>}
+        {sucesso && <p className="dashboard-success" role="status">{sucesso}</p>}
 
         <div className="dashboard-grid">
           <section className="dashboard-card">
@@ -207,7 +208,7 @@ export default function DashboardPrestador() {
         solicitacao={solicitacaoSelecionada}
         enviando={aceitando}
         onFechar={() => setSolicitacaoSelecionada(null)}
-        onConfirmar={confirmarAceite}
+        onConfirmar={confirmarProposta}
       />
     </div>
   );

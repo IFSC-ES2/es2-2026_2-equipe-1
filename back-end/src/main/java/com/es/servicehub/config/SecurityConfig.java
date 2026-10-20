@@ -80,7 +80,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/solicitacao/minhas", "/api/solicitacoes/minhas").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/solicitacao/disponiveis", "/api/solicitacoes/disponiveis",
                                 "/api/solicitacao/meus-chamados", "/api/solicitacoes/meus-chamados").hasRole("PRESTADOR")
-                        .requestMatchers(HttpMethod.POST, "/api/solicitacao/*/aceitar", "/api/solicitacoes/*/aceitar").hasRole("PRESTADOR")
+                        .requestMatchers(HttpMethod.POST, "/api/solicitacao/*/propostas", "/api/solicitacoes/*/propostas").hasRole("PRESTADOR")
+                        .requestMatchers(HttpMethod.POST, "/api/solicitacao/*/propostas/*/aceitar",
+                                "/api/solicitacoes/*/propostas/*/aceitar").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/solicitacao", "/api/solicitacoes").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/enderecos").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.PUT, "/api/solicitacao/**", "/api/solicitacoes/**").hasRole("ADMIN")
