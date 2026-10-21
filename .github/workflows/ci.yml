@@ -60,6 +60,10 @@ jobs:
         working-directory: ServiceHub
         run: npm run build
 
+      - name: Test frontend
+        working-directory: ServiceHub
+        run: npm test -- --run
+
       - name: Lint frontend
         working-directory: ServiceHub
         run: npm run lint

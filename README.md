@@ -54,7 +54,7 @@ cd ServiceHub && npm ci && npm run dev
 
 ```bash
 cd back-end && ./gradlew test --no-daemon
-cd ServiceHub && npm run build && npm run lint
+cd ServiceHub && npm ci && npm test && npm run build && npm run lint
 ```
 
 ## Linha do Projeto
@@ -147,3 +147,12 @@ O projeto está relacionado à linha:
 - **ADR-0003: Autenticação:** [docs/adrs/ADR-0003-autenticacao.md](docs/adrs/ADR-0003-autenticacao.md)
 O relato documenta o escopo e as evidências da Sprint e está pronto para acompanhar o PR. A release `v0.2.0` ainda não foi publicada.
 - **Registro de uso de IA:** [USO-IA.md](USO-IA.md)
+
+---
+## Entrega 7 — Sprint 3
+- Inspeção e replanejamento: [docs/entregas/sprint-3.md](docs/entregas/sprint-3.md)
+- Arquitetura efetiva C4: [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
+- Diagramas: [docs/diagramas/](docs/diagramas/)
+- Reengenharia: [docs/REENGENHARIA.md](docs/REENGENHARIA.md)
+- Métricas: [docs/METRICAS.md](docs/METRICAS.md)
+- Contribuições: [docs/CONTRIBUICOES-SPRINT-3.md](docs/CONTRIBUICOES-SPRINT-3.md)
