@@ -6,7 +6,7 @@ Este arquivo registra todas as utilizações de ferramentas de Inteligência Art
 
 ```text
 Registro de uso 1
-
+Implementação do 
 Data: 05/08/2026
 Ferramenta: ChatGPT
 Uso: Sugestão de nome para o sistema e melhoria da organização e formatação do README a partir da ideia proposta pela equipe.
@@ -137,5 +137,15 @@ Uso: Resolução de bugs do carrossel + correções no CSS ( referentes aos Link
 Artefatos: Conforme o Commit, foi realizado algumas melhorias no 1 primeiro carrossel e uma tentativa
 de correção no carrossel secundário, porém sem sucesso. Referente aos Links, deixado padronizado em 
 ambas as páginas, na verdade era apenas um ajuste relativamente simples no CSS.
+Validação: Necessario a revisão e confirmação final pela equipe.
+```
+
+```text
+Registro de uso 11
+
+Data: 22/10/2026
+Ferramenta: Chat GPT
+Uso: Auxilio na documentação e criação da ADR 0005, com base na ADR anterior
+Artefatos: Conforme o Commit, foi realizado a documentação da ADR 0005, à qual precisa de atualizações
 Validação: Necessario a revisão e confirmação final pela equipe.
 ```
