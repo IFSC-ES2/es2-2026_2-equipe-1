@@ -73,14 +73,23 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/csrf").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/cadastro", "/api/usuarios/login").permitAll()
-                        .requestMatchers("/api/usuarios/me", "/api/usuarios/logout").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios/logout").authenticated()
                         .requestMatchers("/api/usuarios", "/api/usuarios/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/solicitacao", "/api/enderecos").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.POST, "/api/solicitacao", "/api/solicitacoes").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/solicitacao/minhas", "/api/solicitacoes/minhas").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/solicitacao/disponiveis", "/api/solicitacoes/disponiveis",
+                                "/api/solicitacao/meus-chamados", "/api/solicitacoes/meus-chamados").hasRole("PRESTADOR")
+                        .requestMatchers(HttpMethod.POST, "/api/solicitacao/*/propostas", "/api/solicitacoes/*/propostas").hasRole("PRESTADOR")
+                        .requestMatchers(HttpMethod.POST, "/api/solicitacao/*/propostas/*/aceitar",
+                                "/api/solicitacoes/*/propostas/*/aceitar").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/solicitacao", "/api/solicitacoes").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/enderecos").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/solicitacao/**", "/api/solicitacoes/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/solicitacao/**", "/api/solicitacoes/**").hasRole("ADMIN")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll())
-                .logout(logout -> logout
-                        .logoutUrl("/api/usuarios/logout")
-                        .logoutSuccessHandler((request, response, authentication) -> response.setStatus(204)))
+                .logout(logout -> logout.disable())
                 .headers(headers -> headers.frameOptions(frame -> frame.deny()));
 
         return http.build();

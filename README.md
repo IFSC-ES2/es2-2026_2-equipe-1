@@ -4,10 +4,10 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software II** do curso
 
 ## Integrantes
 
-* Ana Clara Teixeira Ronzani (202510703694) - Engenheira de Qualidade
+* Ana Clara Teixeira Ronzani (202510703694) - Scrum Master & Engenheira de Qualidade
 * Davi Israel Quirino (202510703620) - Front End
 * João Vitor Schmitt (202510703638) - DevOps/Infra
-* Leonardo Victor Muller De Morais (202510703650) - Scrum Master & Arquiteto de Software
+* Leonardo Victor Muller De Morais (202510703650) - Arquiteto de Software
 
 ## Tema do Projeto
 
@@ -53,8 +53,8 @@ cd ServiceHub && npm ci && npm run dev
 ## Como testar
 
 ```bash
-cd back-end && ./gradlew test --no-daemon
-cd ServiceHub && npm run build && npm run lint
+cd back-end && ./gradlew test jacocoTestReport --no-daemon
+cd ServiceHub && npm ci && npm test && npm run build && npm run lint
 ```
 
 ## Linha do Projeto
@@ -139,11 +139,22 @@ O projeto está relacionado à linha:
 
 ---
 
-## Entrega 6 - Sprint 2 (em andamento)
+## Entrega 6 - Sprint 2
 - **Relato da Sprint e situação do PR/release:** [docs/entregas/sprint-2.md](docs/entregas/sprint-2.md)
 - **Métricas e lacunas de coleta:** [docs/METRICAS.md](docs/METRICAS.md)
 - **Revisão dos riscos:** [docs/riscos.md](docs/riscos.md)
 - **Padrões de projeto OO:** [docs/PADROES-DE-PROJETO.md](docs/PADROES-DE-PROJETO.md)
 - **ADR-0003: Autenticação:** [docs/adrs/ADR-0003-autenticacao.md](docs/adrs/ADR-0003-autenticacao.md)
-O relato documenta o escopo e as evidências da Sprint e está pronto para acompanhar o PR. A release `v0.2.0` ainda não foi publicada.
+O relato documenta o escopo e as evidências da Sprint 2.
 - **Registro de uso de IA:** [USO-IA.md](USO-IA.md)
+
+---
+## Entrega 7 — Sprint 3
+
+- **Inspeção e Replanejamento:** [docs/entregas/sprint-3-planejamento.md](docs/entregas/sprint-3-planejamento.md)
+- **Arquitetura Efetiva (C4 Níveis 1 e 2):** [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
+- **Relatório de Reengenharia:** [docs/REENGENHARIA.md](docs/REENGENHARIA.md)
+- **Acompanhamento de Métricas:** [docs/METRICAS.md](docs/METRICAS.md)
+- **Registro e Matriz de Riscos:** [docs/RISCOS.md](docs/RISCOS.md)
+- **Registro de Uso de IA:** [docs/USO-IA.md](docs/USO-IA.md)
+- **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-3.md](docs/contribuições/CONTRIBUICOES-SPRINT-3.md)

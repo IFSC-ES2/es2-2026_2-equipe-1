@@ -73,18 +73,11 @@ function Home() {
                             <Link className="home-button" to="/cadastro">Encontrar um profissional <span aria-hidden="true">↗</span></Link>
                             <a className="text-link" href="#para-profissionais">Sou profissional <span aria-hidden="true">→</span></a>
                         </div>
-                        <div className="hero-proof">
-                            <div className="proof-avatars" aria-hidden="true">
-                                {profissionais.slice(0, 3).map((profissional) => <img key={profissional.nome} src={profissional.avatar} alt="" />)}
-                            </div>
-                            <p><strong>Talentos da sua região</strong><br />Gente de verdade, pronta para ajudar.</p>
-                        </div>
+
                     </div>
                     <div className="hero-visual">
                         <img className="hero-image" src="https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=1400&q=90" alt="Profissional eletricista trabalhando em uma instalação" />
                         <div className="hero-image-shade" />
-                        <div className="hero-note"><span className="note-star">✳</span><span>O cuidado que sua casa precisa,<br /><strong>perto de você.</strong></span></div>
-                        <div className="hero-tag"><span className="tag-dot" /> Conexões que fazem acontecer</div>
                     </div>
                 </section>
 

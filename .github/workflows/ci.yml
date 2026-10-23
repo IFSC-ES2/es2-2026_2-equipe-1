@@ -20,6 +20,14 @@ jobs:
       - name: Verificar arquivos
         run: |
           test -f README.md
+          test -f USO-IA.md
+          test -f docs/entregas/sprint-3-planejamento.md
+          test -f docs/ARQUITETURA.md
+          test -f docs/REENGENHARIA.md
+          test -f docs/METRICAS.md
+          test -f docs/riscos.md
+          test -f docs/qualidade.md
+          test -f docs/adrs/ADR-0005-evolucao-arquitetura-negociacao.md
 
   backend:
     name: Backend tests
@@ -36,7 +44,13 @@ jobs:
 
       - name: Test backend
         working-directory: back-end
-        run: ./gradlew test --no-daemon
+        run: ./gradlew test jacocoTestReport --no-daemon
+
+      - name: Publicar relatório JaCoCo
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-backend
+          path: back-end/build/reports/jacoco/test/html
 
   frontend:
     name: Frontend build and lint
@@ -59,6 +73,10 @@ jobs:
       - name: Build frontend
         working-directory: ServiceHub
         run: npm run build
+
+      - name: Test frontend
+        working-directory: ServiceHub
+        run: npm test -- --run
 
       - name: Lint frontend
         working-directory: ServiceHub

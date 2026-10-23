@@ -1,141 +1,215 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { listarSolicitacoes, type SolicitacaoApi } from "../../servicos/api";
-import { especialidades, nomesEspecialidades, type Especialidade } from "../../servicos/especialidades";
-import { obterDashboardPorPerfil, obterUsuarioLogado, validarUsuarioLogado, type Usuario } from "../../servicos/autenticacao";
+import { Link, useNavigate } from "react-router-dom";
+import marca from "../../assets/logo/ServiceHub_azul.png";
+import ModalAceitarSolicitacao from "../../componentes/modal/ModalAceitarSolicitacao";
+import {
+  enviarProposta,
+  listarMeusChamados,
+  listarSolicitacoesDisponiveis,
+  type SolicitacaoApi,
+} from "../../servicos/api";
+import { nomesEspecialidades } from "../../servicos/especialidades";
+import { obterDashboardPorPerfil, obterUsuarioLogado, sairUsuario, validarUsuarioLogado, type Usuario } from "../../servicos/autenticacao";
+import "../Dashboard.css";
 
-type Solicitacao = {
-	id: number;
-	especialidades: Especialidade[];
-	servico: string;
-	cliente: string;
-	local: string;
-	valor: number;
-	horario: string;
-};
-
-export default function DashboardPrestador() {
-	const navigate = useNavigate();
-	const [usuario, setUsuario] = useState<Usuario | null>(() => obterUsuarioLogado());
-	const [disponivel, setDisponivel] = useState(true);
-	const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
-	const [filtroEspecialidade, setFiltroEspecialidade] = useState<Especialidade | "TODAS">("TODAS");
-	const [mensagem, setMensagem] = useState("");
-
-	useEffect(() => {
-		let cancelado = false;
-
-		async function carregarDashboard() {
-			const usuarioAtual = await validarUsuarioLogado();
-			if (cancelado) return;
-			setUsuario(usuarioAtual);
-
-			if (!usuarioAtual) {
-				navigate("/login", { replace: true });
-				return;
-			}
-
-			if (usuarioAtual.perfil !== "PRESTADOR") {
-				navigate(obterDashboardPorPerfil(usuarioAtual.perfil), { replace: true });
-				return;
-			}
-
-			try {
-				const solicitacoesAtuais = await listarSolicitacoes();
-				if (!cancelado) setSolicitacoes(solicitacoesAtuais.map(formatarSolicitacao));
-			} catch {
-				if (!cancelado) setMensagem("Não foi possível carregar as solicitações.");
-			}
-		}
-
-		void carregarDashboard();
-		return () => { cancelado = true; };
-	}, [navigate]);
-
-	const solicitacoesFiltradas = filtroEspecialidade === "TODAS"
-		? solicitacoes
-		: solicitacoes.filter((solicitacao) => solicitacao.especialidades.includes(filtroEspecialidade));
-
-	function aceitarServico(id: number) {
-		setSolicitacoes((atuais) => atuais.filter((solicitacao) => solicitacao.id !== id));
-		setMensagem("Serviço aceito! O cliente foi notificado.");
-		setTimeout(() => setMensagem(""), 3000);
-	}
-
-	function formatarSolicitacao(solicitacao: SolicitacaoApi): Solicitacao {
-		return {
-			id: solicitacao.id,
-			especialidades: solicitacao.especialidadesRequiridas ?? [],
-			servico: solicitacao.titulo,
-			cliente: "Cliente ServiceHub",
-			local: `${solicitacao.enderecoAtendimento.logradouro}, ${solicitacao.enderecoAtendimento.numero} - ${solicitacao.enderecoAtendimento.cidade}`,
-			valor: solicitacao.valorEstimado,
-			horario: new Date(solicitacao.dataCriacao).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }),
-		};
-	}
-
-	return (
-		<main style={styles.page}>
-			<header style={styles.header}>
-				<div>
-					<span style={styles.logo}>ServiceHub</span>
-					<p style={styles.subtitle}>Painel do prestador</p>
-				</div>
-				<button style={styles.profileButton}>Olá, {usuario?.nome?.split(" ")[0] ?? "Prestador"} ▾</button>
-			</header>
-
-			<section style={styles.welcome}>
-				<div>
-					<h1 style={styles.title}>Bom dia, {usuario?.nome?.split(" ")[0] ?? "Prestador"}!</h1>
-					<p style={styles.muted}>Encontre novos serviços e acompanhe seus atendimentos.</p>
-				</div>
-				<button
-					onClick={() => setDisponivel(!disponivel)}
-					style={{ ...styles.statusButton, background: disponivel ? "#dcfce7" : "#f1f5f9", color: disponivel ? "#15803d" : "#64748b" }}
-				>
-					<span style={{ ...styles.dot, background: disponivel ? "#22c55e" : "#94a3b8" }} />
-					{disponivel ? "Disponível para serviços" : "Indisponível"}
-				</button>
-			</section>
-
-			{mensagem && <div style={styles.success}>{mensagem}</div>}
-
-			<section style={styles.cards}>
-				<div style={styles.card}><span style={styles.cardIcon}>📋</span><div><p style={styles.label}>Solicitações novas</p><strong style={styles.number}>{solicitacoes.length}</strong></div></div>
-				<div style={styles.card}><span style={styles.cardIcon}>✅</span><div><p style={styles.label}>Serviços concluídos</p><strong style={styles.number}>24</strong></div></div>
-				<div style={styles.card}><span style={styles.cardIcon}>💰</span><div><p style={styles.label}>Ganhos este mês</p><strong style={styles.number}>R$ 2.840</strong></div></div>
-				<div style={styles.card}><span style={styles.cardIcon}>⭐</span><div><p style={styles.label}>Avaliação média</p><strong style={styles.number}>4,9</strong></div></div>
-			</section>
-
-			<section style={styles.content}>
-				<div style={styles.listSection}>
-					<div style={styles.sectionHeading}>
-						<h2 style={styles.heading}>Novas solicitações</h2>
-						<span style={styles.counter}>{solicitacoesFiltradas.length} disponíveis</span>
-						<select value={filtroEspecialidade} onChange={(event) => setFiltroEspecialidade(event.target.value as Especialidade | "TODAS")}>
-							<option value="TODAS">Todas as especialidades</option>
-							{especialidades.map((especialidade) => <option key={especialidade} value={especialidade}>{nomesEspecialidades[especialidade]}</option>)}
-						</select>
-					</div>
-					{solicitacoesFiltradas.length === 0 ? <div style={styles.empty}>Você não tem novas solicitações no momento.</div> : solicitacoesFiltradas.map((solicitacao) => (
-						<article key={solicitacao.id} style={styles.request}>
-							<div style={styles.requestTop}><div><h3 style={styles.service}>{solicitacao.servico}</h3><p style={styles.muted}>Solicitado por {solicitacao.cliente}</p></div><strong style={styles.price}>{solicitacao.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong></div>
-							<div style={styles.details}><span>📍 {solicitacao.local}</span><span>🕒 {solicitacao.horario}</span></div>
-							<div>{solicitacao.especialidades.map((especialidade) => <span key={especialidade} style={styles.specialty}>{nomesEspecialidades[especialidade]}</span>)}</div>
-							<button onClick={() => aceitarServico(solicitacao.id)} style={styles.accept}>Aceitar serviço</button>
-						</article>
-					))}
-				</div>
-				<aside style={styles.tip}><h2 style={styles.heading}>Dica do dia</h2><p style={styles.muted}>Mantenha seu perfil atualizado e responda rapidamente para aumentar suas chances de conseguir serviços.</p><button style={styles.link}>Ver meu perfil →</button></aside>
-			</section>
-		</main>
-	);
+function formatarData(data: string) {
+  return new Date(data).toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" });
 }
 
-const styles: Record<string, React.CSSProperties> = {
-	page: { minHeight: "100vh", background: "#f8fafc", color: "#172033", fontFamily: "Arial, sans-serif", paddingBottom: 48 },
-	header: { background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "18px 7%", display: "flex", justifyContent: "space-between", alignItems: "center" },
-	logo: { color: "#2563eb", fontSize: 24, fontWeight: 800 }, subtitle: { margin: "4px 0 0", color: "#64748b", fontSize: 13 }, profileButton: { background: "none", border: 0, color: "#334155", fontWeight: 600, fontSize: 14 },
-	welcome: { maxWidth: 1120, margin: "36px auto 24px", padding: "0 24px", display: "flex", justifyContent: "space-between", gap: 20, alignItems: "center" }, title: { margin: 0, fontSize: 30 }, muted: { color: "#64748b", margin: "8px 0", lineHeight: 1.5 }, statusButton: { border: 0, borderRadius: 24, padding: "12px 16px", fontWeight: 700, cursor: "pointer" }, dot: { display: "inline-block", width: 9, height: 9, borderRadius: "50%", marginRight: 8 },
-	success: { maxWidth: 1072, margin: "0 auto 20px", padding: "12px 24px", background: "#dcfce7", color: "#166534", borderRadius: 8 }, cards: { maxWidth: 1072, margin: "0 auto 30px", padding: "0 24px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }, card: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: 18, display: "flex", gap: 14, alignItems: "center" }, cardIcon: { fontSize: 24 }, label: { color: "#64748b", margin: 0, fontSize: 13 }, number: { display: "block", fontSize: 22, marginTop: 6 }, content: { maxWidth: 1072, margin: "0 auto", padding: "0 24px", display: "grid", gridTemplateColumns: "2fr 1fr", gap: 24 }, listSection: {}, sectionHeading: { display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }, heading: { margin: 0, fontSize: 20 }, counter: { color: "#2563eb", background: "#dbeafe", borderRadius: 20, padding: "5px 10px", fontSize: 12, fontWeight: 700 }, request: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: 20, marginBottom: 14 }, requestTop: { display: "flex", justifyContent: "space-between", gap: 12 }, service: { margin: 0, fontSize: 17 }, price: { color: "#16a34a", whiteSpace: "nowrap" }, details: { display: "flex", gap: 20, color: "#64748b", fontSize: 13, margin: "18px 0" }, specialty: { display: "inline-block", color: "#1d4ed8", background: "#dbeafe", borderRadius: 14, padding: "5px 9px", margin: "0 8px 12px 0", fontSize: 12, fontWeight: 700 }, accept: { width: "100%", border: 0, borderRadius: 7, padding: 11, background: "#2563eb", color: "#fff", fontWeight: 700, cursor: "pointer" }, tip: { background: "#eff6ff", borderRadius: 10, padding: 22, alignSelf: "start" }, link: { color: "#2563eb", border: 0, background: "none", padding: 0, fontWeight: 700, cursor: "pointer" }, empty: { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: 28, color: "#64748b" },
-};
+function formatarMoeda(valor: number) {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+export default function DashboardPrestador() {
+  const navigate = useNavigate();
+  const [usuario, setUsuario] = useState<Usuario | null>(() => obterUsuarioLogado());
+  const [disponiveis, setDisponiveis] = useState<SolicitacaoApi[]>([]);
+  const [meusChamados, setMeusChamados] = useState<SolicitacaoApi[]>([]);
+  const [solicitacaoSelecionada, setSolicitacaoSelecionada] = useState<SolicitacaoApi | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [aceitando, setAceitando] = useState(false);
+  const [saindo, setSaindo] = useState(false);
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+
+  useEffect(() => {
+    let cancelado = false;
+
+    async function carregar() {
+      const usuarioAtual = await validarUsuarioLogado();
+      if (cancelado) return;
+      setUsuario(usuarioAtual);
+
+      if (!usuarioAtual) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      if (usuarioAtual.perfil !== "PRESTADOR") {
+        navigate(obterDashboardPorPerfil(usuarioAtual.perfil), { replace: true });
+        return;
+      }
+
+      try {
+        const [solicitacoesDisponiveis, chamados] = await Promise.all([
+          listarSolicitacoesDisponiveis(),
+          listarMeusChamados(),
+        ]);
+        if (cancelado) return;
+        setDisponiveis(solicitacoesDisponiveis);
+        setMeusChamados(chamados);
+      } catch (erroApi) {
+        if (!cancelado) setErro(erroApi instanceof Error ? erroApi.message : "Não foi possível carregar as solicitações.");
+      } finally {
+        if (!cancelado) setCarregando(false);
+      }
+    }
+
+    void carregar();
+    return () => { cancelado = true; };
+  }, [navigate]);
+
+  async function confirmarProposta(valorProposto: number) {
+    if (!solicitacaoSelecionada) return;
+    setAceitando(true);
+    try {
+      await enviarProposta(solicitacaoSelecionada.id, valorProposto);
+      setSolicitacaoSelecionada(null);
+      setErro("");
+      setSucesso("Sua proposta foi enviada ao cliente.");
+    } catch (erroApi) {
+      const mensagem = erroApi instanceof Error ? erroApi.message : "Não foi possível enviar a proposta.";
+      setErro(mensagem);
+      throw new Error(mensagem);
+    } finally {
+      setAceitando(false);
+    }
+  }
+
+  async function sair() {
+    setSaindo(true);
+    setErro("");
+    try {
+      await sairUsuario();
+      setUsuario(null);
+      navigate("/login", { replace: true });
+    } catch (erroLogout) {
+      setErro(erroLogout instanceof Error ? erroLogout.message : "Não foi possível encerrar a sessão.");
+      setSaindo(false);
+    }
+  }
+
+  function renderSolicitacao(solicitacao: SolicitacaoApi, permitirAceite: boolean) {
+    return (
+      <article className="dashboard-request" key={solicitacao.id}>
+        <div className="dashboard-request-top">
+          <div>
+            <h3>{solicitacao.titulo}</h3>
+            <p className="dashboard-muted">
+              Pedido #{solicitacao.id} · {formatarData(solicitacao.dataCriacao)}
+            </p>
+          </div>
+          <strong className="dashboard-price">{formatarMoeda(solicitacao.valorEstimado)}</strong>
+        </div>
+        <p className="dashboard-description">{solicitacao.descricao}</p>
+        <div className="dashboard-details">
+          <span>{solicitacao.enderecoAtendimento.logradouro}, {solicitacao.enderecoAtendimento.numero} · {solicitacao.enderecoAtendimento.cidade}</span>
+          {solicitacao.cliente && <span>Cliente: {solicitacao.cliente.nome}</span>}
+        </div>
+        <div className="dashboard-tags">
+          {solicitacao.especialidadesRequiridas.map((especialidade) => (
+            <span className="dashboard-tag" key={especialidade}>{nomesEspecialidades[especialidade]}</span>
+          ))}
+        </div>
+        {permitirAceite ? (
+          <button
+            className="dashboard-button"
+            type="button"
+            onClick={() => setSolicitacaoSelecionada(solicitacao)}
+          >
+            Enviar Proposta (R$) <span aria-hidden="true">↗</span>
+          </button>
+        ) : (
+          <span className="dashboard-status">Em andamento · {formatarMoeda(solicitacao.valorEstimado)}</span>
+        )}
+      </article>
+    );
+  }
+
+  return (
+    <div className="home-page dashboard-page">
+      <header className="dashboard-nav">
+        <Link className="home-brand" to="/" aria-label="ServiceHub, página inicial">
+          <img src={marca} alt="" />
+          <span>Service<span>Hub</span></span>
+        </Link>
+        <div className="dashboard-nav-actions">
+          <span>Olá, {usuario?.nome.split(" ")[0] ?? "profissional"}</span>
+          <button type="button" onClick={() => void sair()} disabled={saindo}>
+            {saindo ? "Saindo..." : "Sair"}
+          </button>
+        </div>
+      </header>
+
+      <main className="dashboard-main">
+        <section className="dashboard-intro">
+          <div>
+            <p className="dashboard-eyebrow">SEU ESPAÇO SERVICEHUB</p>
+            <h1 className="dashboard-title">Seu talento encontra<br /><em>novos caminhos.</em></h1>
+            <p className="dashboard-muted">Veja oportunidades reais e acompanhe os serviços que você aceitou.</p>
+          </div>
+        </section>
+
+        {erro && <p className="dashboard-error" role="alert">{erro}</p>}
+        {sucesso && <p className="dashboard-success" role="status">{sucesso}</p>}
+
+        <div className="dashboard-grid">
+          <section className="dashboard-card">
+            <div className="dashboard-section-heading">
+              <div>
+                <p className="dashboard-eyebrow">NOVAS OPORTUNIDADES</p>
+                <h2>Solicitações disponíveis</h2>
+              </div>
+              <span className="dashboard-count">{disponiveis.length}</span>
+            </div>
+            {carregando ? (
+              <p className="dashboard-empty">Carregando solicitações...</p>
+            ) : disponiveis.length === 0 ? (
+              <p className="dashboard-empty">Não há solicitações disponíveis no momento.</p>
+            ) : (
+              <div className="dashboard-request-list">
+                {disponiveis.map((solicitacao) => renderSolicitacao(solicitacao, true))}
+              </div>
+            )}
+          </section>
+
+          <section className="dashboard-card">
+            <div className="dashboard-section-heading">
+              <div>
+                <p className="dashboard-eyebrow">SERVIÇOS ACEITOS</p>
+                <h2>Meus chamados em andamento</h2>
+              </div>
+              <span className="dashboard-count">{meusChamados.length}</span>
+            </div>
+            {carregando ? (
+              <p className="dashboard-empty">Carregando seus chamados...</p>
+            ) : meusChamados.length === 0 ? (
+              <p className="dashboard-empty">Os serviços que você aceitar aparecerão aqui.</p>
+            ) : (
+              <div className="dashboard-request-list">
+                {meusChamados.map((solicitacao) => renderSolicitacao(solicitacao, false))}
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+
+      <ModalAceitarSolicitacao
+        key={solicitacaoSelecionada?.id ?? "fechado"}
+        solicitacao={solicitacaoSelecionada}
+        enviando={aceitando}
+        onFechar={() => setSolicitacaoSelecionada(null)}
+        onConfirmar={confirmarProposta}
+      />
+    </div>
+  );
+}

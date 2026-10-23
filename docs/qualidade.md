@@ -81,3 +81,15 @@ Entre as evidências previstas estão:
 * feedback sobre utilização das telas.
 
 As métricas já definidas em `docs/metricas/` serão utilizadas como apoio à avaliação.
+
+## 5. Evidência da Entrega 7
+
+Foi executado:
+
+```bash
+./gradlew test jacocoTestReport --no-daemon
+```
+
+Resultado: **57 testes backend passaram**, sem falhas, erros ou testes ignorados. O relatório JaCoCo registrou **77,35% de cobertura de linhas**, acima da meta de 70%. A cobertura de branches foi de 63,89% e permanece como oportunidade de melhoria.
+
+Também foi adicionado o teste de integração `UsuarioSessionIntegrationTest`, que valida o fluxo login → acesso autenticado -> logout -> bloqueio de acesso após a invalidação da sessão.

@@ -6,7 +6,7 @@ Este arquivo registra todas as utilizações de ferramentas de Inteligência Art
 
 ```text
 Registro de uso 1
-
+Implementação do 
 Data: 05/08/2026
 Ferramenta: ChatGPT
 Uso: Sugestão de nome para o sistema e melhoria da organização e formatação do README a partir da ideia proposta pela equipe.
@@ -125,4 +125,66 @@ Ferramenta: Copilot
 Uso: Auxilio na correção e estrutura do planejamento.md faltantes: métricas, riscos, padrões de projeto, ADR-0004 e contribuições.
 Artefatos:docs/entregas/sprint-2-planejamento.md
 Validação: Necessario a revisão e confirmação final pela equipe.
+```
+## Entrega 7
+
+```text
+Registro de uso 10
+
+Data: 20/10/2026
+Ferramenta: Chat GPT
+Uso: Resolução de bugs do carrossel + correções no CSS ( referentes aos Links )
+Artefatos: Conforme o Commit, foi realizado algumas melhorias no 1 primeiro carrossel e uma tentativa
+de correção no carrossel secundário, porém sem sucesso. Referente aos Links, deixado padronizado em 
+ambas as páginas, na verdade era apenas um ajuste relativamente simples no CSS.
+Validação: Necessario a revisão e confirmação final pela equipe.
+```
+
+```text
+Registro de uso 11
+
+Data: 22/10/2026
+Ferramenta: Chat GPT
+Uso: Auxilio na documentação e criação da ADR 0005, com base na ADR anterior
+Artefatos: Conforme o Commit, foi realizado a documentação da ADR 0005, à qual precisa de atualizações
+Validação: Necessario a revisão e confirmação final pela equipe.
+```
+
+```
+Registro de uso 12
+
+Data: 22/10/2026
+Ferramenta: GitHub Copilot
+Uso: Autocompletar e geração de código no Frontend (React/TypeScript) e Backend (Java/Spring Boot)
+Artefatos: Auxílio no autocompletar da entidade PropostaServico, adição dos DTOs de proposta, ajustes nos componentes dos Dashboards de Cliente/Prestador e criação da suíte de testes do Vitest (servicos.test.ts).
+Validação: Código-fonte revisado, compilado e validado pela equipe via testes automatizados no CI.
+```
+```
+Registro de uso 13
+
+Data: 22/10/2026
+Ferramenta: Gemini / ChatGPT
+Uso: Elaboração da documentação técnica da Entrega 7 (Arquitetura C4, Reengenharia, Métricas e Riscos)
+Artefatos: Reestruturação do ARQUITETURA.md (diagramas Mermaid com alto contraste), elaboração do REENGENHARIA.md (solução do Bug #24 e bloqueio transacional) e atualização dos arquivos METRICAS.md e RISCOS.md.
+Validação: Documentos revisados, testados quanto ao render do Markdown no GitHub e aprovados pela equipe.
+```
+
+```
+Registro de uso 14
+
+Datas: 21 e 22/10/2026
+Ferramenta: ChatGPT / Gemini
+Uso: Auxílio na atualização de documentos da Sprint 3; revisão de arquitetura, reengenharia, métricas, riscos, qualidade, CI e contribuições; criação e ampliação de testes backend e frontend para propostas, aceite, duplicidade, usuários, endereços, autenticação, autorização, CSRF, login, sessão, logout e validações; configuração do Vitest e do JaCoCo; atualização do pipeline.
+Artefatos: docs/entregas/sprint-3-planejamento.md, docs/ARQUITETURA.md, docs/REENGENHARIA.md, docs/METRICAS.md, docs/metricas/M-01.md, docs/riscos.md, docs/qualidade.md, docs/ci.md, docs/CONTRIBUICOES-SPRINT-3.md, back-end/build.gradle, back-end/src/test/, ServiceHub/tests/, ServiceHub/vitest.config.ts e docs/evidencias/.
+Validação: A equipe revisou os documentos e executou os testes.
+```
+
+```
+Registro de uso 15
+
+Data: 22/10/2026
+Ferramenta: ChatGPT
+Uso: Elaboração da documentação da Release 0.3.0
+Artefatos: Criação da Documentação da Release 0.3.0, com a atualização do estado atual do projeto
+Validação: Precisa de Revisão e confimação final da equipe
 ```

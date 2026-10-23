@@ -47,6 +47,32 @@ export async function requisitarApi(rota: string, opcoes: RequestInit = {}): Pro
   });
 }
 
+async function erroDaResposta(resposta: Response, padrao: string): Promise<Error> {
+  const detalhe = await resposta.text();
+  if (!detalhe) {
+    return new Error(`${padrao} (${resposta.status}).`);
+  }
+
+  try {
+    const payload: unknown = JSON.parse(detalhe);
+    if (payload && typeof payload === "object") {
+      const problema = payload as { detail?: string; message?: string; title?: string };
+      return new Error(problema.detail ?? problema.message ?? problema.title ?? detalhe);
+    }
+  } catch {
+    return new Error(detalhe);
+  }
+
+  return new Error(detalhe);
+}
+
+export async function logout(): Promise<void> {
+  const resposta = await requisitarApi("/usuarios/logout", { method: "POST" });
+  if (!resposta.ok) {
+    throw await erroDaResposta(resposta, "Não foi possível encerrar a sessão");
+  }
+}
+
 type EnderecoApi = {
   id: number;
   logradouro: string;
@@ -58,15 +84,30 @@ type EnderecoApi = {
   cep: string;
 };
 
+export type UsuarioSolicitacaoApi = {
+  id: number;
+  nome: string;
+  email: string;
+  telefone: string;
+  tipoPerfil: "CLIENTE" | "PRESTADOR" | "ADMIN";
+  especialidades: Especialidade[];
+};
+
 export type SolicitacaoApi = {
   id: number;
   titulo: string;
   descricao: string;
   valorEstimado: number;
-  statusSolicitacao: string;
+  statusSolicitacao: "SOLICITADO" | "ACEITO" | "RECUSADO" | "EM_ANDAMENTO" | "CONCLUIDO" | "CANCELADO";
   dataCriacao: string;
   enderecoAtendimento: EnderecoApi;
   especialidadesRequiridas: Especialidade[];
+  cliente: Pick<UsuarioSolicitacaoApi, "id" | "nome"> | null;
+  prestador: UsuarioSolicitacaoApi | null;
+  propostas: {
+    valorProposto: number;
+    prestador: Pick<UsuarioSolicitacaoApi, "id" | "nome">;
+  }[];
 };
 
 async function requisicao<T>(rota: string, opcoes?: RequestInit): Promise<T> {
@@ -76,8 +117,7 @@ async function requisicao<T>(rota: string, opcoes?: RequestInit): Promise<T> {
   });
 
   if (!resposta.ok) {
-    const detalhe = await resposta.text();
-    throw new Error(detalhe || `Não foi possível concluir a operação (${resposta.status}).`);
+    throw await erroDaResposta(resposta, "Não foi possível concluir a operação");
   }
 
   return resposta.json() as Promise<T>;
@@ -118,6 +158,31 @@ export async function criarEndereco(endereco: Endereco): Promise<EnderecoSelecio
 
 export async function listarSolicitacoes(): Promise<SolicitacaoApi[]> {
   return requisicao<SolicitacaoApi[]>("/solicitacao");
+}
+
+export async function listarMinhasSolicitacoes(): Promise<SolicitacaoApi[]> {
+  return requisicao<SolicitacaoApi[]>("/solicitacao/minhas");
+}
+
+export async function listarSolicitacoesDisponiveis(): Promise<SolicitacaoApi[]> {
+  return requisicao<SolicitacaoApi[]>("/solicitacoes/disponiveis");
+}
+
+export async function listarMeusChamados(): Promise<SolicitacaoApi[]> {
+  return requisicao<SolicitacaoApi[]>("/solicitacoes/meus-chamados");
+}
+
+export async function enviarProposta(id: number, valorProposto: number): Promise<SolicitacaoApi> {
+  return requisicao<SolicitacaoApi>(`/solicitacoes/${id}/propostas`, {
+    method: "POST",
+    body: JSON.stringify({ valorProposto }),
+  });
+}
+
+export async function clienteAceitarProposta(id: number, prestadorId: number): Promise<SolicitacaoApi> {
+  return requisicao<SolicitacaoApi>(`/solicitacoes/${id}/propostas/${prestadorId}/aceitar`, {
+    method: "POST",
+  });
 }
 
 export async function criarSolicitacao(
