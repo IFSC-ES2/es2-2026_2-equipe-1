@@ -145,7 +145,7 @@ O projeto está relacionado à linha:
 - **Revisão dos riscos:** [docs/riscos.md](docs/riscos.md)
 - **Padrões de projeto OO:** [docs/PADROES-DE-PROJETO.md](docs/PADROES-DE-PROJETO.md)
 - **ADR-0003: Autenticação:** [docs/adrs/ADR-0003-autenticacao.md](docs/adrs/ADR-0003-autenticacao.md)
-O relato documenta o escopo e as evidências da Sprint e está pronto para acompanhar o PR. A release `v0.2.0` ainda não foi publicada.
+O relato documenta o escopo e as evidências da Sprint 2.
 - **Registro de uso de IA:** [USO-IA.md](USO-IA.md)
 
 ---
