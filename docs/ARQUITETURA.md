@@ -62,6 +62,9 @@ graph TB
 
 ## 3. Descrição dos Componentes e Responsabilidades
 
+O diagrama de classes das entidades, serviços e repositórios implementados está
+em [Diagrama de Classes do Backend](./diagramas/Diagrama-de-Classes.md).
+
 * **Web Frontend (`ServiceHub/src`):**
   * **Módulo de Autenticação (`Login.tsx`, `Cadastro.tsx`):** Formulários com validação de perfil.
   * **Dashboards (`DashboardCliente.tsx`, `DashboardPrestador.tsx`):** Visões para criação de chamados, cartões de serviços e listagem de propostas.
