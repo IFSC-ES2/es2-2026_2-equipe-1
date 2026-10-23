@@ -32,7 +32,7 @@ Para garantir a qualidade do software, a previsibilidade do processo de desenvol
 
 | Métrica | Baseline (20/08) | Sprint 1 (17/09) | Sprint 2 (01/10) | Meta |
 |:---|:---:|:---:|:---:|:---:|
-| M-01 Cobertura de testes | 0% | Não medida | **Não medida** (sem JaCoCo) | >= 70% |
+| M-01 Cobertura de testes | 0% | Não medida | **77,35% de linhas** (JaCoCo) | >= 70% |
 | M-02 Lead time de PR | 0h | Não registrado | **A medir após o merge do PR da Entrega 6** | < 24h |
 | M-03 Progresso do MVP (por itens concluídos) | 0/88h (0%) | 16/88h (18,2%) | **32/88h (36,4%)** | 88/88h |
 
@@ -43,7 +43,7 @@ Não há apontamento de horas executadas. O valor usa a **estimativa do Planning
 |:---|:---:|:---:|:---|
 | #7 Cadastro e autenticação | 16h | Sim (Sprint 2) | Funcional e testado em unidade; falta teste HTTP |
 | #8 Criar/publicar solicitação | 16h | Sim (Sprint 1) | Funcional, integrado ao backend |
-| #9 Aceite/recusa | 8h | Não | Aceite não persiste no backend |
+| #9 Aceite/recusa | 8h | Parcial | Aceite de proposta implementado e persistido; recusa ainda pendente |
 | #10 Pagamento Asaas | 24h | Não | Não iniciado |
 | #13 Infraestrutura | 16h | Não | Parcial: CI ok; compose/PostgreSQL pendentes |
 | #14 Documentação viva | 8h | Não | Parcial |
@@ -53,5 +53,5 @@ Não há apontamento de horas executadas. O valor usa a **estimativa do Planning
 - **Planejado x executado:** a capacidade acumulada das duas sprints é de 96h (2 x 48h), maior que as 88h do MVP. Foram concluídos 32h de itens (cerca de um terço da capacidade acumulada). O baseline original previa chegar à Sprint 2 com #7, #8 e #9 prontos; #9 ficou de fora.
 - **O que influenciou:** (a) o replanejamento da Sprint 1 (troca de #7 por #8) deslocou a autenticação; (b) parte do esforço foi para ajustes visuais e Dockerfiles, que não são itens do backlog; (c) a ausência de apontamento de horas e de relatório de cobertura impede comparações numéricas reais.
 - **Comparação com a Sprint 1:** +16h de itens concluídos (+18,2 pontos percentuais). O ganho vem de um único item (#7).
-- **M-01:** existem 28 testes no backend, mas sem JaCoCo não há percentual. Risco R05 permanece ativo.
+- **M-01:** 57 testes backend passaram e o JaCoCo registrou 77,35% de cobertura de linhas; a meta de 70% foi atingida. A cobertura de branches permanece em 63,89%.
 - **M-02:** o PR da Entrega 6 ainda não foi mesclado; registrar abertura e merge ao final.

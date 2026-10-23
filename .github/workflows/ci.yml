@@ -36,7 +36,7 @@ jobs:
 
       - name: Test backend
         working-directory: back-end
-        run: ./gradlew test --no-daemon
+        run: ./gradlew test jacocoTestReport --no-daemon
 
   frontend:
     name: Frontend build and lint

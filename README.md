@@ -53,7 +53,7 @@ cd ServiceHub && npm ci && npm run dev
 ## Como testar
 
 ```bash
-cd back-end && ./gradlew test --no-daemon
+cd back-end && ./gradlew test jacocoTestReport --no-daemon
 cd ServiceHub && npm ci && npm test && npm run build && npm run lint
 ```
 

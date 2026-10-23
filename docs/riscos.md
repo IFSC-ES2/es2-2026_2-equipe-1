@@ -89,7 +89,7 @@ Critério: prioridade = probabilidade x impacto (escala 1 a 3). "Prop." indica v
 | R02 Aumento do escopo | Ativo | 2 | 3 | 6 - Alta | Ajustes visuais e Dockerfiles consumiram esforço fora do backlog | Todo trabalho fora do backlog exige issue e justificativa; decisão de comunicação cliente-prestador apenas como ADR | Davi |
 | R03 Integração Asaas | Ativo, **piorou** | 3 (prop.) | 3 | 9 - Alta | Nenhum teste em sandbox; pagamento fica para a Sprint 4, com 24h estimadas e inexperiência com webhooks | Spike de 2h no sandbox na Sprint 3 | João |
 | R04 Falhas no CI | **Concretizado e corrigido** | 2 | 2 | 4 - Média | O `ci.yml` anterior era YAML inválido e não executaria; versão nova validada por parser | Manter ativo até os checks do PR ficarem verdes; depois reclassificar como mitigado | João |
-| R05 Baixa cobertura | Ativo, **piorou** | 3 (prop.) | 2 | 6 - Alta | Cobertura não medida; sem testes HTTP de login, sessão, CSRF e autorização | JaCoCo + testes `MockMvc` | Ana Clara |
+| R05 Baixa cobertura | **Mitigado parcialmente** | 2 | 2 | 4 - Média | 57 testes backend passaram; JaCoCo registrou 77,35% de linhas e 63,89% de branches | Ampliar branches e manter JaCoCo no CI | Ana Clara |
 | R06 Comunicação | Ativo | 1 | 2 | 2 - Baixa | Sem evidência de falha; board e issues devem refletir o estado real | Revisar board antes do fechamento | Davi |
 
 ### 6.2 Riscos novos
