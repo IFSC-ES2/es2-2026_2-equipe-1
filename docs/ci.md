@@ -18,10 +18,10 @@ O workflow está localizado em:
 
 `.github/workflows/ci.yml`
 
-## 5. Evidência
+## 5. Evidência local e do pull request
 
-Na validação da Entrega 7, a suíte backend passou com 57 testes e a suíte frontend passou com 13 testes. O build e o lint frontend também passaram. A execução correspondente no GitHub ainda deve ser vinculada ao PR da entrega.
+Na validação local da Entrega 7, a suíte backend passou com 57 testes e a suíte frontend passou com 13 testes. O build e o lint frontend também passaram. O workflow publica o relatório HTML do JaCoCo como artefato `jacoco-backend`.
 
 ## 6. Evolução
 
-O workflow executa `./gradlew test jacocoTestReport --no-daemon` e gera o relatório JaCoCo. Na validação local, a cobertura de linhas foi de 77,35%, acima da meta de 70%. A execução correspondente no GitHub ainda deve ser vinculada ao PR da entrega.
+O workflow executa `./gradlew test jacocoTestReport --no-daemon` e gera o relatório JaCoCo. Na validação local registrada em `docs/COBERTURA-JACOCO.md`, a cobertura de linhas foi de 77,35%, acima da meta de 70%.
