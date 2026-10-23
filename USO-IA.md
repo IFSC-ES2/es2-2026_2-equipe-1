@@ -168,3 +168,13 @@ Uso: Elaboração da documentação técnica da Entrega 7 (Arquitetura C4, Reeng
 Artefatos: Reestruturação do ARQUITETURA.md (diagramas Mermaid com alto contraste), elaboração do REENGENHARIA.md (solução do Bug #24 e bloqueio transacional) e atualização dos arquivos METRICAS.md e RISCOS.md.
 Validação: Documentos revisados, testados quanto ao render do Markdown no GitHub e aprovados pela equipe.
 ```
+
+```
+Registro de uso 14
+
+Data: 22/10/2026
+Ferramenta: ChatGPT
+Uso: Elaboração da documentação da Release 0.3.0
+Artefatos: Criação da Documentação da Release 0.3.0, com a atualização do estado atual do projeto
+Validação: Precisa de Revisão e confimação final da equipe
+```
