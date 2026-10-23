@@ -178,3 +178,13 @@ Uso: Auxílio na atualização de documentos da Sprint 3; revisão de arquitetur
 Artefatos: docs/entregas/sprint-3-planejamento.md, docs/ARQUITETURA.md, docs/REENGENHARIA.md, docs/METRICAS.md, docs/metricas/M-01.md, docs/riscos.md, docs/qualidade.md, docs/ci.md, docs/CONTRIBUICOES-SPRINT-3.md, back-end/build.gradle, back-end/src/test/, ServiceHub/tests/, ServiceHub/vitest.config.ts e docs/evidencias/.
 Validação: A equipe revisou os documentos e executou os testes.
 ```
+
+```
+Registro de uso 15
+
+Data: 22/10/2026
+Ferramenta: ChatGPT
+Uso: Elaboração da documentação da Release 0.3.0
+Artefatos: Criação da Documentação da Release 0.3.0, com a atualização do estado atual do projeto
+Validação: Precisa de Revisão e confimação final da equipe
+```
