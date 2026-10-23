@@ -21,7 +21,7 @@ jobs:
         run: |
           test -f README.md
           test -f USO-IA.md
-          test -f docs/entregas/sprint-3.md
+          test -f docs/entregas/sprint-3-planejamento.md
           test -f docs/ARQUITETURA.md
           test -f docs/REENGENHARIA.md
           test -f docs/METRICAS.md
