@@ -149,3 +149,22 @@ Uso: Auxilio na documentação e criação da ADR 0005, com base na ADR anterior
 Artefatos: Conforme o Commit, foi realizado a documentação da ADR 0005, à qual precisa de atualizações
 Validação: Necessario a revisão e confirmação final pela equipe.
 ```
+
+```
+Registro de uso 12
+
+Data: 22/10/2026
+Ferramenta: GitHub Copilot
+Uso: Autocompletar e geração de código no Frontend (React/TypeScript) e Backend (Java/Spring Boot)
+Artefatos: Auxílio no autocompletar da entidade PropostaServico, adição dos DTOs de proposta, ajustes nos componentes dos Dashboards de Cliente/Prestador e criação da suíte de testes do Vitest (servicos.test.ts).
+Validação: Código-fonte revisado, compilado e validado pela equipe via testes automatizados no CI.
+```
+```
+Registro de uso 13
+
+Data: 22/10/2026
+Ferramenta: Gemini / ChatGPT
+Uso: Elaboração da documentação técnica da Entrega 7 (Arquitetura C4, Reengenharia, Métricas e Riscos)
+Artefatos: Reestruturação do ARQUITETURA.md (diagramas Mermaid com alto contraste), elaboração do REENGENHARIA.md (solução do Bug #24 e bloqueio transacional) e atualização dos arquivos METRICAS.md e RISCOS.md.
+Validação: Documentos revisados, testados quanto ao render do Markdown no GitHub e aprovados pela equipe.
+```
