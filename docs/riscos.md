@@ -100,3 +100,32 @@ Critério: prioridade = probabilidade x impacto (escala 1 a 3). "Prop." indica v
 | R08 | Autorização incompleta na API | Só `POST /api/solicitacao` e `POST /api/enderecos` exigem CLIENTE; `PUT`/`DELETE` de solicitação e `GET /api/enderecos` exigem só autenticação, sem checar o dono | Qualquer usuário logado altera/apaga solicitações de outros e lista endereços de todos (privacidade) | 3 | 3 | 9 - Alta | Restringir por perfil e por dono do recurso; testes `MockMvc` | Leonardo |
 | R09 | Ambiente Docker inconsistente com a stack | `docker-compose.yml` usa porta 3000 e volumes de Node para o backend Spring (porta 8080) e não tem PostgreSQL; app usa H2 em memória | Ambiente de staging (Sprint 4) sem base; perda de dados a cada reinício | 3 | 2 | 6 - Alta | Corrigir compose; decidir PostgreSQL x H2 em novo ADR | João |
 | R10 | Uso de IA sem validação humana registrada | `USO-IA.md` registros 6, 7 e 10 dizem "a equipe irá validar" / "necessário revisão" | Código ou documentos incorretos entrarem na release; infração ao protocolo de IA | 2 | 2 | 4 - Média | Registrar quem validou e como em cada entrada de IA antes do merge | Ana Clara |
+
+
+---
+
+## 7. Revisão da Sprint 3 (22/10/2026)
+
+### 7.1 Reavaliação dos Riscos Anteriores
+
+| ID | Situação na Sprint 3 | Prob. | Impacto | Prioridade | Evidência / Evolução | Ação para a Sprint 4 | Resp. |
+|:---|:---|:---:|:---:|:---:|:---|:---|:---|
+| **R01 Atraso** | **Mitigado parcialmente** | 2 | 3 | 6 - Alta | Conclusão do item #9 (Aceite com propostas de valor) e evolução para 54,5% do MVP. | Manter foco exclusivo no item #10 (Asaas) e #13 (Staging) na Sprint 4. | Leonardo |
+| **R02 Escopo** | **Mitigado** | 1 | 3 | 3 - Média | O escopo da Sprint 3 foi estritamente focado em propostas, arquitetura C4 e reengenharia. | Manter a política de controle via Issues e PRs revisados. | Davi |
+| **R03 Asaas** | **Ativo (Crítico)** | 3 | 3 | 9 - Alta | O fluxo de pagamento permanece como o maior desafio do MVP para a Sprint 4 (24h de estimativa). | Iniciar a Sprint 4 pela integração da API/Sandbox do Asaas e escuta de Webhooks. | João |
+| **R04 CI** | **Mitigado** | 1 | 2 | 2 - Baixa | O pipeline `ci.yml` executou e validou com sucesso as compilações e suítes do Gradle e Vitest. | Manter monitoramento dos checks automatizados nos PRs. | João |
+| **R05 Cobertura** | **Mitigado parcialmente** | 2 | 2 | 4 - Média | Criada a suíte de testes de frontend com Vitest e adicionado o `SecurityIntegrationTest` no backend. | Configurar o plugin JaCoCo no Gradle para medição numérica oficial da cobertura. | Ana Clara |
+| **R06 Comunicação** | **Mitigado** | 1 | 2 | 2 - Baixa | Alinhamento contínuo das tarefas via GitHub Projects e issues associadas aos PRs. | Manter atualização do board. | Davi |
+| **R07 Dependências** | **Mitigado** | 1 | 1 | 1 - Baixa | Dependências de desenvolvimento checadas no frontend durante o build. | Rodar `npm audit` preventivo. | João |
+| **R08 Autorização** | **Mitigado (Reengenharia)** | 1 | 3 | 3 - Média | Resolvido o Bug #24 e reestruturado o acesso a solicitações e propostas com validação de proprietário. | Manter testes de integração cobrindo rotas protegidas. | Leonardo |
+| **R09 Docker/Compose** | **Ativo** | 2 | 2 | 4 - Média | Aplicação rodou com H2 na Sprint 3. A configuração final do PostgreSQL/Staging ficou alocada para a Sprint 4. | Ajustar o `docker-compose.yml` para subir a imagem da API e o container PostgreSQL na Sprint 4. | João |
+| **R10 IA sem Validação** | **Mitigado** | 1 | 2 | 2 - Baixa | Entradas de código e documentos gerados por IA validados e registrados pelos integrantes responsáveis. | Manter registros em `USO-IA.md`. | Ana Clara |
+
+---
+
+### 7.2 Riscos Novos Identificados na Sprint 3
+
+| ID | Risco | Causa | Consequência | Prob. | Impacto | Prioridade | Mitigação | Resp. |
+|:---|:---|:---|:---|:---:|:---:|:---:|:---|:---|
+| **R11** | **Complexidade na Regra de Webhooks do Asaas** | Inexperiência com o tratamento assíncrono do retorno de pagamento via Webhook em ambiente de Sandbox. | Falha em atualizar o status da solicitação após a liquidação do pagamento pelo cliente. | 2 | 3 | 6 - Alta | Criar um endpoint/controller dedicado para simular os eventos de Webhook do Asaas no backend. | João |
+| **R12** | **Migração de Dados H2 para PostgreSQL** | Diferenças de sintaxe SQL/DDL e comportamentos de tipos entre o banco H2 (em memória) e o PostgreSQL. | Falha na inicialização da aplicação ou erros de migração JPA no ambiente de staging. | 2 | 2 | 4 - Média | Validar as propriedades do Spring Data JPA (`ddl-auto` / scripts SQL) em container local do PostgreSQL. | Leonardo |
