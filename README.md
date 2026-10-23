@@ -149,10 +149,12 @@ O relato documenta o escopo e as evidências da Sprint e está pronto para acomp
 - **Registro de uso de IA:** [USO-IA.md](USO-IA.md)
 
 ---
-## Entrega 7 — Sprint 3
-- Inspeção e replanejamento: [docs/entregas/sprint-3.md](docs/entregas/sprint-3.md)
-- Arquitetura efetiva C4: [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
-- Diagramas: [docs/diagramas/](docs/diagramas/)
-- Reengenharia: [docs/REENGENHARIA.md](docs/REENGENHARIA.md)
-- Métricas: [docs/METRICAS.md](docs/METRICAS.md)
-- Contribuições: [docs/CONTRIBUICOES-SPRINT-3.md](docs/CONTRIBUICOES-SPRINT-3.md)
+## Entrega 7 — Sprint 3 (Concluída)
+
+- **Inspeção e Replanejamento:** [docs/entregas/sprint-3-planejamento.md](docs/entregas/sprint-3-planejamento.md)
+- **Arquitetura Efetiva (C4 Níveis 1 e 2):** [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
+- **Relatório de Reengenharia:** [docs/REENGENHARIA.md](docs/REENGENHARIA.md)
+- **Acompanhamento de Métricas:** [docs/METRICAS.md](docs/METRICAS.md)
+- **Registro e Matriz de Riscos:** [docs/RISCOS.md](docs/RISCOS.md)
+- **Registro de Uso de IA:** [docs/USO-IA.md](docs/USO-IA.md)
+- **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-3.md](docs/contribuições/CONTRIBUICOES-SPRINT-3.md)
