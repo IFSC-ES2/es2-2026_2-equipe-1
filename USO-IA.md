@@ -168,3 +168,13 @@ Uso: Elaboração da documentação técnica da Entrega 7 (Arquitetura C4, Reeng
 Artefatos: Reestruturação do ARQUITETURA.md (diagramas Mermaid com alto contraste), elaboração do REENGENHARIA.md (solução do Bug #24 e bloqueio transacional) e atualização dos arquivos METRICAS.md e RISCOS.md.
 Validação: Documentos revisados, testados quanto ao render do Markdown no GitHub e aprovados pela equipe.
 ```
+
+```
+Registro de uso 14
+
+Datas: 21 e 22/10/2026
+Ferramenta: ChatGPT / Gemini
+Uso: Auxílio na atualização de documentos da Sprint 3; revisão de arquitetura, reengenharia, métricas, riscos, qualidade, CI e contribuições; criação e ampliação de testes backend e frontend para propostas, aceite, duplicidade, usuários, endereços, autenticação, autorização, CSRF, login, sessão, logout e validações; configuração do Vitest e do JaCoCo; atualização do pipeline.
+Artefatos: docs/entregas/sprint-3-planejamento.md, docs/ARQUITETURA.md, docs/REENGENHARIA.md, docs/METRICAS.md, docs/metricas/M-01.md, docs/riscos.md, docs/qualidade.md, docs/ci.md, docs/CONTRIBUICOES-SPRINT-3.md, back-end/build.gradle, back-end/src/test/, ServiceHub/tests/, ServiceHub/vitest.config.ts e docs/evidencias/.
+Validação: A equipe revisou os documentos e executou os testes.
+```

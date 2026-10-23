@@ -139,7 +139,7 @@ O projeto está relacionado à linha:
 
 ---
 
-## Entrega 6 - Sprint 2 (em andamento)
+## Entrega 6 - Sprint 2
 - **Relato da Sprint e situação do PR/release:** [docs/entregas/sprint-2.md](docs/entregas/sprint-2.md)
 - **Métricas e lacunas de coleta:** [docs/METRICAS.md](docs/METRICAS.md)
 - **Revisão dos riscos:** [docs/riscos.md](docs/riscos.md)
@@ -149,7 +149,7 @@ O relato documenta o escopo e as evidências da Sprint e está pronto para acomp
 - **Registro de uso de IA:** [USO-IA.md](USO-IA.md)
 
 ---
-## Entrega 7 — Sprint 3 (Concluída)
+## Entrega 7 — Sprint 3
 
 - **Inspeção e Replanejamento:** [docs/entregas/sprint-3-planejamento.md](docs/entregas/sprint-3-planejamento.md)
 - **Arquitetura Efetiva (C4 Níveis 1 e 2):** [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
