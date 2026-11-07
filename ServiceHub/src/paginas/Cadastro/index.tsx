@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { InputSenha } from "../../componentes/InputSenha";
 import marca from "../../assets/logo/ServiceHub_azul.png";
 import { especialidades, nomesEspecialidades, type Especialidade } from "../../servicos/especialidades";
 import { cadastrarUsuario, type PerfilUsuario } from "../../servicos/autenticacao";
@@ -20,6 +21,7 @@ export default function Cadastro() {
   const [perfil, setPerfil] = useState<PerfilUsuario>("CLIENTE");
   const [selecionadas, setSelecionadas] = useState<Especialidade[]>([]);
   const [erro, setErro] = useState("");
+
 
   function alternarEspecialidade(especialidade: Especialidade) {
     setSelecionadas((atuais) =>
@@ -96,18 +98,28 @@ export default function Cadastro() {
 
             <label className="auth-field">
               <span>Telefone</span>
-              <input value={telefone} onChange={(event) => setTelefone(event.target.value)} type="tel" placeholder="(99) 99999-9999" required />
+              <input value={telefone} onChange={(event) => setTelefone(event.target.value)} type="tel" placeholder="(99) 99999-9999" maxLength={15} required />
             </label>
 
             <div className="auth-grid">
               <label className="auth-field">
                 <span>Senha</span>
-                <input value={senha} onChange={(event) => setSenha(event.target.value)} type="password" placeholder="Mínimo 10 caracteres" required />
+                <InputSenha
+                  value={senha}
+                  onChange={(event) => setSenha(event.target.value)}
+                  placeholder="Mínimo 10 caracteres"
+                  required
+                />
               </label>
 
               <label className="auth-field">
                 <span>Confirmar senha</span>
-                <input value={confirmarSenha} onChange={(event) => setConfirmarSenha(event.target.value)} type="password" placeholder="Repita a senha" required />
+                <InputSenha
+                  value={confirmarSenha}
+                  onChange={(event) => setConfirmarSenha(event.target.value)}
+                  placeholder="Repita a senha"
+                  required
+                />
               </label>
             </div>
 

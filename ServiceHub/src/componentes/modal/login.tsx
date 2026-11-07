@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import marca from "../../assets/logo/ServiceHub_azul.png";
 import { entrarUsuario, obterDashboardPorPerfil, validarUsuarioLogado } from "../../servicos/autenticacao";
 import "../../paginas/Home/Home.css";
+import { InputSenha } from "../../componentes/InputSenha";
+
 
 function Login() {
   const navigate = useNavigate();
@@ -82,7 +84,12 @@ function Login() {
 
             <label className="auth-field">
               <span>Senha</span>
-              <input value={senha} onChange={(event) => setSenha(event.target.value)} type="password" placeholder="Digite sua senha" required />
+              <InputSenha
+                value={senha}
+                onChange={(event) => setSenha(event.target.value)}
+                placeholder="Mínimo 10 caracteres"
+                required
+              />
             </label>
 
             {erro && <p className="auth-message auth-message-error">{erro}</p>}
