@@ -114,7 +114,7 @@ async function selecionarOuCadastrarEndereco(page: Page) {
 
 test("cliente publica solicitação e prestador envia proposta", async ({ page }) => {
   test.setTimeout(60_000);
-  const tituloSolicitacao = "Troca de Chuveiro E2E";
+  const tituloSolicitacao = `Troca de Chuveiro E2E ${Date.now()}`;
 
   await entrarOuCadastrar(page, contas.cliente, /\/dashboard-cliente$/);
   await selecionarOuCadastrarEndereco(page);
@@ -126,7 +126,7 @@ test("cliente publica solicitação e prestador envia proposta", async ({ page }
   await modalSolicitacao.getByRole("checkbox", { name: "Eletricista" }).check();
   await modalSolicitacao.getByRole("button", { name: "Publicar solicitação" }).click();
   await expect(page.getByRole("status")).toContainText("Sua solicitação foi publicada.");
-  await expect(page.getByRole("heading", { name: tituloSolicitacao }).first()).toBeVisible();
+  await expect(page.locator(".dashboard-request-accordion").filter({ hasText: tituloSolicitacao })).toBeVisible();
 
   await page.getByRole("button", { name: "Sair" }).click();
   await expect(page).toHaveURL(/\/login$/);
@@ -144,4 +144,38 @@ test("cliente publica solicitação e prestador envia proposta", async ({ page }
   await modalProposta.getByLabel("Valor proposto (R$)").fill("140.00");
   await modalProposta.getByRole("button", { name: "Enviar proposta" }).click();
   await expect(page.getByRole("status")).toContainText("Sua proposta foi enviada ao cliente.");
+
+  await page.getByRole("button", { name: "Sair" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await entrarOuCadastrar(page, contas.cliente, /\/dashboard-cliente$/);
+
+  await page.getByRole("button", { name: "Criado", exact: true }).click();
+  let pedido = page.locator(".dashboard-request-accordion").filter({ hasText: tituloSolicitacao });
+  await expect(pedido).toHaveCount(1);
+  await pedido.locator(".dashboard-request-toggle").click();
+  await expect(pedido).toContainText("Preciso de eletricista");
+  await expect(pedido).toContainText(contas.prestador.nome);
+  await expect(pedido).toContainText("R$ 140,00");
+  await pedido.getByRole("button", { name: /Aceitar Proposta de/ }).click();
+  await expect(page.getByRole("status")).toContainText("Proposta aceita. O contrato foi confirmado.");
+
+  await page.getByRole("button", { name: "Em andamento", exact: true }).click();
+  pedido = page.locator(".dashboard-request-accordion").filter({ hasText: tituloSolicitacao });
+  await expect(pedido).toHaveCount(1);
+  await pedido.locator(".dashboard-request-toggle").click();
+  await expect(pedido).toContainText("Profissional responsável");
+  await expect(pedido.getByRole("link", { name: /WhatsApp/ })).toBeVisible();
+  await pedido.getByRole("button", { name: "Concluir Serviço" }).click();
+  await expect(page.getByRole("status")).toContainText("Serviço concluído.");
+
+  await page.getByRole("button", { name: "Concluído", exact: true }).click();
+  pedido = page.locator(".dashboard-request-accordion").filter({ hasText: tituloSolicitacao });
+  await expect(pedido).toHaveCount(1);
+  await expect(pedido.locator(".dashboard-request-status")).toHaveText("Concluída");
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await pedido.getByRole("button", { name: `Ações da solicitação ${tituloSolicitacao}` }).click();
+  await pedido.getByRole("button", { name: "Excluir solicitação" }).click();
+  await expect(page.getByRole("status")).toContainText("Solicitação excluída.");
+  await expect(pedido).toHaveCount(0);
 });

@@ -185,6 +185,19 @@ export async function clienteAceitarProposta(id: number, prestadorId: number): P
   });
 }
 
+export async function concluirSolicitacao(id: number): Promise<SolicitacaoApi> {
+  return requisicao<SolicitacaoApi>(`/solicitacoes/${id}/concluir`, {
+    method: "PUT",
+  });
+}
+
+export async function excluirSolicitacao(id: number): Promise<void> {
+  const resposta = await requisitarApi(`/solicitacoes/${id}`, { method: "DELETE" });
+  if (!resposta.ok) {
+    throw await erroDaResposta(resposta, "Não foi possível excluir a solicitação");
+  }
+}
+
 export async function criarSolicitacao(
   dados: DadosSolicitacao,
 ): Promise<SolicitacaoApi> {

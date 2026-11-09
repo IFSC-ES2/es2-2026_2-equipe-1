@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronUp, MoreVertical } from "lucide-react";
 import marca from "../../assets/logo/ServiceHub_azul.png";
 import ModalCriarEndereco, { type Endereco } from "../../componentes/modal/ModalCriarEndereço";
 import ModalCriarSolicitacao, {
@@ -10,6 +11,8 @@ import {
   criarEndereco,
   criarSolicitacao,
   clienteAceitarProposta,
+  concluirSolicitacao,
+  excluirSolicitacao,
   listarEnderecos,
   listarMinhasSolicitacoes,
   type SolicitacaoApi,
@@ -28,7 +31,7 @@ function formatarMoeda(valor: number) {
 
 function rotuloStatus(status: SolicitacaoApi["statusSolicitacao"]) {
   const rotulos: Record<SolicitacaoApi["statusSolicitacao"], string> = {
-    SOLICITADO: "Aguardando profissional",
+    SOLICITADO: "Criado",
     ACEITO: "Aceita",
     RECUSADO: "Recusada",
     EM_ANDAMENTO: "Em andamento",
@@ -36,6 +39,22 @@ function rotuloStatus(status: SolicitacaoApi["statusSolicitacao"]) {
     CANCELADO: "Cancelada",
   };
   return rotulos[status] ?? status;
+}
+
+type FiltroSolicitacao = "TODAS" | "SOLICITADO" | "EM_ANDAMENTO" | "CONCLUIDO";
+
+const filtrosSolicitacao: { valor: FiltroSolicitacao; rotulo: string }[] = [
+  { valor: "TODAS", rotulo: "Todas" },
+  { valor: "SOLICITADO", rotulo: "Criado" },
+  { valor: "EM_ANDAMENTO", rotulo: "Em andamento" },
+  { valor: "CONCLUIDO", rotulo: "Concluído" },
+];
+
+function classeStatus(status: SolicitacaoApi["statusSolicitacao"]) {
+  if (status === "SOLICITADO") return "dashboard-request-status-created";
+  if (status === "EM_ANDAMENTO" || status === "ACEITO") return "dashboard-request-status-progress";
+  if (status === "CONCLUIDO") return "dashboard-request-status-completed";
+  return "dashboard-request-status-other";
 }
 
 export default function DashboardCliente() {
@@ -51,6 +70,18 @@ export default function DashboardCliente() {
   const [erroEndereco, setErroEndereco] = useState("");
   const [sucesso, setSucesso] = useState("");
   const [aceitandoProposta, setAceitandoProposta] = useState<string | null>(null);
+  const [filtroSolicitacao, setFiltroSolicitacao] = useState<FiltroSolicitacao>("TODAS");
+  const [solicitacaoExpandida, setSolicitacaoExpandida] = useState<number | null>(null);
+  const [menuAberto, setMenuAberto] = useState<number | null>(null);
+  const [concluindoSolicitacao, setConcluindoSolicitacao] = useState<number | null>(null);
+  const [excluindoSolicitacao, setExcluindoSolicitacao] = useState<number | null>(null);
+
+  const solicitacoesFiltradas = useMemo(
+    () => filtroSolicitacao === "TODAS"
+      ? solicitacoes
+      : solicitacoes.filter((solicitacao) => solicitacao.statusSolicitacao === filtroSolicitacao),
+    [filtroSolicitacao, solicitacoes],
+  );
 
   useEffect(() => {
     let cancelado = false;
@@ -134,6 +165,41 @@ export default function DashboardCliente() {
     }
   }
 
+  async function concluirServico(solicitacaoId: number) {
+    setConcluindoSolicitacao(solicitacaoId);
+    setErro("");
+    setSucesso("");
+    try {
+      const atualizada = await concluirSolicitacao(solicitacaoId);
+      setSolicitacoes((atuais) => atuais.map((item) => item.id === atualizada.id ? atualizada : item));
+      setSucesso("Serviço concluído.");
+    } catch (erroApi) {
+      setErro(erroApi instanceof Error ? erroApi.message : "Não foi possível concluir o serviço.");
+    } finally {
+      setConcluindoSolicitacao(null);
+    }
+  }
+
+  async function excluirPedido(solicitacao: SolicitacaoApi) {
+    const confirmado = window.confirm(`Deseja excluir a solicitação "${solicitacao.titulo}"? Esta ação não pode ser desfeita.`);
+    setMenuAberto(null);
+    if (!confirmado) return;
+
+    setExcluindoSolicitacao(solicitacao.id);
+    setErro("");
+    setSucesso("");
+    try {
+      await excluirSolicitacao(solicitacao.id);
+      setSolicitacoes((atuais) => atuais.filter((item) => item.id !== solicitacao.id));
+      setSolicitacaoExpandida((atual) => atual === solicitacao.id ? null : atual);
+      setSucesso("Solicitação excluída.");
+    } catch (erroApi) {
+      setErro(erroApi instanceof Error ? erroApi.message : "Não foi possível excluir a solicitação.");
+    } finally {
+      setExcluindoSolicitacao(null);
+    }
+  }
+
   async function sair() {
     setSaindo(true);
     setErro("");
@@ -191,81 +257,165 @@ export default function DashboardCliente() {
               <p className="dashboard-eyebrow">ACOMPANHAMENTO</p>
               <h2>Minhas solicitações</h2>
             </div>
-            <span className="dashboard-count">{solicitacoes.length}</span>
+            <span className="dashboard-count">{solicitacoesFiltradas.length}</span>
+          </div>
+
+          <div className="dashboard-request-filters" role="group" aria-label="Filtrar solicitações por status">
+            {filtrosSolicitacao.map((filtro) => (
+              <button
+                className={`dashboard-filter-chip${filtroSolicitacao === filtro.valor ? " is-active" : ""}`}
+                type="button"
+                key={filtro.valor}
+                aria-pressed={filtroSolicitacao === filtro.valor}
+                onClick={() => {
+                  setFiltroSolicitacao(filtro.valor);
+                  setSolicitacaoExpandida(null);
+                  setMenuAberto(null);
+                }}
+              >
+                {filtro.rotulo}
+              </button>
+            ))}
           </div>
 
           {carregando ? (
             <p className="dashboard-empty">Carregando suas solicitações...</p>
           ) : solicitacoes.length === 0 ? (
             <p className="dashboard-empty">Você ainda não publicou solicitações.</p>
+          ) : solicitacoesFiltradas.length === 0 ? (
+            <p className="dashboard-empty">Não há solicitações neste status.</p>
           ) : (
-            <div className="dashboard-request-list">
-              {solicitacoes.map((solicitacao) => (
-                <article className="dashboard-request" key={solicitacao.id}>
-                  <div className="dashboard-request-top">
-                    <div>
-                      <h3>{solicitacao.titulo}</h3>
-                      <p className="dashboard-muted">Pedido #{solicitacao.id} · {formatarData(solicitacao.dataCriacao)}</p>
-                    </div>
-                    <strong className="dashboard-price">{formatarMoeda(solicitacao.valorEstimado)}</strong>
-                  </div>
-                  <p className="dashboard-description">{solicitacao.descricao}</p>
-                  <div className="dashboard-details">
-                    <span>{solicitacao.enderecoAtendimento.logradouro}, {solicitacao.enderecoAtendimento.numero} · {solicitacao.enderecoAtendimento.cidade}</span>
-                    <span>{rotuloStatus(solicitacao.statusSolicitacao)}</span>
-                  </div>
-                  {solicitacao.prestador ? (
-                    <div className="dashboard-provider">
-                      <strong>Profissional responsável: {solicitacao.prestador.nome}</strong>
-                      <span>Valor acordado: <b>{formatarMoeda(solicitacao.valorEstimado)}</b></span>
-                      {solicitacao.prestador.telefone && (
-                        <a href={`https://wa.me/${solicitacao.prestador.telefone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
-                          WhatsApp: {solicitacao.prestador.telefone}
-                        </a>
-                      )}
-                      <a href={`mailto:${solicitacao.prestador.email}`}>{solicitacao.prestador.email}</a>
-                      <span>
-                        Especialidades: {solicitacao.prestador.especialidades.length
-                        ? solicitacao.prestador.especialidades.map((especialidade) => nomesEspecialidades[especialidade]).join(", ")
-                          : "Não informadas"}
-                      </span>
-                    </div>
-                  ) : (
-                    <>
-                      {solicitacao.statusSolicitacao === "SOLICITADO" && solicitacao.propostas.length > 0 ? (
-                        <div className="dashboard-provider">
-                          <strong>Propostas recebidas</strong>
-                          {solicitacao.propostas.map((proposta) => {
-                            const chave = `${solicitacao.id}-${proposta.prestador.id}`;
-                            return (
-                              <div className="dashboard-proposal" key={proposta.prestador.id}>
-                                <span>De: <b>{proposta.prestador.nome}</b></span>
-                                <span>Valor proposto: <b>{formatarMoeda(proposta.valorProposto)}</b></span>
-                                <button
-                                  className="dashboard-button"
-                                  type="button"
-                                  disabled={aceitandoProposta !== null}
-                                  onClick={() => void aceitarProposta(solicitacao.id, proposta.prestador.id)}
-                                >
-                                  {aceitandoProposta === chave
-                                    ? "Confirmando..."
-                                    : `Aceitar Proposta de ${formatarMoeda(proposta.valorProposto)}`}
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <span className="dashboard-status">
-                          {solicitacao.statusSolicitacao === "SOLICITADO"
-                            ? "Aguardando profissional"
-                            : rotuloStatus(solicitacao.statusSolicitacao)}
+            <div className="dashboard-request-list dashboard-request-list-scroll">
+              {solicitacoesFiltradas.map((solicitacao) => {
+                const expandida = solicitacaoExpandida === solicitacao.id;
+                const acoesAbertas = menuAberto === solicitacao.id;
+                return (
+                  <article
+                    className={`dashboard-request dashboard-request-accordion${expandida ? " is-expanded" : ""}`}
+                    key={solicitacao.id}
+                    aria-busy={excluindoSolicitacao === solicitacao.id}
+                  >
+                    <div className="dashboard-request-summary">
+                      <button
+                        className="dashboard-request-toggle"
+                        type="button"
+                        aria-expanded={expandida}
+                        aria-controls={`solicitacao-detalhes-${solicitacao.id}`}
+                        onClick={() => setSolicitacaoExpandida(expandida ? null : solicitacao.id)}
+                      >
+                        <span className="dashboard-request-summary-main">
+                          <span className="dashboard-request-summary-title">{solicitacao.titulo}</span>
+                          <span className="dashboard-request-summary-meta">
+                            Pedido #{solicitacao.id} · {formatarData(solicitacao.dataCriacao)}
+                          </span>
                         </span>
-                      )}
-                    </>
-                  )}
-                </article>
-              ))}
+                        <strong className="dashboard-price">{formatarMoeda(solicitacao.valorEstimado)}</strong>
+                        <span className={`dashboard-request-status ${classeStatus(solicitacao.statusSolicitacao)}`}>
+                          {rotuloStatus(solicitacao.statusSolicitacao)}
+                        </span>
+                        {expandida
+                          ? <ChevronUp size={19} aria-hidden="true" />
+                          : <ChevronDown size={19} aria-hidden="true" />}
+                      </button>
+                      <div className="dashboard-request-actions">
+                        <button
+                          className="dashboard-icon-button"
+                          type="button"
+                          aria-label={`Ações da solicitação ${solicitacao.titulo}`}
+                          aria-expanded={acoesAbertas}
+                          onClick={() => setMenuAberto(acoesAbertas ? null : solicitacao.id)}
+                        >
+                          <MoreVertical size={19} aria-hidden="true" />
+                        </button>
+                        {acoesAbertas && (
+                          <div className="dashboard-action-menu">
+                            <button
+                              type="button"
+                              disabled={excluindoSolicitacao !== null}
+                              onClick={() => void excluirPedido(solicitacao)}
+                            >
+                              {excluindoSolicitacao === solicitacao.id ? "Excluindo..." : "Excluir solicitação"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {expandida && (
+                      <div className="dashboard-request-expanded" id={`solicitacao-detalhes-${solicitacao.id}`}>
+                        <p className="dashboard-description">{solicitacao.descricao}</p>
+                        <div className="dashboard-details">
+                          <span>
+                            {solicitacao.enderecoAtendimento.logradouro}, {solicitacao.enderecoAtendimento.numero}
+                            {solicitacao.enderecoAtendimento.complemento
+                              ? `, ${solicitacao.enderecoAtendimento.complemento}`
+                              : ""} · {solicitacao.enderecoAtendimento.bairro}, {solicitacao.enderecoAtendimento.cidade}
+                          </span>
+                        </div>
+                        <div className="dashboard-tags">
+                          {solicitacao.especialidadesRequiridas.map((especialidade) => (
+                            <span className="dashboard-tag" key={especialidade}>{nomesEspecialidades[especialidade]}</span>
+                          ))}
+                        </div>
+
+                        {solicitacao.prestador ? (
+                          <div className="dashboard-provider">
+                            <strong>Profissional responsável: {solicitacao.prestador.nome}</strong>
+                            <span>Valor acordado: <b>{formatarMoeda(solicitacao.valorEstimado)}</b></span>
+                            {solicitacao.prestador.telefone && (
+                              <a href={`https://wa.me/${solicitacao.prestador.telefone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                                WhatsApp: {solicitacao.prestador.telefone}
+                              </a>
+                            )}
+                            <a href={`mailto:${solicitacao.prestador.email}`}>{solicitacao.prestador.email}</a>
+                            <span>
+                              Especialidades: {solicitacao.prestador.especialidades.length
+                                ? solicitacao.prestador.especialidades.map((especialidade) => nomesEspecialidades[especialidade]).join(", ")
+                                : "Não informadas"}
+                            </span>
+                          </div>
+                        ) : solicitacao.propostas.length > 0 ? (
+                          <div className="dashboard-provider">
+                            <strong>Propostas recebidas</strong>
+                            {solicitacao.propostas.map((proposta) => {
+                              const chave = `${solicitacao.id}-${proposta.prestador.id}`;
+                              return (
+                                <div className="dashboard-proposal" key={proposta.prestador.id}>
+                                  <span>De: <b>{proposta.prestador.nome}</b></span>
+                                  <span>Valor proposto: <b>{formatarMoeda(proposta.valorProposto)}</b></span>
+                                  <button
+                                    className="dashboard-button"
+                                    type="button"
+                                    disabled={aceitandoProposta !== null}
+                                    onClick={() => void aceitarProposta(solicitacao.id, proposta.prestador.id)}
+                                  >
+                                    {aceitandoProposta === chave
+                                      ? "Confirmando..."
+                                      : `Aceitar Proposta de ${formatarMoeda(proposta.valorProposto)}`}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="dashboard-status">Aguardando profissional</span>
+                        )}
+
+                        {solicitacao.statusSolicitacao === "EM_ANDAMENTO" && (
+                          <button
+                            className="dashboard-button dashboard-complete-button"
+                            type="button"
+                            disabled={concluindoSolicitacao !== null}
+                            onClick={() => void concluirServico(solicitacao.id)}
+                          >
+                            {concluindoSolicitacao === solicitacao.id ? "Concluindo..." : "Concluir Serviço"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
