@@ -1,5 +1,6 @@
 package com.es.servicehub.service;
 
+import com.es.servicehub.dto.AtualizarPerfilUsuarioRequest;
 import com.es.servicehub.dto.CadastroUsuarioRequest;
 import com.es.servicehub.enums.TipoPerfil;
 import com.es.servicehub.model.Usuario;
@@ -7,6 +8,8 @@ import com.es.servicehub.repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -216,6 +219,39 @@ public class UsuarioService {
         usuarioExistente.setTipoPerfil(usuarioAtualizado.getTipoPerfil());
         usuarioExistente.setEspecialidades(usuarioAtualizado.getEspecialidades() == null ? new ArrayList<>() : usuarioAtualizado.getEspecialidades());
         usuarioExistente.setEndereco(usuarioAtualizado.getEndereco());
+
+        return usuarioRepository.save(usuarioExistente);
+    }
+
+    @Transactional
+    public Usuario atualizarPerfil(
+            Long id, Long solicitanteId, AtualizarPerfilUsuarioRequest dadosAtualizacao) {
+        if (!id.equals(solicitanteId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você só pode editar seu próprio perfil.");
+        }
+        if (dadosAtualizacao == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe os dados do perfil.");
+        }
+
+        Usuario usuarioExistente = buscarPorId(id);
+        if (dadosAtualizacao.nome() != null) {
+            if (dadosAtualizacao.nome().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome não pode ficar vazio.");
+            }
+            usuarioExistente.setNome(dadosAtualizacao.nome().trim());
+        }
+        if (dadosAtualizacao.telefone() != null) {
+            String telefone = dadosAtualizacao.telefone().trim();
+            usuarioExistente.setTelefone(telefone.isEmpty() ? null : telefone);
+        }
+        if (dadosAtualizacao.especialidades() != null) {
+            if (usuarioExistente.getTipoPerfil() != TipoPerfil.PRESTADOR
+                    && !dadosAtualizacao.especialidades().isEmpty()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Somente prestadores podem cadastrar especialidades.");
+            }
+            usuarioExistente.setEspecialidades(new ArrayList<>(dadosAtualizacao.especialidades()));
+        }
 
         return usuarioRepository.save(usuarioExistente);
     }

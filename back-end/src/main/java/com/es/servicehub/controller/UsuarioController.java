@@ -1,6 +1,7 @@
 package com.es.servicehub.controller;
 
 import com.es.servicehub.dto.CadastroUsuarioRequest;
+import com.es.servicehub.dto.AtualizarPerfilUsuarioRequest;
 import com.es.servicehub.dto.LoginUsuarioRequest;
 import com.es.servicehub.dto.UsuarioRespostaDTO;
 import com.es.servicehub.model.Usuario;
@@ -15,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,6 +43,11 @@ public class UsuarioController {
     @ExceptionHandler({ RuntimeException.class, IllegalArgumentException.class })
     public ResponseEntity<Map<String, String>> tratarErro(Exception erro) {
         return ResponseEntity.badRequest().body(Map.of("message", erro.getMessage()));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> tratarErroDeStatus(ResponseStatusException erro) {
+        return ResponseEntity.status(erro.getStatusCode()).body(Map.of("message", erro.getReason()));
     }
 
     @GetMapping
@@ -127,9 +134,13 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> atualizar(@PathVariable Long id, @RequestBody Usuario usuarioAtualizado) {
-        Usuario usuario = usuarioService.atualizar(id, usuarioAtualizado);
-        return ResponseEntity.ok(usuario);
+    public ResponseEntity<UsuarioRespostaDTO> atualizar(
+            @PathVariable Long id,
+            @RequestBody AtualizarPerfilUsuarioRequest request,
+            Authentication authentication) {
+        Usuario solicitante = usuarioService.buscarPorEmail(authentication.getName());
+        Usuario usuario = usuarioService.atualizarPerfil(id, solicitante.getId(), request);
+        return ResponseEntity.ok(UsuarioRespostaDTO.fromEntity(usuario));
     }
 
     @DeleteMapping("/{id}")

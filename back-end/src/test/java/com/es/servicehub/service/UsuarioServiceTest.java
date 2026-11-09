@@ -1,6 +1,7 @@
 package com.es.servicehub.service;
 
 import com.es.servicehub.dto.CadastroUsuarioRequest;
+import com.es.servicehub.dto.AtualizarPerfilUsuarioRequest;
 import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.enums.TipoPerfil;
 import com.es.servicehub.model.Usuario;
@@ -330,6 +331,44 @@ class UsuarioServiceTest {
         assertEquals("João Atualizado", resultado.getNome());
         assertEquals("novo@email.com", resultado.getEmail());
         assertEquals(TipoPerfil.PRESTADOR, resultado.getTipoPerfil());
+    }
+
+    @Test
+    void atualizarPerfil_deveAlterarSomenteCamposPermitidos() {
+        usuario.setTipoPerfil(TipoPerfil.PRESTADOR);
+        usuario.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+        AtualizarPerfilUsuarioRequest dados = new AtualizarPerfilUsuarioRequest(
+                "João Atualizado", "(48) 99999-0000", List.of(Especialidades.PINTOR));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario resultado = usuarioService.atualizarPerfil(1L, 1L, dados);
+
+        assertEquals("João Atualizado", resultado.getNome());
+        assertEquals("(48) 99999-0000", resultado.getTelefone());
+        assertEquals(List.of(Especialidades.PINTOR), resultado.getEspecialidades());
+        assertEquals("joao@email.com", resultado.getEmail());
+        assertEquals("123456", resultado.getSenha());
+        assertEquals(TipoPerfil.PRESTADOR, resultado.getTipoPerfil());
+    }
+
+    @Test
+    void atualizarPerfil_quandoSolicitanteNaoForProprietario_deveRejeitar() {
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> usuarioService.atualizarPerfil(
+                        1L, 2L, new AtualizarPerfilUsuarioRequest("Outro", null, null)));
+        verify(usuarioRepository, never()).findById(anyLong());
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void atualizarPerfil_quandoNomeFicarVazio_deveRejeitar() {
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> usuarioService.atualizarPerfil(
+                        1L, 1L, new AtualizarPerfilUsuarioRequest("  ", null, null)));
+        verify(usuarioRepository, never()).save(any());
     }
 
     @Test

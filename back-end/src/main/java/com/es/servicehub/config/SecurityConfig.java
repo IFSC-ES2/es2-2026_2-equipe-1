@@ -75,6 +75,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/cadastro", "/api/usuarios/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/logout").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/*").authenticated()
                         .requestMatchers("/api/usuarios", "/api/usuarios/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/solicitacao", "/api/solicitacoes").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/solicitacao/minhas", "/api/solicitacoes/minhas").hasRole("CLIENTE")
@@ -83,6 +84,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/solicitacao/*/propostas", "/api/solicitacoes/*/propostas").hasRole("PRESTADOR")
                         .requestMatchers(HttpMethod.POST, "/api/solicitacao/*/propostas/*/aceitar",
                                 "/api/solicitacoes/*/propostas/*/aceitar").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/solicitacao/*/concluir",
+                                "/api/solicitacoes/*/concluir").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/solicitacao/*", "/api/solicitacoes/*")
+                                .hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/solicitacao", "/api/solicitacoes").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/enderecos").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.PUT, "/api/solicitacao/**", "/api/solicitacoes/**").hasRole("ADMIN")

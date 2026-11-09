@@ -1,6 +1,7 @@
 package com.es.servicehub.service;
 
 import com.es.servicehub.dto.SolicitacaoServicoRespostaDTO;
+import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.enums.StatusSolicitacao;
 import com.es.servicehub.enums.TipoPerfil;
 import com.es.servicehub.model.PropostaServico;
@@ -33,6 +34,31 @@ public class SolicitacaoServicoService {
     public List<SolicitacaoServicoRespostaDTO> listarDisponiveis() {
         return solicitacaoServiceRepository
                 .findByStatusSolicitacaoOrderByDataCriacaoDesc(StatusSolicitacao.SOLICITADO)
+                .stream()
+                .map(solicitacao -> SolicitacaoServicoRespostaDTO.fromEntity(solicitacao, false))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<SolicitacaoServicoRespostaDTO> listarDisponiveis(Long prestadorId, Especialidades especialidadeFiltro) {
+        Usuario prestador = usuarioRepository.findById(prestadorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prestador não encontrado."));
+        if (prestador.getTipoPerfil() != TipoPerfil.PRESTADOR) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas prestadores podem consultar solicitações disponíveis.");
+        }
+
+        List<Especialidades> especialidades = prestador.getEspecialidades() == null
+                ? List.of()
+                : prestador.getEspecialidades();
+        if (especialidadeFiltro != null) {
+            especialidades = List.of(especialidadeFiltro);
+        }
+        if (especialidades.isEmpty()) {
+            return List.of();
+        }
+
+        return solicitacaoServiceRepository
+                .findDisponiveisPorEspecialidades(StatusSolicitacao.SOLICITADO, especialidades)
                 .stream()
                 .map(solicitacao -> SolicitacaoServicoRespostaDTO.fromEntity(solicitacao, false))
                 .toList();
@@ -144,6 +170,24 @@ public class SolicitacaoServicoService {
                 clienteAceitarProposta(solicitacaoId, clienteId, prestadorId), true);
     }
 
+    @Transactional
+    public SolicitacaoServico concluir(Long solicitacaoId, Long clienteId) {
+        SolicitacaoServico solicitacao = buscarParaAlteracao(solicitacaoId);
+        validarClienteProprietario(solicitacao, clienteId);
+        if (solicitacao.getStatusSolicitacao() != StatusSolicitacao.EM_ANDAMENTO) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Somente solicitações em andamento podem ser concluídas.");
+        }
+
+        solicitacao.setStatusSolicitacao(StatusSolicitacao.CONCLUIDO);
+        return solicitacaoServiceRepository.save(solicitacao);
+    }
+
+    @Transactional
+    public SolicitacaoServicoRespostaDTO concluirComoResposta(Long solicitacaoId, Long clienteId) {
+        return SolicitacaoServicoRespostaDTO.fromEntity(concluir(solicitacaoId, clienteId), true);
+    }
+
     public List<SolicitacaoServico> listarTodos() {
         return solicitacaoServiceRepository.findAll();
     }
@@ -180,5 +224,24 @@ public class SolicitacaoServicoService {
     public void deletar(Long id) {
         SolicitacaoServico solicitacao = buscarPorId(id);
         solicitacaoServiceRepository.delete(solicitacao);
+    }
+
+    @Transactional
+    public void deletarComoCliente(Long id, Long clienteId) {
+        SolicitacaoServico solicitacao = buscarParaAlteracao(id);
+        validarClienteProprietario(solicitacao, clienteId);
+        solicitacaoServiceRepository.delete(solicitacao);
+    }
+
+    private SolicitacaoServico buscarParaAlteracao(Long id) {
+        return solicitacaoServiceRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Solicitação não encontrada."));
+    }
+
+    private void validarClienteProprietario(SolicitacaoServico solicitacao, Long clienteId) {
+        if (solicitacao.getCliente() == null || !solicitacao.getCliente().getId().equals(clienteId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Apenas o cliente proprietário pode alterar esta solicitação.");
+        }
     }
 }

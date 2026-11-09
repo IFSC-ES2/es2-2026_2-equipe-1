@@ -2,6 +2,7 @@ package com.es.servicehub.service;
 
 import com.es.servicehub.enums.StatusSolicitacao;
 import com.es.servicehub.enums.TipoPerfil;
+import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.model.PropostaServico;
 import com.es.servicehub.model.SolicitacaoServico;
 import com.es.servicehub.model.Usuario;
@@ -156,6 +157,121 @@ class SolicitacaoServicoServiceTest {
         assertThrows(org.springframework.web.server.ResponseStatusException.class,
                 () -> solicitacaoServicoService.clienteAceitarProposta(1L, 3L, 7L));
         verify(solicitacaoServiceRepository, never()).save(any());
+    }
+
+    @Test
+    void concluir_deveAtualizarStatusQuandoClienteProprietario() {
+        Usuario cliente = new Usuario();
+        cliente.setId(3L);
+        solicitacao.setCliente(cliente);
+        solicitacao.setStatusSolicitacao(StatusSolicitacao.EM_ANDAMENTO);
+        when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
+        when(solicitacaoServiceRepository.save(any(SolicitacaoServico.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        SolicitacaoServico resultado = solicitacaoServicoService.concluir(1L, 3L);
+
+        assertEquals(StatusSolicitacao.CONCLUIDO, resultado.getStatusSolicitacao());
+        verify(solicitacaoServiceRepository).save(solicitacao);
+    }
+
+    @Test
+    void concluir_quandoNaoForClienteProprietario_deveRejeitar() {
+        Usuario cliente = new Usuario();
+        cliente.setId(3L);
+        solicitacao.setCliente(cliente);
+        solicitacao.setStatusSolicitacao(StatusSolicitacao.EM_ANDAMENTO);
+        when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> solicitacaoServicoService.concluir(1L, 4L));
+        verify(solicitacaoServiceRepository, never()).save(any());
+    }
+
+    @Test
+    void concluir_quandoStatusNaoEstaEmAndamento_deveRejeitar() {
+        Usuario cliente = new Usuario();
+        cliente.setId(3L);
+        solicitacao.setCliente(cliente);
+        when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> solicitacaoServicoService.concluir(1L, 3L));
+        verify(solicitacaoServiceRepository, never()).save(any());
+    }
+
+    @Test
+    void deletarComoCliente_devePermitirSomenteProprietario() {
+        Usuario cliente = new Usuario();
+        cliente.setId(3L);
+        solicitacao.setCliente(cliente);
+        when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
+
+        solicitacaoServicoService.deletarComoCliente(1L, 3L);
+
+        verify(solicitacaoServiceRepository).delete(solicitacao);
+    }
+
+    @Test
+    void deletarComoCliente_quandoNaoForProprietario_deveRejeitar() {
+        Usuario cliente = new Usuario();
+        cliente.setId(3L);
+        solicitacao.setCliente(cliente);
+        when(solicitacaoServiceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(solicitacao));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> solicitacaoServicoService.deletarComoCliente(1L, 4L));
+        verify(solicitacaoServiceRepository, never()).delete(any());
+    }
+
+    @Test
+    void listarDisponiveis_deveFiltrarPelasEspecialidadesDoPrestador() {
+        Usuario prestador = new Usuario();
+        prestador.setId(7L);
+        prestador.setTipoPerfil(TipoPerfil.PRESTADOR);
+        prestador.setEspecialidades(List.of(Especialidades.ELETRICISTA, Especialidades.PINTOR));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(prestador));
+        when(solicitacaoServiceRepository.findDisponiveisPorEspecialidades(
+                StatusSolicitacao.SOLICITADO, prestador.getEspecialidades()))
+                .thenReturn(List.of(solicitacao));
+
+        List<?> resultado = solicitacaoServicoService.listarDisponiveis(7L, null);
+
+        assertEquals(1, resultado.size());
+        verify(solicitacaoServiceRepository).findDisponiveisPorEspecialidades(
+                StatusSolicitacao.SOLICITADO, prestador.getEspecialidades());
+    }
+
+    @Test
+    void listarDisponiveis_deveAceitarFiltroDentroDasEspecialidadesDoPrestador() {
+        Usuario prestador = new Usuario();
+        prestador.setId(7L);
+        prestador.setTipoPerfil(TipoPerfil.PRESTADOR);
+        prestador.setEspecialidades(List.of(Especialidades.ELETRICISTA, Especialidades.PINTOR));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(prestador));
+        when(solicitacaoServiceRepository.findDisponiveisPorEspecialidades(
+                StatusSolicitacao.SOLICITADO, List.of(Especialidades.ELETRICISTA)))
+                .thenReturn(List.of(solicitacao));
+
+        assertEquals(1, solicitacaoServicoService.listarDisponiveis(7L, Especialidades.ELETRICISTA).size());
+        verify(solicitacaoServiceRepository).findDisponiveisPorEspecialidades(
+                StatusSolicitacao.SOLICITADO, List.of(Especialidades.ELETRICISTA));
+    }
+
+    @Test
+    void listarDisponiveis_deveUsarEspecialidadeInformadaMesmoForaDoPerfil() {
+        Usuario prestador = new Usuario();
+        prestador.setId(7L);
+        prestador.setTipoPerfil(TipoPerfil.PRESTADOR);
+        prestador.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(prestador));
+        when(solicitacaoServiceRepository.findDisponiveisPorEspecialidades(
+                StatusSolicitacao.SOLICITADO, List.of(Especialidades.PINTOR)))
+                .thenReturn(List.of(solicitacao));
+
+        assertEquals(1, solicitacaoServicoService.listarDisponiveis(7L, Especialidades.PINTOR).size());
+        verify(solicitacaoServiceRepository).findDisponiveisPorEspecialidades(
+                StatusSolicitacao.SOLICITADO, List.of(Especialidades.PINTOR));
     }
 
     @Test
