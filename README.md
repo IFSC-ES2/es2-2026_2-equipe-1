@@ -57,6 +57,19 @@ cd back-end && ./gradlew test jacocoTestReport --no-daemon
 cd ServiceHub && npm ci && npm test && npm run build && npm run lint
 ```
 
+### Teste E2E do fluxo de solicitação e proposta
+
+Com o backend em execução em `http://localhost:8080`, execute:
+
+```bash
+cd ServiceHub
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+O teste inicia o frontend Vite em `http://localhost:5173`, cria contas e dados exclusivos a cada execução e percorre os fluxos de cliente e prestador. Para usar outra URL do frontend, defina `PLAYWRIGHT_BASE_URL`.
+
 ## Linha do Projeto
 
 O projeto está relacionado à linha:

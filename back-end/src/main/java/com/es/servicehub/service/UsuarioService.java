@@ -98,6 +98,7 @@ public class UsuarioService {
         Usuario usuario = new Usuario();
         usuario.setNome(request.getNome().trim());
         usuario.setEmail(email);
+        usuario.setCpf(request.getCpf() == null ? null : request.getCpf().trim());
         usuario.setSenha(passwordEncoder.encode(request.getSenha()));
         usuario.setTelefone(request.getTelefone() == null ? null : request.getTelefone().trim());
         usuario.setTipoPerfil(request.getTipoPerfil());

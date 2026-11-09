@@ -15,6 +15,7 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
@@ -38,6 +39,7 @@ export default function Cadastro() {
     const resultado = await cadastrarUsuario({
       nome,
       email,
+      cpf,
       senha,
       confirmarSenha,
       perfil,
@@ -95,6 +97,13 @@ export default function Cadastro() {
                 <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="seu@email.com" required />
               </label>
             </div>
+
+            {perfil === "CLIENTE" && (
+              <label className="auth-field">
+                <span>CPF</span>
+                <input value={cpf} onChange={(event) => setCpf(event.target.value)} type="text" inputMode="numeric" placeholder="000.000.000-00" required />
+              </label>
+            )}
 
             <label className="auth-field">
               <span>Telefone</span>

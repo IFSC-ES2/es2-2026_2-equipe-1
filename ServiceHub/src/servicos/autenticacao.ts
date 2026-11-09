@@ -108,6 +108,7 @@ function extrairMensagemErro(payload: unknown): string {
 export async function cadastrarUsuario(dados: {
   nome: string;
   email: string;
+  cpf: string;
   senha: string;
   confirmarSenha: string;
   perfil: PerfilUsuario;
@@ -147,6 +148,7 @@ export async function cadastrarUsuario(dados: {
       body: JSON.stringify({
         nome,
         email,
+        cpf: dados.cpf.trim(),
         senha,
         telefone,
         tipoPerfil: dados.perfil,

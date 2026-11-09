@@ -10,6 +10,7 @@ import java.util.List;
 public class CadastroUsuarioRequest {
     private String nome;
     private String email;
+    private String cpf;
     private String senha;
     private String telefone;
     private TipoPerfil tipoPerfil;
