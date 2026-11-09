@@ -68,7 +68,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-O teste inicia o frontend Vite em `http://localhost:5173`, cria contas e dados exclusivos a cada execução e percorre os fluxos de cliente e prestador. Para usar outra URL do frontend, defina `PLAYWRIGHT_BASE_URL`.
+O teste inicia o frontend Vite em `http://localhost:5173`. Ele cria as contas fixas de teste apenas na primeira execução; depois, faz login e reutiliza as mesmas contas e o endereço já cadastrado. Os dados são exclusivos para teste e não devem ser usados em produção. Para assistir ao fluxo no Chromium, com as ações desaceleradas, execute `npm run test:e2e:visivel`. Para usar outra URL do frontend, defina `PLAYWRIGHT_BASE_URL`.
 
 ## Linha do Projeto
 

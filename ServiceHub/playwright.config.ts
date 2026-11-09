@@ -11,6 +11,9 @@ export default defineConfig({
     ...devices["Desktop Chrome"],
     baseURL,
     screenshot: "only-on-failure",
+    launchOptions: {
+      slowMo: process.env.CI ? 0 : 350,
+    },
   },
   webServer: {
     command: "npm run dev -- --host localhost",
