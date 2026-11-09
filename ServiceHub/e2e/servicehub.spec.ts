@@ -33,16 +33,18 @@ async function criarConta(
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Telefone").fill("(48) 99999-0000");
 
-  if (cpf) {
-    await page.getByLabel("CPF").fill(cpf);
-  }
-
   await page.getByLabel("Senha", { exact: true }).fill(senha);
   await page.getByLabel("Confirmar senha").fill(senha);
 
   if (perfil === "Prestador") {
     await page.getByRole("radio", { name: /Prestador/ }).check();
+    await page.getByRole("radio", { name: /^CNPJ/ }).check();
+    await expect(page.getByRole("textbox", { name: "CNPJ" })).toBeVisible();
+    await page.getByRole("radio", { name: /^CPF/ }).check();
+    await page.getByRole("textbox", { name: "CPF" }).fill(cpf ?? gerarCpfValido());
     await page.getByRole("checkbox", { name: "Eletricista" }).check();
+  } else if (cpf) {
+    await page.getByRole("textbox", { name: "CPF" }).fill(cpf);
   }
 
   await page.getByRole("button", { name: "Criar conta" }).click();

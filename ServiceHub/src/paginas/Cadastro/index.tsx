@@ -16,6 +16,8 @@ export default function Cadastro() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [cpf, setCpf] = useState("");
+  const [cnpj, setCnpj] = useState("");
+  const [documentoPrestador, setDocumentoPrestador] = useState<"CPF" | "CNPJ">("CPF");
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
@@ -39,7 +41,8 @@ export default function Cadastro() {
     const resultado = await cadastrarUsuario({
       nome,
       email,
-      cpf,
+      cpf: perfil === "CLIENTE" || documentoPrestador === "CPF" ? cpf : "",
+      cnpj: perfil === "PRESTADOR" && documentoPrestador === "CNPJ" ? cnpj : "",
       senha,
       confirmarSenha,
       perfil,
@@ -98,12 +101,51 @@ export default function Cadastro() {
               </label>
             </div>
 
-            {perfil === "CLIENTE" && (
+            {perfil === "CLIENTE" ? (
               <label className="auth-field">
                 <span>CPF</span>
-                <input value={cpf} onChange={(event) => setCpf(event.target.value)} type="text" inputMode="numeric" placeholder="000.000.000-00" required />
+                <input value={cpf} onChange={(event) => setCpf(event.target.value)} type="text" inputMode="numeric" placeholder="000.000.000-00" maxLength={14} required />
               </label>
-            )}
+            ) : perfil === "PRESTADOR" ? (
+              <>
+                <fieldset className="auth-fieldset">
+                  <legend>Tipo de documento</legend>
+                  <div className="auth-role-grid">
+                    <label className={`auth-role-option ${documentoPrestador === "CPF" ? "selected" : ""}`}>
+                      <input
+                        type="radio"
+                        name="documentoPrestador"
+                        value="CPF"
+                        checked={documentoPrestador === "CPF"}
+                        onChange={() => setDocumentoPrestador("CPF")}
+                      />
+                      <span><strong>CPF</strong><small>Pessoa física</small></span>
+                    </label>
+                    <label className={`auth-role-option ${documentoPrestador === "CNPJ" ? "selected" : ""}`}>
+                      <input
+                        type="radio"
+                        name="documentoPrestador"
+                        value="CNPJ"
+                        checked={documentoPrestador === "CNPJ"}
+                        onChange={() => setDocumentoPrestador("CNPJ")}
+                      />
+                      <span><strong>CNPJ</strong><small>Pessoa jurídica</small></span>
+                    </label>
+                  </div>
+                </fieldset>
+                {documentoPrestador === "CPF" ? (
+                  <label className="auth-field">
+                    <span>CPF</span>
+                    <input value={cpf} onChange={(event) => setCpf(event.target.value)} type="text" inputMode="numeric" placeholder="000.000.000-00" maxLength={14} required />
+                  </label>
+                ) : (
+                  <label className="auth-field">
+                    <span>CNPJ</span>
+                    <input value={cnpj} onChange={(event) => setCnpj(event.target.value)} type="text" inputMode="numeric" placeholder="00.000.000/0000-00" maxLength={18} required />
+                  </label>
+                )}
+              </>
+            ) : null}
 
             <label className="auth-field">
               <span>Telefone</span>

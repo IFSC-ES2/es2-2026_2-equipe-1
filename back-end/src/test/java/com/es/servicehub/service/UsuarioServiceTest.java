@@ -48,6 +48,7 @@ class UsuarioServiceTest {
         CadastroUsuarioRequest request = new CadastroUsuarioRequest();
         request.setNome("Maria Silva");
         request.setEmail(" MARIA@EMAIL.COM ");
+        request.setCpf("529.982.247-25");
         request.setSenha("senha-segura-123");
         request.setTipoPerfil(TipoPerfil.CLIENTE);
 
@@ -58,6 +59,7 @@ class UsuarioServiceTest {
 
         assertEquals("Maria Silva", resultado.getNome());
         assertEquals("maria@email.com", resultado.getEmail());
+        assertEquals("52998224725", resultado.getCpf());
         assertNotEquals("senha-segura-123", resultado.getSenha());
         assertTrue(new BCryptPasswordEncoder().matches("senha-segura-123", resultado.getSenha()));
         verify(usuarioRepository).save(any(Usuario.class));
@@ -79,6 +81,7 @@ class UsuarioServiceTest {
         CadastroUsuarioRequest request = new CadastroUsuarioRequest();
         request.setNome("Pedro Prestador");
         request.setEmail("pedro@email.com");
+        request.setCpf("52998224725");
         request.setSenha("senha-segura-123");
         request.setTipoPerfil(TipoPerfil.PRESTADOR);
 
@@ -91,6 +94,7 @@ class UsuarioServiceTest {
         CadastroUsuarioRequest request = new CadastroUsuarioRequest();
         request.setNome("Pedro Prestador");
         request.setEmail("pedro@email.com");
+        request.setCpf("52998224725");
         request.setSenha("senha-segura-123");
         request.setTipoPerfil(TipoPerfil.PRESTADOR);
         request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
@@ -100,7 +104,74 @@ class UsuarioServiceTest {
         Usuario resultado = usuarioService.cadastrar(request);
 
         assertEquals(TipoPerfil.PRESTADOR, resultado.getTipoPerfil());
+        assertEquals("52998224725", resultado.getCpf());
         assertEquals(List.of(Especialidades.ELETRICISTA), resultado.getEspecialidades());
+    }
+
+    @Test
+    void cadastrar_prestadorComCnpjValido_deveSalvarSomenteCnpj() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@empresa.com");
+        request.setCnpj("04.252.011/0001-10");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+        request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+        when(usuarioRepository.findByEmail("pedro@empresa.com")).thenReturn(Optional.empty());
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+        Usuario resultado = usuarioService.cadastrar(request);
+
+        assertNull(resultado.getCpf());
+        assertEquals("04252011000110", resultado.getCnpj());
+    }
+
+    @Test
+    void cadastrar_prestadorSemDocumento_deveRejeitarENaoSalvar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@email.com");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+        request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+
+        RuntimeException erro = assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+
+        assertEquals("Informe CPF ou CNPJ para continuar.", erro.getMessage());
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_prestadorComCpfECnpj_deveRejeitarENaoSalvar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@email.com");
+        request.setCpf("52998224725");
+        request.setCnpj("04252011000110");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+        request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+
+        RuntimeException erro = assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+
+        assertEquals("Informe somente CPF ou CNPJ.", erro.getMessage());
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_prestadorComCnpjInvalido_deveRejeitarENaoSalvar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@email.com");
+        request.setCnpj("04.252.011/0001-11");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+        request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+
+        RuntimeException erro = assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+
+        assertEquals("Informe um CNPJ válido.", erro.getMessage());
+        verify(usuarioRepository, never()).save(any());
     }
 
     @Test
@@ -108,11 +179,28 @@ class UsuarioServiceTest {
         CadastroUsuarioRequest request = new CadastroUsuarioRequest();
         request.setNome("Maria Silva");
         request.setEmail("maria@email.com");
+        request.setCpf("52998224725");
         request.setSenha("senha-segura-123");
         request.setTipoPerfil(TipoPerfil.CLIENTE);
         when(usuarioRepository.findByEmail("maria@email.com")).thenReturn(Optional.of(usuario));
 
         assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_clienteComCpfInvalido_deveRejeitarENaoSalvar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Maria Silva");
+        request.setEmail("maria@email.com");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.CLIENTE);
+
+        for (String cpf : List.of("11111111111", "529.982.247-24")) {
+            request.setCpf(cpf);
+            RuntimeException erro = assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+            assertEquals("Informe um CPF válido.", erro.getMessage());
+        }
         verify(usuarioRepository, never()).save(any());
     }
 

@@ -166,15 +166,109 @@ describe("serviço de autenticação", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(cadastrarUsuario({ nome: "", email: "invalido", senha: "123", confirmarSenha: "123", perfil: "CLIENTE", telefone: "", especialidades: [] }))
+    await expect(cadastrarUsuario({ nome: "", email: "invalido", cpf: "", cnpj: "", senha: "123", confirmarSenha: "123", perfil: "CLIENTE", telefone: "", especialidades: [] }))
       .resolves.toEqual({ ok: false, mensagem: "Preencha todos os campos obrigatórios." });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("recusa senha divergente e prestador sem especialidade", async () => {
-    const base = { nome: "Maria", email: "maria@email.com", senha: "senha-segura", telefone: "999", especialidades: [] as never[] };
+    const base = { nome: "Maria", email: "maria@email.com", cpf: "52998224725", cnpj: "", senha: "senha-segura", telefone: "999", especialidades: [] as never[] };
     await expect(cadastrarUsuario({ ...base, confirmarSenha: "outra", perfil: "CLIENTE" })).resolves.toMatchObject({ ok: false, mensagem: "As senhas não conferem." });
     await expect(cadastrarUsuario({ ...base, confirmarSenha: base.senha, perfil: "PRESTADOR" })).resolves.toMatchObject({ ok: false, mensagem: "Selecione pelo menos uma especialidade para prestadores." });
+  });
+
+  it("rejeita CPF inválido antes de chamar a API", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const dados: Parameters<typeof cadastrarUsuario>[0] = {
+      nome: "Maria",
+      email: "maria@email.com",
+      cpf: "",
+      cnpj: "",
+      senha: "senha-segura",
+      confirmarSenha: "senha-segura",
+      perfil: "CLIENTE",
+      telefone: "999",
+      especialidades: [],
+    };
+
+    for (const cpf of ["", "11111111111", "529.982.247-24"]) {
+      await expect(cadastrarUsuario({ ...dados, cpf }))
+        .resolves.toEqual({ ok: false, mensagem: "Informe um CPF válido." });
+    }
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("exige somente um documento válido para prestadores", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const base: Parameters<typeof cadastrarUsuario>[0] = {
+      nome: "Pedro",
+      email: "pedro@email.com",
+      cpf: "",
+      cnpj: "",
+      senha: "senha-segura",
+      confirmarSenha: "senha-segura",
+      perfil: "PRESTADOR",
+      telefone: "999",
+      especialidades: ["ELETRICISTA"],
+    };
+
+    await expect(cadastrarUsuario(base))
+      .resolves.toEqual({ ok: false, mensagem: "Informe CPF ou CNPJ para continuar." });
+    await expect(cadastrarUsuario({ ...base, cpf: "52998224725", cnpj: "04252011000110" }))
+      .resolves.toEqual({ ok: false, mensagem: "Informe somente CPF ou CNPJ." });
+    await expect(cadastrarUsuario({ ...base, cnpj: "04252011000111" }))
+      .resolves.toEqual({ ok: false, mensagem: "Informe um CNPJ válido." });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("valida CNPJ formatado e envia seus dígitos para a API", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson(usuarioApi, 201));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("document", { cookie: "XSRF-TOKEN=token%2Bseguro" });
+
+    const resultado = await cadastrarUsuario({
+      nome: "Pedro",
+      email: "pedro@email.com",
+      cpf: "",
+      cnpj: "04.252.011/0001-10",
+      senha: "senha-segura",
+      confirmarSenha: "senha-segura",
+      perfil: "PRESTADOR",
+      telefone: "999",
+      especialidades: ["ELETRICISTA"],
+    });
+
+    expect(resultado).toEqual({ ok: true, usuario: expect.any(Object) });
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as { cpf: string | null; cnpj: string };
+    expect(body.cpf).toBeNull();
+    expect(body.cnpj).toBe("04252011000110");
+  });
+
+  it("valida CPF e envia somente os dígitos para a API", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson(usuarioApi, 201));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("document", { cookie: "XSRF-TOKEN=token%2Bseguro" });
+
+    const resultado = await cadastrarUsuario({
+      nome: "Maria",
+      email: "maria@email.com",
+      cpf: "529.982.247-25",
+      cnpj: "",
+      senha: "senha-segura",
+      confirmarSenha: "senha-segura",
+      perfil: "CLIENTE",
+      telefone: "999",
+      especialidades: [],
+    });
+
+    expect(resultado).toEqual({ ok: true, usuario: expect.any(Object) });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as { cpf: string };
+    expect(body.cpf).toBe("52998224725");
   });
 
   it("realiza login, normaliza email e persiste o usuário", async () => {

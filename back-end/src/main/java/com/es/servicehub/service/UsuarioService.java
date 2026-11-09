@@ -81,6 +81,28 @@ public class UsuarioService {
             throw new RuntimeException("Não é permitido criar contas administrativas pelo cadastro público.");
         }
 
+        String cpf = request.getCpf() == null ? "" : request.getCpf().trim();
+        String cnpj = request.getCnpj() == null ? "" : request.getCnpj().trim();
+        if (request.getTipoPerfil() == TipoPerfil.CLIENTE && !cpfValido(cpf)) {
+            throw new RuntimeException("Informe um CPF válido.");
+        }
+        if (request.getTipoPerfil() == TipoPerfil.CLIENTE && !cnpj.isEmpty()) {
+            throw new RuntimeException("Clientes devem informar CPF, não CNPJ.");
+        }
+        if (request.getTipoPerfil() == TipoPerfil.PRESTADOR) {
+            if (cpf.isEmpty() == cnpj.isEmpty()) {
+                throw new RuntimeException(cpf.isEmpty()
+                        ? "Informe CPF ou CNPJ para continuar."
+                        : "Informe somente CPF ou CNPJ.");
+            }
+            if (!cpf.isEmpty() && !cpfValido(cpf)) {
+                throw new RuntimeException("Informe um CPF válido.");
+            }
+            if (!cnpj.isEmpty() && !cnpjValido(cnpj)) {
+                throw new RuntimeException("Informe um CNPJ válido.");
+            }
+        }
+
         if (request.getSenha().length() < 10) {
             throw new RuntimeException("A senha deve ter pelo menos 10 caracteres.");
         }
@@ -98,13 +120,67 @@ public class UsuarioService {
         Usuario usuario = new Usuario();
         usuario.setNome(request.getNome().trim());
         usuario.setEmail(email);
-        usuario.setCpf(request.getCpf() == null ? null : request.getCpf().trim());
+        usuario.setCpf(cpf.isEmpty() ? null : cpf.replaceAll("\\D", ""));
+        usuario.setCnpj(cnpj.isEmpty() ? null : cnpj.replaceAll("\\D", ""));
         usuario.setSenha(passwordEncoder.encode(request.getSenha()));
         usuario.setTelefone(request.getTelefone() == null ? null : request.getTelefone().trim());
         usuario.setTipoPerfil(request.getTipoPerfil());
         usuario.setEspecialidades(request.getEspecialidades() == null ? new ArrayList<>() : request.getEspecialidades());
 
         return usuarioRepository.save(usuario);
+    }
+
+    private boolean cpfValido(String cpf) {
+        if (!cpf.matches("(?:\\d{11}|\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2})")) {
+            return false;
+        }
+
+        String digitos = cpf.replaceAll("\\D", "");
+        if (digitos.matches("(\\d)\\1{10}")) {
+            return false;
+        }
+
+        int primeiroDigito = calcularDigitoCpf(digitos, 9);
+        int segundoDigito = calcularDigitoCpf(digitos, 10);
+        return digitos.charAt(9) - '0' == primeiroDigito
+                && digitos.charAt(10) - '0' == segundoDigito;
+    }
+
+    private int calcularDigitoCpf(String cpf, int quantidade) {
+        int soma = 0;
+        for (int indice = 0; indice < quantidade; indice++) {
+            soma += (cpf.charAt(indice) - '0') * (quantidade + 1 - indice);
+        }
+        int resto = soma % 11;
+        return resto < 2 ? 0 : 11 - resto;
+    }
+
+    private boolean cnpjValido(String cnpj) {
+        if (!cnpj.matches("(?:\\d{14}|\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2})")) {
+            return false;
+        }
+
+        String digitos = cnpj.replaceAll("\\D", "");
+        if (digitos.matches("(\\d)\\1{13}")) {
+            return false;
+        }
+
+        int primeiroDigito = calcularDigitoCnpj(digitos, 12);
+        int segundoDigito = calcularDigitoCnpj(digitos, 13);
+        return digitos.charAt(12) - '0' == primeiroDigito
+                && digitos.charAt(13) - '0' == segundoDigito;
+    }
+
+    private int calcularDigitoCnpj(String cnpj, int quantidade) {
+        int[] pesos = quantidade == 12
+                ? new int[] { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 }
+                : new int[] { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
+        int soma = 0;
+        for (int indice = 0; indice < quantidade; indice++) {
+            soma += (cnpj.charAt(indice) - '0') * pesos[indice];
+        }
+        int resto = soma % 11;
+        return resto < 2 ? 0 : 11 - resto;
     }
 
     @Transactional
