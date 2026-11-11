@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:e2e:visivel": "playwright test --headed --workers=1"
+    "test:e2e:visivel": "playwright test --headed --workers=1",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
@@ -20,20 +21,21 @@
     "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.8.0",
-    "@testing-library/react": "^16.3.0",
     "@eslint/js": "^9.25.0",
     "@playwright/test": "^1.65.0",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^26.6.6",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
+    "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
-    "jsdom": "^26.1.0",
     "js-big-decimal": "^2.2.0",
+    "jsdom": "^26.1.0",
     "lucide-react": "^1.70.0",
     "node": "^24.21.0",
     "typescript": "~5.8.3",
