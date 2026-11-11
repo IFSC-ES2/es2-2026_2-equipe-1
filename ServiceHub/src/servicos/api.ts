@@ -4,6 +4,17 @@ import type { Especialidade } from "./especialidades";
 import type { EnderecoPerfilUsuario } from "./autenticacao";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081/api";
+const TOKEN_STORAGE_KEY = "token";
+
+function obterTokenAutenticacao(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage?.getItem(TOKEN_STORAGE_KEY)
+    ?? window.sessionStorage?.getItem(TOKEN_STORAGE_KEY)
+    ?? null;
+}
 
 function obterCookie(nome: string): string | null {
   const prefixo = `${nome}=`;
@@ -33,6 +44,12 @@ async function obterTokenCsrf(): Promise<string> {
 export async function requisitarApi(rota: string, opcoes: RequestInit = {}): Promise<Response> {
   const metodo = (opcoes.method ?? "GET").toUpperCase();
   const headers = new Headers(opcoes.headers);
+  const token = obterTokenAutenticacao();
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
   if (opcoes.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }

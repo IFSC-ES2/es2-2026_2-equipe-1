@@ -56,6 +56,20 @@ describe("serviço de API", () => {
     expect(new Headers(init.headers).has("X-XSRF-TOKEN")).toBe(false);
   });
 
+  it("injeta o token JWT armazenado no cabeçalho Authorization", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson([]));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("window", {
+      localStorage: { getItem: vi.fn().mockReturnValue("jwt-local") },
+      sessionStorage: { getItem: vi.fn().mockReturnValue(null) },
+    });
+
+    await requisitarApi("/usuarios/me");
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(new Headers(init.headers).get("Authorization")).toBe("Bearer jwt-local");
+  });
+
   it("inclui Content-Type e CSRF em operações mutáveis", async () => {
     const fetchMock = vi.fn().mockResolvedValue(respostaJson({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);

@@ -2,6 +2,7 @@ import type { Especialidade } from "./especialidades";
 import { logout, requisitarApi } from "./api";
 
 export type PerfilUsuario = "CLIENTE" | "PRESTADOR";
+const TOKEN_STORAGE_KEY = "token";
 
 export type EnderecoPerfilUsuario = {
   cep: string;
@@ -285,6 +286,12 @@ export async function entrarUsuario(
       throw new Error(extrairMensagemErro(payload));
     }
 
+    const token = payload && typeof payload === "object" && "token" in payload
+      && typeof payload.token === "string" ? payload.token : null;
+    if (token) {
+      window.localStorage?.setItem(TOKEN_STORAGE_KEY, token);
+    }
+
     const usuario = mapearUsuario(payload as UsuarioApi);
     definirUsuarioLogado(usuario);
     return { ok: true, usuario };
@@ -298,5 +305,7 @@ export async function entrarUsuario(
 
 export async function sairUsuario() {
   await logout();
+  window.localStorage?.removeItem(TOKEN_STORAGE_KEY);
+  window.sessionStorage?.removeItem(TOKEN_STORAGE_KEY);
   definirUsuarioLogado(null);
 }
