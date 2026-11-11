@@ -60,36 +60,16 @@ public class SecurityConfig {
             SecurityContextRepository securityContextRepository) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                // A REST API authenticated through request headers does not use browser CSRF state.
+                // A API usa autenticação por cabeçalho, portanto não depende de CSRF baseado em sessão.
                 .csrf(csrf -> csrf.disable())
+                // O contexto de segurança não deve ser persistido em uma sessão HTTP.
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/cadastro", "/api/usuarios/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/usuarios/logout").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/*").authenticated()
-                        .requestMatchers("/api/usuarios", "/api/usuarios/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/solicitacao", "/api/solicitacoes").hasRole("CLIENTE")
-                        .requestMatchers(HttpMethod.GET, "/api/solicitacao/minhas", "/api/solicitacoes/minhas").hasRole("CLIENTE")
-                        .requestMatchers(HttpMethod.GET, "/api/solicitacao/disponiveis", "/api/solicitacoes/disponiveis",
-                                "/api/solicitacao/meus-chamados", "/api/solicitacoes/meus-chamados").hasRole("PRESTADOR")
-                        .requestMatchers(HttpMethod.POST, "/api/solicitacao/*/propostas", "/api/solicitacoes/*/propostas").hasRole("PRESTADOR")
-                        .requestMatchers(HttpMethod.POST, "/api/solicitacao/*/propostas/*/aceitar",
-                                "/api/solicitacoes/*/propostas/*/aceitar").hasRole("CLIENTE")
-                        .requestMatchers(HttpMethod.PUT, "/api/solicitacao/*/concluir",
-                                "/api/solicitacoes/*/concluir").hasRole("CLIENTE")
-                        .requestMatchers(HttpMethod.DELETE, "/api/solicitacao/*", "/api/solicitacoes/*")
-                                .hasRole("CLIENTE")
-                        .requestMatchers(HttpMethod.GET, "/api/solicitacao", "/api/solicitacoes").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/enderecos").hasRole("CLIENTE")
-                        .requestMatchers(HttpMethod.PUT, "/api/solicitacao/**", "/api/solicitacoes/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/solicitacao/**", "/api/solicitacoes/**").hasRole("ADMIN")
-                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated())
-                // BasicAuthenticationFilter is the header-based authentication filter available
-                // in this application; it must run before username/password authentication.
+                // O filtro HTTP Basic é o filtro de autenticação por cabeçalho disponível no projeto.
                 .addFilterBefore(new BasicAuthenticationFilter(authenticationManager),
                         UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.disable())
@@ -101,6 +81,7 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // Origens explicitamente autorizadas para o frontend local e publicado.
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "https://frontservicehub.jvs.dev.br"));
