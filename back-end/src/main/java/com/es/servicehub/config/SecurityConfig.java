@@ -67,9 +67,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Liberar requisições OPTIONS de CORS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Liberar rotas públicas: cadastro, login e a rota de checagem do csrf
-                        .requestMatchers(HttpMethod.POST, "/api/usuarios/cadastro", "/api/usuarios/login").permitAll()
-                        .requestMatchers("/api/usuarios/csrf", "/h2-console/**").permitAll()
+                        // Endpoints públicos; a API não utiliza token CSRF.
+                        .requestMatchers(
+                                "/api/usuarios/cadastro",
+                                "/api/usuarios/login",
+                                "/api/usuarios/csrf",
+                                "/h2-console/**").permitAll()
                         // Demais endpoints exigem autenticação
                         .anyRequest().authenticated())
                 .addFilterBefore(new BasicAuthenticationFilter(authenticationManager),
@@ -83,10 +86,13 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permite o acesso a partir de qualquer origem no frontend (local e staging)
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        // Padrões explícitos permitem credenciais sem combinar wildcard irrestrito e credentials.
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "https://*.jvs.dev.br",
+                "https://servicehub.jvs.dev.br"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

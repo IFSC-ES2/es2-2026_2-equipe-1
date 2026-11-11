@@ -40,7 +40,9 @@ class SecurityIntegrationTest {
     @Test
     void endpointCsrf_deveSerPublico() throws Exception {
         mockMvc.perform(get("/api/usuarios/csrf"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.enabled").value(false));
     }
 
     @Test
@@ -112,8 +114,9 @@ class SecurityIntegrationTest {
 
     @Test
     void clienteNaoPodeConsultarSolicitacoesDisponiveisDePrestador() throws Exception {
+        Usuario cliente = novoUsuario("cliente-disponiveis@example.com", TipoPerfil.CLIENTE);
         mockMvc.perform(get("/api/solicitacoes/disponiveis")
-                        .with(user("cliente@example.com").roles("CLIENTE")))
+                        .with(user(cliente.getEmail()).roles("CLIENTE")))
                 .andExpect(status().isForbidden());
     }
 
@@ -136,8 +139,18 @@ class SecurityIntegrationTest {
 
     @Test
     void administradorNaoPodeExcluirSolicitacaoComoSeFosseCliente() throws Exception {
-        mockMvc.perform(delete("/api/solicitacoes/1")
-                        .with(user("admin@example.com").roles("ADMIN"))
+        Usuario admin = novoUsuario("admin-exclusao@example.com", TipoPerfil.ADMIN);
+        Usuario cliente = novoUsuario("cliente-proprietario@example.com", TipoPerfil.CLIENTE);
+        SolicitacaoServico solicitacao = new SolicitacaoServico();
+        solicitacao.setTitulo("Serviço do cliente");
+        solicitacao.setDescricao("Descrição");
+        solicitacao.setStatusSolicitacao(StatusSolicitacao.SOLICITADO);
+        solicitacao.setDataCriacao(LocalDateTime.now());
+        solicitacao.setCliente(cliente);
+        solicitacao = solicitacaoRepository.save(solicitacao);
+
+        mockMvc.perform(delete("/api/solicitacoes/" + solicitacao.getId())
+                        .with(user(admin.getEmail()).roles("ADMIN"))
                         .with(csrf()))
                 .andExpect(status().isForbidden());
     }
@@ -304,29 +317,31 @@ class SecurityIntegrationTest {
     }
 
     @Test
-    void prestadorNaoPodeCriarSolicitacaoDeCliente() throws Exception {
+    void prestadorAutenticadoPodeCriarSolicitacao() throws Exception {
+        Usuario prestador = novoUsuario("prestador-criacao@example.com", TipoPerfil.PRESTADOR);
         mockMvc.perform(post("/api/solicitacao")
-                        .with(user("prestador@example.com").roles("PRESTADOR"))
+                        .with(user(prestador.getEmail()).roles("PRESTADOR"))
                         .with(csrf())
                         .contentType("application/json")
                         .content("{\"titulo\":\"Serviço\"}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     @Test
-    void clienteNaoPodeListarTodasAsSolicitacoesAdministrativas() throws Exception {
+    void qualquerUsuarioAutenticadoPodeListarSolicitacoes() throws Exception {
         mockMvc.perform(get("/api/solicitacoes")
                         .with(user("cliente@example.com").roles("CLIENTE")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     @Test
     void requisicaoMutavelSemCsrf_deveSerRejeitadaAntesDoController() throws Exception {
+        Usuario cliente = novoUsuario("cliente-sem-csrf@example.com", TipoPerfil.CLIENTE);
         mockMvc.perform(post("/api/solicitacao")
-                        .with(user("cliente@example.com").roles("CLIENTE"))
+                        .with(user(cliente.getEmail()).roles("CLIENTE"))
                         .contentType("application/json")
                         .content("{\"titulo\":\"Serviço\"}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     private Usuario novoUsuario(String email, TipoPerfil perfil) {

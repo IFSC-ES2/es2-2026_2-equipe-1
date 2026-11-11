@@ -70,7 +70,7 @@ describe("serviço de API", () => {
     expect(new Headers(init.headers).get("Authorization")).toBe("Bearer jwt-local");
   });
 
-  it("inclui Content-Type e CSRF em operações mutáveis", async () => {
+  it("inclui Content-Type sem depender de CSRF em operações mutáveis", async () => {
     const fetchMock = vi.fn().mockResolvedValue(respostaJson({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -79,26 +79,7 @@ describe("serviço de API", () => {
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = new Headers(init.headers);
     expect(headers.get("Content-Type")).toBe("application/json");
-    expect(headers.get("X-XSRF-TOKEN")).toBe("token+seguro");
-  });
-
-  it("busca o token no endpoint CSRF quando o cookie não existe", async () => {
-    vi.stubGlobal("document", { cookie: "" });
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(respostaJson({ token: "token-retornado-pela-api" }))
-      .mockResolvedValueOnce(respostaJson({ ok: true }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await requisitarApi("/usuarios/logout", { method: "POST" });
-
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      1,
-      "http://localhost:8081/api/usuarios/csrf",
-      { credentials: "include" },
-    );
-    expect(new Headers((fetchMock.mock.calls[1][1] as RequestInit).headers).get("X-XSRF-TOKEN"))
-      .toBe("token-retornado-pela-api");
+    expect(headers.has("X-XSRF-TOKEN")).toBe(false);
   });
 
   it("converte endereços da API para o modelo usado pela tela", async () => {

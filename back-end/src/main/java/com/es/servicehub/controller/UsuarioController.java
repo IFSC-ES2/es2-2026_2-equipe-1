@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -94,8 +93,8 @@ public class UsuarioController {
     }
 
     @GetMapping("/csrf")
-    public ResponseEntity<Map<String, String>> csrf(CsrfToken csrfToken) {
-        return ResponseEntity.ok(Map.of("token", csrfToken.getToken()));
+    public ResponseEntity<Map<String, Boolean>> csrf() {
+        return ResponseEntity.ok(Map.of("enabled", false));
     }
 
     @PostMapping("/logout")
