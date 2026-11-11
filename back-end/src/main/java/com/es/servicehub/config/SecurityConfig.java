@@ -15,10 +15,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -49,20 +47,23 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityContextRepository securityContextRepository() {
-        return new RequestAttributeSecurityContextRepository();
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        authoritiesConverter.setAuthoritiesClaimName("roles");
+        authoritiesConverter.setAuthorityPrefix("ROLE_");
+
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+        return converter;
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            AuthenticationManager authenticationManager,
-            SecurityContextRepository securityContextRepository) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter)
+            throws Exception {
         http
                 .cors(Customizer.withDefaults())
                 // Desativa o CSRF completamente para a API
                 .csrf(csrf -> csrf.disable())
-                .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Liberar requisições OPTIONS de CORS
@@ -75,8 +76,8 @@ public class SecurityConfig {
                                 "/h2-console/**").permitAll()
                         // Demais endpoints exigem autenticação
                         .anyRequest().authenticated())
-                .addFilterBefore(new BasicAuthenticationFilter(authenticationManager),
-                        UsernamePasswordAuthenticationFilter.class)
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
                 .logout(logout -> logout.disable())
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 

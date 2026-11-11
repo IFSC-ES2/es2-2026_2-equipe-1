@@ -80,7 +80,7 @@ Antes de considerar o Compose uma reprodução completa do ambiente, é necessá
 3. O backend usa H2 em memória, não PostgreSQL; os dados podem ser perdidos ao reiniciar a aplicação.
 4. O Compose publica a API em `8081`, não em `8080`.
 5. O Compose passa `VITE_API_URL` ao frontend, mas o valor depende do `.env` ausente.
-6. As configurações `SPRING_DATASOURCE_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD` e `JWT_SECRET` não estão atualmente ligadas ao Compose e/ou à configuração do backend.
+6. As configurações `SPRING_DATASOURCE_URL`, `POSTGRES_USER` e `POSTGRES_PASSWORD` não estão atualmente ligadas ao Compose. `JWT_SECRET` é exigido pelo backend e injetado no serviço pelo Compose.
 
 Consequentemente, os comandos acima registram o procedimento esperado, mas a execução local plenamente reproduzível depende dessas pendências. Não use a URL de staging como substituição automática para a API local.
 
@@ -133,9 +133,9 @@ As variáveis abaixo são a configuração prevista para parametrizar a aplicaç
 | `SPRING_DATASOURCE_URL` | JDBC URL que o Spring usaria para conectar ao banco. | Exemplo de rede Compose: `jdbc:postgresql://db:5432/servicehub`. Não está conectado à configuração atual, que usa H2. |
 | `POSTGRES_USER` | Usuário do banco PostgreSQL local. | Defina um valor exclusivo de desenvolvimento; não reutilize usuário de staging. |
 | `POSTGRES_PASSWORD` | Senha do usuário PostgreSQL local. | Gere uma senha local forte e não a compartilhe nem a versione. |
-| `JWT_SECRET` | Segredo destinado à assinatura de tokens, caso a autenticação JWT seja configurada. | Use um segredo aleatório local. A configuração atualmente verificada usa sessão HTTP/Spring Security, não demonstra consumo desta variável. |
+| `JWT_SECRET` | Segredo HMAC usado para assinar e validar tokens JWT do backend. | Gere um valor aleatório de pelo menos 32 bytes; forneça-o ao Compose sem versioná-lo. |
 
-**Estado dos arquivos de configuração:** `.env.example` não existe/versionado no checkout consultado. O Compose referencia `VITE_API_URL`, mas não injeta as demais variáveis no backend; o `application.properties` usa H2 em memória. Portanto, a tabela descreve os campos solicitados para a configuração futura e não significa que todos estejam operacionais hoje.
+**Estado dos arquivos de configuração:** `.env.example` não existe/versionado no checkout consultado. O Compose referencia `VITE_API_URL` e injeta `JWT_SECRET` no backend; `application.properties` usa H2 em memória.
 
 **Proteção de segredos:**
 

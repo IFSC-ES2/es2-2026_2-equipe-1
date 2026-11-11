@@ -3,23 +3,19 @@ package com.es.servicehub.controller;
 import com.es.servicehub.dto.CadastroUsuarioRequest;
 import com.es.servicehub.dto.AtualizarUsuarioRequest;
 import com.es.servicehub.dto.LoginUsuarioRequest;
+import com.es.servicehub.dto.LoginUsuarioRespostaDTO;
 import com.es.servicehub.dto.UsuarioRespostaDTO;
 import com.es.servicehub.model.Usuario;
+import com.es.servicehub.service.JwtTokenService;
 import com.es.servicehub.service.UsuarioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -30,13 +26,15 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
     private final AuthenticationManager authenticationManager;
-    private final SecurityContextRepository securityContextRepository;
+    private final JwtTokenService jwtTokenService;
 
-    public UsuarioController(UsuarioService usuarioService, AuthenticationManager authenticationManager,
-            SecurityContextRepository securityContextRepository) {
+    public UsuarioController(
+            UsuarioService usuarioService,
+            AuthenticationManager authenticationManager,
+            JwtTokenService jwtTokenService) {
         this.usuarioService = usuarioService;
         this.authenticationManager = authenticationManager;
-        this.securityContextRepository = securityContextRepository;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @ExceptionHandler({ RuntimeException.class, IllegalArgumentException.class })
@@ -72,19 +70,13 @@ public class UsuarioController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginUsuarioRequest request,
-            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    public ResponseEntity<?> login(@RequestBody LoginUsuarioRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     UsernamePasswordAuthenticationToken.unauthenticated(request.getEmail(), request.getSenha()));
-                httpRequest.getSession(true);
-                httpRequest.changeSessionId();
-            SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(authentication);
-            SecurityContextHolder.setContext(context);
-            securityContextRepository.saveContext(context, httpRequest, httpResponse);
             Usuario usuario = usuarioService.buscarPorEmail(authentication.getName());
-            return ResponseEntity.ok(UsuarioRespostaDTO.fromEntity(usuario));
+            String token = jwtTokenService.emitir(authentication);
+            return ResponseEntity.ok(LoginUsuarioRespostaDTO.fromEntity(usuario, token));
         } catch (RuntimeException erro) {
             SecurityContextHolder.clearContext();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -98,26 +90,9 @@ public class UsuarioController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-        var sessao = httpRequest.getSession(false);
-        if (sessao != null) {
-            sessao.invalidate();
-        }
-
+    public ResponseEntity<Void> logout() {
         SecurityContextHolder.clearContext();
-        String caminhoCookie = httpRequest.getContextPath().isEmpty() ? "/" : httpRequest.getContextPath();
-        expirarCookie(httpResponse, "JSESSIONID", true, caminhoCookie);
-        expirarCookie(httpResponse, "XSRF-TOKEN", false, caminhoCookie);
-
         return ResponseEntity.noContent().build();
-    }
-
-    private void expirarCookie(HttpServletResponse response, String nome, boolean httpOnly, String caminho) {
-        Cookie cookie = new Cookie(nome, "");
-        cookie.setPath(caminho);
-        cookie.setMaxAge(0);
-        cookie.setHttpOnly(httpOnly);
-        response.addCookie(cookie);
     }
 
     @GetMapping("/me")

@@ -8,6 +8,8 @@ services:
     container_name: servicehub_backend
     ports:
       - "8081:8081"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET com pelo menos 32 bytes aleatórios}
 
   frontend:
     build:

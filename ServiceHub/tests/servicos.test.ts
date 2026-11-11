@@ -293,15 +293,27 @@ describe("serviço de autenticação", () => {
   });
 
   it("realiza login, normaliza email e persiste o usuário", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(respostaJson(usuarioApi));
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson({ ...usuarioApi, token: "jwt-login" }));
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubGlobal("document", { cookie: "XSRF-TOKEN=token" });
+    const storage = new Map<string, string>();
+    const localStorage = {
+      getItem: vi.fn((key: string) => storage.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => storage.set(key, value)),
+      removeItem: vi.fn((key: string) => storage.delete(key)),
+    };
+    const sessionStorage = {
+      getItem: vi.fn((key: string) => storage.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => storage.set(key, value)),
+      removeItem: vi.fn((key: string) => storage.delete(key)),
+    };
+    vi.stubGlobal("window", { localStorage, sessionStorage });
 
     const resultado = await entrarUsuario("  Maria@Email.com ", "senha-segura");
 
     expect(resultado.ok).toBe(true);
     expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string).email).toBe("maria@email.com");
     expect(obterUsuarioLogado()).toMatchObject({ id: 8, perfil: "PRESTADOR" });
+    expect(localStorage.getItem("token")).toBe("jwt-login");
   });
 
   it("retorna mensagem do backend quando login falha", async () => {

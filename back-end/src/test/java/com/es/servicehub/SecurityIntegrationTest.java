@@ -48,7 +48,7 @@ class SecurityIntegrationTest {
     @Test
     void endpointUsuarioAtual_deveExigirAutenticacao() throws Exception {
         mockMvc.perform(get("/api/usuarios/me"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
