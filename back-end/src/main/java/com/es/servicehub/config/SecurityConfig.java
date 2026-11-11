@@ -15,13 +15,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
-import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
-import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -53,26 +50,22 @@ public class SecurityConfig {
 
     @Bean
     SecurityContextRepository securityContextRepository() {
-        return new HttpSessionSecurityContextRepository();
+        return new RequestAttributeSecurityContextRepository();
     }
 
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
+            AuthenticationManager authenticationManager,
             SecurityContextRepository securityContextRepository) throws Exception {
-        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-
         http
                 .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(csrfTokenRepository)
-                        .ignoringRequestMatchers("/api/usuarios/cadastro", "/api/usuarios/login")
-                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
+                // A REST API authenticated through request headers does not use browser CSRF state.
+                .csrf(csrf -> csrf.disable())
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios/csrf").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/cadastro", "/api/usuarios/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/logout").authenticated()
@@ -94,7 +87,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/solicitacao/**", "/api/solicitacoes/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/solicitacao/**", "/api/solicitacoes/**").hasRole("ADMIN")
                         .requestMatchers("/api/**").authenticated()
-                        .anyRequest().denyAll())
+                        .anyRequest().authenticated())
+                // BasicAuthenticationFilter is the header-based authentication filter available
+                // in this application; it must run before username/password authentication.
+                .addFilterBefore(new BasicAuthenticationFilter(authenticationManager),
+                        UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.disable())
                 .headers(headers -> headers.frameOptions(frame -> frame.deny()));
 
@@ -107,33 +104,12 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "https://frontservicehub.jvs.dev.br"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
-    }
-
-    private static final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
-        private final CsrfTokenRequestHandler plain = new CsrfTokenRequestAttributeHandler();
-        private final CsrfTokenRequestHandler xor = new XorCsrfTokenRequestAttributeHandler();
-
-        @Override
-        public void handle(jakarta.servlet.http.HttpServletRequest request,
-                jakarta.servlet.http.HttpServletResponse response,
-                java.util.function.Supplier<org.springframework.security.web.csrf.CsrfToken> deferredCsrfToken) {
-            this.xor.handle(request, response, deferredCsrfToken);
-            deferredCsrfToken.get();
-        }
-
-        @Override
-        public String resolveCsrfTokenValue(jakarta.servlet.http.HttpServletRequest request,
-                org.springframework.security.web.csrf.CsrfToken csrfToken) {
-            return StringUtils.hasText(request.getHeader(csrfToken.getHeaderName()))
-                    ? this.plain.resolveCsrfTokenValue(request, csrfToken)
-                    : this.xor.resolveCsrfTokenValue(request, csrfToken);
-        }
     }
 }
