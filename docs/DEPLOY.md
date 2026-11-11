@@ -31,15 +31,15 @@ cd es2-2026_2-equipe-1
 
 ### Configurar o ambiente
 
-A instrução prevista para a entrega é copiar o arquivo de exemplo:
+O arquivo de exemplo **`.env.example` está versionado** na raiz do repositório (Entrega 8). Copie-o e ajuste apenas os valores locais:
 
 ```bash
 cp .env.example .env
 ```
 
-**Atenção:** no estado atual do repositório, `.env.example` não está versionado. Assim, esse comando não funciona até que o arquivo seja incluído. Não crie um `.env` com valores de produção ou reutilize credenciais reais.
+O `.env` está no `.gitignore` e **não deve ser commitado**. Não crie um `.env` com valores de produção ou reutilize credenciais reais.
 
-As variáveis previstas para a configuração estão descritas na seção [Variáveis de ambiente e segurança](#4-variáveis-de-ambiente-e-segurança). Nem todas estão conectadas à configuração atual do Compose/backend.
+As variáveis disponíveis estão descritas na seção [Variáveis de ambiente e segurança](#4-variáveis-de-ambiente-e-segurança). As variáveis do PostgreSQL e do Asaas estão comentadas no exemplo, porque essas integrações ainda não estão ligadas ao Compose/backend.
 
 ### Construir e iniciar os serviços
 
@@ -75,12 +75,12 @@ O endereço `http://localhost:8080/api` não corresponde ao mapeamento atual do 
 
 Antes de considerar o Compose uma reprodução completa do ambiente, é necessário alinhar os arquivos de infraestrutura com esta documentação. No estado atual:
 
-1. Não há `.env.example` versionado.
+1. O `.env.example` está versionado (Entrega 8), mas o Compose não injeta todas as variáveis listadas nele no backend.
 2. O Compose não declara um container PostgreSQL.
 3. O backend usa H2 em memória, não PostgreSQL; os dados podem ser perdidos ao reiniciar a aplicação.
 4. O Compose publica a API em `8081`, não em `8080`.
 5. O Compose passa `VITE_API_URL` ao frontend, mas o valor depende do `.env` ausente.
-6. As configurações `SPRING_DATASOURCE_URL`, `POSTGRES_USER` e `POSTGRES_PASSWORD` não estão atualmente ligadas ao Compose. `JWT_SECRET` é exigido pelo backend e injetado no serviço pelo Compose.
+6. As configurações `SPRING_DATASOURCE_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD` e `JWT_SECRET` não estão atualmente ligadas ao Compose e/ou à configuração do backend.
 
 Consequentemente, os comandos acima registram o procedimento esperado, mas a execução local plenamente reproduzível depende dessas pendências. Não use a URL de staging como substituição automática para a API local.
 
@@ -133,9 +133,11 @@ As variáveis abaixo são a configuração prevista para parametrizar a aplicaç
 | `SPRING_DATASOURCE_URL` | JDBC URL que o Spring usaria para conectar ao banco. | Exemplo de rede Compose: `jdbc:postgresql://db:5432/servicehub`. Não está conectado à configuração atual, que usa H2. |
 | `POSTGRES_USER` | Usuário do banco PostgreSQL local. | Defina um valor exclusivo de desenvolvimento; não reutilize usuário de staging. |
 | `POSTGRES_PASSWORD` | Senha do usuário PostgreSQL local. | Gere uma senha local forte e não a compartilhe nem a versione. |
-| `JWT_SECRET` | Segredo HMAC usado para assinar e validar tokens JWT do backend. | Gere um valor aleatório de pelo menos 32 bytes; forneça-o ao Compose sem versioná-lo. |
+| `JWT_SECRET` | Segredo destinado à assinatura de tokens, caso a autenticação JWT seja configurada. | Use um segredo aleatório local. A configuração atualmente verificada usa sessão HTTP/Spring Security, não demonstra consumo desta variável. |
 
-**Estado dos arquivos de configuração:** `.env.example` não existe/versionado no checkout consultado. O Compose referencia `VITE_API_URL` e injeta `JWT_SECRET` no backend; `application.properties` usa H2 em memória.
+**Estado dos arquivos de configuração:** `.env.example` está versionado na raiz do repositório com apenas valores de exemplo e variáveis sensíveis comentadas. O Compose referencia `VITE_API_URL`, mas não injeta as demais variáveis no backend; o `application.properties` usa H2 em memória. Portanto, a tabela descreve os campos previstos para a configuração futura e não significa que todos estejam operacionais hoje.
+
+> **Importante para o build do frontend:** `ServiceHub/src/servicos/api.ts` lê `import.meta.env.VITE_API_URL` com valor padrão `http://localhost:8081/api`. O Vite **embute** a variável no bundle em tempo de build. Para servir o frontend em outro domínio, defina `VITE_API_URL` **antes** de `npm run build` / `docker compose build`.
 
 **Proteção de segredos:**
 
@@ -145,10 +147,30 @@ As variáveis abaixo são a configuração prevista para parametrizar a aplicaç
 - Não publique arquivos de configuração preenchidos com valores reais em logs, capturas de tela ou relatórios.
 - Na inspeção dos arquivos de ambiente versionados, não foi localizado `.env` nem `.env.example`. Isso não substitui uma varredura formal de segredos em todo o histórico Git; qualquer suspeita de segredo comprometido deve ser tratada com rotação/revogação imediata.
 
-## 5. Limitações conhecidas
+## 5. Validação do ambiente e da versão entregue
+
+Checklist objetivo para confirmar que o ambiente implantado corresponde à versão `v0.4.0`:
+
+| # | Verificação | Como validar | Resultado esperado |
+|:--:|:---|:---|:---|
+| 1 | Aplicação no ar | abrir a URL do frontend | tela inicial do ServiceHub (Home) carregada |
+| 2 | API respondendo | `curl -i https://<frontend>/api/usuarios/csrf` ou `http://localhost:8081/api/usuarios/csrf` | `200` com `{"token": ...}` |
+| 3 | Versão entregue | comparar o commit implantado com a tag `v0.4.0` | mesmo commit |
+| 4 | Login | entrar com uma conta de teste (cliente e prestador) | redirecionamento ao dashboard do perfil |
+| 5 | Fluxo principal | publicar solicitação (cliente), enviar proposta (prestador) e aceitar (cliente) | mensagens de sucesso na interface |
+| 6 | CORS | requisição do frontend ao domínio da API | sem erro de CORS no console |
+| 7 | Segurança | acessar `/dashboard-cliente` sem login | redirecionamento para `/login` |
+| 8 | Suíte automatizada | `./gradlew test jacocoTestReport` e `npm test` | 129 e 29 testes aprovados |
+
+O pipeline `.github/workflows/ci.yml` executa os mesmos testes a cada pull request, além do E2E com
+Playwright. Os resultados da Sprint 4 estão em `docs/PLANO-DE-TESTES.md`.
+
+## 6. Limitações conhecidas
 
 - **Sandbox financeiro (Asaas):** integração postergada nesta entrega para priorizar deploy e estabilidade. Não considerar pagamentos reais disponíveis ou validados.
 - **Banco de staging:** pode ser limpo periodicamente para permitir a execução das suítes automatizadas. Não depender da permanência de contas ou registros de teste.
 - **Compose local:** ainda não reproduz o PostgreSQL de staging; usa H2 em memória e portas diferentes da URL `localhost:8080/api` inicialmente prevista.
 - **Contas E2E:** são dados sintéticos e podem precisar ser recriados após a limpeza do banco. A senha indicada para demonstração diverge da senha atualmente presente no teste Playwright.
 - **Disponibilidade do staging:** depende do servidor e do proxy reverso mantidos pela equipe. Falhas de acesso devem ser verificadas junto ao responsável pela infraestrutura antes de concluir que a aplicação está indisponível.
+- **Frontend em staging:** o domínio do frontend publicado é `https://frontservicehub.jvs.dev.br` (consta em `allowedHosts` do Vite e em CORS/`WebConfig` do backend); o domínio `https://servicehub.jvs.dev.br` é o endereço geral informado para a Entrega 8. Confirme qual dos dois deve ser usado na validação e registre-o na release.
+- **Cobertura do frontend:** medida a partir da Entrega 8 (`npm run test:coverage`), mas ainda concentrada em `servicos/` e em componentes isolados; as páginas são cobertas apenas pelo E2E.

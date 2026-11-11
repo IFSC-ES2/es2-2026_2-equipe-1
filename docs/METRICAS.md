@@ -84,7 +84,7 @@ Para garantir a qualidade do software, a previsibilidade do processo de desenvol
 
 | Métrica | Baseline (20/08) | Sprint 1 (17/09) | Sprint 2 (01/10) | Sprint 3 (22/10) | Sprint 4 (Final) | Meta |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| M-01 Cobertura de testes | 0% | Não medida | Não medida | **77,35% de linhas** | **Suíte estabilizada:** `SecurityIntegrationTest` e Playwright E2E (3/3 cenários aprovados). Cobertura JaCoCo final não recalculada. | ≥ 70% |
+| M-01 Cobertura de testes | 0% | Não medida | Não medida | 77,35% de linhas | **93,37% de linhas** e **80,80% de branches** no backend (129 testes); frontend com 29 testes e 25,22% de linhas; E2E Playwright 3/3. | ≥ 70% |
 | M-02 Lead time de PR | 0h | Não registrado | A medir | A confirmar no GitHub | **Média de aprovação mantida em menos de 24h**; confirmar pelos registros dos PRs no GitHub. | < 24h |
 | M-03 Progresso do MVP | 0% | 18,2% | 36,4% | 54,5% | **100% do escopo revisado**, com foco em staging, E2E, Docker e correções de perfil e segurança. A integração Asaas foi postergada e retirada do escopo desta entrega. | 100% do escopo revisado |
 
@@ -116,7 +116,11 @@ Na Sprint 4, o foco foi a estabilidade da aplicação e sua validação: prepara
 
 A suíte de testes foi estabilizada: os testes de integração de segurança do Spring Boot passaram, os testes de frontend passaram e os três cenários E2E do Playwright foram aprovados. Esses resultados ampliam a confiança nos fluxos críticos e ajudam a identificar regressões entre frontend, API e autenticação. O ambiente de staging também permite validar a aplicação em uma implantação acessível à equipe, embora os dados possam ser limpos periodicamente.
 
-O percentual de M-03 considera o escopo revisado para a entrega. A integração de pagamentos com Asaas foi postergada para uma etapa futura, para priorizar deploy e estabilidade. Portanto, os 100% não significam que todos os itens do escopo original de 88 horas — que incluía o Asaas — foram concluídos. A cobertura JaCoCo final deve ser coletada novamente antes de atualizar o percentual numérico de M-01.
+O percentual de M-03 considera o escopo revisado para a entrega. A integração de pagamentos com Asaas foi postergada para uma etapa futura, para priorizar deploy e estabilidade. Portanto, os 100% não significam que todos os itens do escopo original de 88 horas — que incluía o Asaas — foram concluídos.
+
+A cobertura JaCoCo foi recalculada em 11/11/2026 para o fechamento da Sprint 4: **129 testes backend** aprovados, sem falhas, erros ou testes ignorados, com **93,37% de linhas**, **80,80% de branches**, **87,22% de métodos** e **100% de classes**. O detalhamento está em `docs/COBERTURA-JACOCO.md` e em `docs/PLANO-DE-TESTES.md`.
+
+A cobertura do frontend passou a ser medida nesta entrega (`npm run test:coverage`): 29 testes aprovados e 25,22% de linhas. A lacuna está nas páginas, cobertas apenas pelo E2E, e é registrada como melhoria para a próxima sprint.
 
 ---
 
@@ -126,6 +130,7 @@ O percentual de M-03 considera o escopo revisado para a entrega. A integração 
 |:---:|:---:|:---:|:---|
 | 20/08/2026 | Entrega 3 — Baseline | 0% | Registro inicial durante a fase de planejamento |
 | 22/10/2026 | Entrega 7 — Sprint 3 | **77,35% de linhas** | 57 testes backend passaram; relatório gerado por `./gradlew test jacocoTestReport --no-daemon`; meta de 70% atingida |
+| 11/11/2026 | Entrega 8 — Sprint 4 (final) | **93,37% de linhas / 80,80% de branches** | 129 testes backend passaram (`UsuarioServiceRegrasAdicionaisTest` +31, `SolicitacaoPropostaIntegrationTest` +11); frontend com 29 testes e 25,22% de linhas; E2E 3/3 |
 
 ## 6. Evidências
 

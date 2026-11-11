@@ -140,4 +140,19 @@ A revisão considera as prioridades da Sprint 4: estabilização do deploy, vali
 | **R03** | Integração com o gateway Asaas | **POSTERGADO** | A integração de pagamento foi retirada do escopo desta entrega para priorizar deploy, estabilidade e validação dos fluxos existentes. Não deve ser contabilizada como funcionalidade concluída. | Replanejar a integração em uma etapa futura, incluindo sandbox e validação dos webhooks antes de habilitar pagamentos. |
 | **R04** | Erros de permissões, CORS e CSRF | **MITIGADO** | Foram realizados ajustes no `SecurityConfig.java` para acesso público às rotas de cadastro/login, tratamento de CSRF e headers CORS. Os testes de integração de segurança passaram. | Manter testes de segurança para as rotas públicas e protegidas e reavaliar a configuração caso novos endpoints sejam adicionados. |
 
-> **Atenção à identificação dos riscos:** no registro histórico deste documento, R04 está descrito como “Falhas no CI”. Para preservar a rastreabilidade, confirme a identificação antes de substituir o risco: se R04 continuar representando o CI, registre permissões/CORS/CSRF com um novo ID e atualize a tabela acima. Da mesma forma, R09 aparece anteriormente como “Ambiente Docker inconsistente com a stack”; alinhe sua descrição no registro principal sem apagar o histórico das revisões anteriores.
+> **Correção de identificação (Entrega 8):** a tabela acima usava R04 para permissões/CORS/CSRF, mas o registro principal define **R04 = Falhas no CI**. Para preservar a rastreabilidade, o risco de segurança foi registrado como **R13** e o de CI permanece em R04. Da mesma forma, R09 passa a ter descrição alinhada ao registro principal ("Ambiente Docker inconsistente com a stack"), sem apagar o histórico das revisões anteriores.
+
+| ID | Risco | Situação ao final da Sprint 4 | Evidência / justificativa | Ação ou acompanhamento |
+|:---|:---|:---|:---|:---|
+| **R13** | Erros de permissões, CORS e CSRF | **MITIGADO** | Ajustes em `SecurityConfig.java` (rotas públicas de cadastro/login, CSRF, `XSRF-TOKEN`, cookie de sessão `HttpOnly`) e em `WebConfig.java` (CORS restrito a `http://localhost:5173` e ao domínio do frontend publicado). Coberto por `SecurityIntegrationTest` (18 casos) e `SolicitacaoPropostaIntegrationTest` (11 casos, incluindo requisição mutável sem CSRF). | Manter testes de segurança para rotas públicas e protegidas e reavaliar a configuração a cada novo endpoint. |
+| **R04** | Falhas no CI | **MITIGADO** | O pipeline passou a executar verificação de arquivos obrigatórios, testes de backend com JaCoCo, build/testes com cobertura/lint do frontend, **E2E com Playwright** e validação do `docker-compose.yml` com varredura de segredos versionados. | Acompanhar as execuções nos PRs e manter o job E2E estável. |
+| **R05** | Baixa cobertura de testes | **MITIGADO no backend, ativo no frontend** | Backend: 129 testes e 93,37% de linhas (era 77,35%). Frontend: 29 testes e 25,22% de linhas, com as páginas cobertas apenas pelo E2E. | Criar testes de componente para `DashboardCliente`, `DashboardPrestador`, `Cadastro`, `Home` e `SelecaoUser`. |
+
+### 8.1 Riscos residuais após a Sprint 4
+
+| ID | Risco | Prob. | Impacto | Prioridade | Observação |
+|:---|:---|:---:|:---:|:---:|:---|
+| **R12** | Migração de dados H2 → PostgreSQL | 2 | 2 | 4 - Média | O Compose local continua em H2; a migração não foi executada nesta entrega. |
+| **R14** | Divergência entre staging e execução local | 2 | 2 | 4 - Média | O Compose não reproduz o PostgreSQL de staging e usa portas diferentes. Mitigação: checklist de validação em `docs/DEPLOY.md`. |
+| **R15** | Build do frontend com `VITE_API_URL` incorreta | 2 | 3 | 6 - Alta | A variável é embutida no bundle pelo Vite; valor errado aponta o frontend para uma API inacessível. Mitigação: `.env.example` versionado e verificação no checklist de deploy. |
+| **R16** | Banco de staging limpo periodicamente | 3 | 2 | 6 - Alta | Contas e registros de demonstração podem desaparecer; os cenários E2E usam dados sintéticos e recriáveis. |
