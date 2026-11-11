@@ -43,7 +43,7 @@ O ServiceHub permite que o cliente **solicite um serviço**, que prestadores pos
 ## Como executar
 
 ```bash
-# Backend (JDK 25) - http://localhost:8080
+# Backend (JDK 25) - http://localhost:8081
 cd back-end && ./gradlew bootRun
 
 # Frontend (Node 24) - http://localhost:5173
@@ -59,7 +59,7 @@ cd ServiceHub && npm ci && npm test && npm run build && npm run lint
 
 ### Teste E2E do fluxo de solicitação e proposta
 
-Com o backend em execução em `http://localhost:8080`, execute:
+Com o backend em execução em `http://localhost:8081`, execute:
 
 ```bash
 cd ServiceHub

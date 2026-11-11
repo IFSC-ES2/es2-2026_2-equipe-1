@@ -48,7 +48,7 @@ describe("serviço de API", () => {
     await requisitarApi("/solicitacao");
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8080/api/solicitacao",
+      "http://localhost:8081/api/solicitacao",
       expect.objectContaining({ method: "GET", credentials: "include" }),
     );
     const init = fetchMock.mock.calls[0][1] as RequestInit;
@@ -80,7 +80,7 @@ describe("serviço de API", () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "http://localhost:8080/api/usuarios/csrf",
+      "http://localhost:8081/api/usuarios/csrf",
       { credentials: "include" },
     );
     expect(new Headers((fetchMock.mock.calls[1][1] as RequestInit).headers).get("X-XSRF-TOKEN")).toBe("novo-token");
@@ -116,9 +116,9 @@ describe("serviço de API", () => {
     await enviarProposta(1, 175.5);
     await clienteAceitarProposta(1, 8);
 
-    expect(fetchMock.mock.calls[0][0]).toBe("http://localhost:8080/api/solicitacoes/1/propostas");
+    expect(fetchMock.mock.calls[0][0]).toBe("http://localhost:8081/api/solicitacoes/1/propostas");
     expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toEqual({ valorProposto: 175.5 });
-    expect(fetchMock.mock.calls[1][0]).toBe("http://localhost:8080/api/solicitacoes/1/propostas/8/aceitar");
+    expect(fetchMock.mock.calls[1][0]).toBe("http://localhost:8081/api/solicitacoes/1/propostas/8/aceitar");
   });
 
   it("transforma erro JSON da API em mensagem útil", async () => {

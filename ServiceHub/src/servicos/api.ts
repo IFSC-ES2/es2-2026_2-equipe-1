@@ -2,7 +2,7 @@ import type { DadosSolicitacao, EnderecoSelecionavel } from "../componentes/moda
 import type { Endereco } from "../componentes/modal/ModalCriarEndereço";
 import type { Especialidade } from "./especialidades";
 
-const API_URL = "http://localhost:8080/api";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
 
 function obterCookie(nome: string): string | null {
   const prefixo = `${nome}=`;
