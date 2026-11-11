@@ -1,15 +1,12 @@
-FROM node:18-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
-# Copia e instala as dependências
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
-# Copia o código-fonte do frontend
 COPY . .
 
 EXPOSE 5173
 
-# Para Vite use 'npm run dev -- --host', para CRA use 'npm start'
 CMD ["npm", "run", "dev", "--", "--host"]
