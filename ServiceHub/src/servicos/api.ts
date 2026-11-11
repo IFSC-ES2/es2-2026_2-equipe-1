@@ -21,7 +21,8 @@ async function obterTokenCsrf(): Promise<string> {
     throw new Error("Não foi possível iniciar uma sessão segura.");
   }
 
-  token = obterCookie("XSRF-TOKEN");
+  const payload = (await resposta.json()) as { token?: string };
+  token = payload.token ?? null;
   if (!token) {
     throw new Error("O servidor não forneceu o token de segurança.");
   }

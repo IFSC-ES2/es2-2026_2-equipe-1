@@ -71,10 +71,9 @@ describe("serviço de API", () => {
     vi.stubGlobal("document", { cookie: "" });
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(respostaJson({ token: "ok" }))
+      .mockResolvedValueOnce(respostaJson({ token: "token-retornado-pela-api" }))
       .mockResolvedValueOnce(respostaJson({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubGlobal("document", { get cookie() { return fetchMock.mock.calls.length ? "XSRF-TOKEN=novo-token" : ""; } });
 
     await requisitarApi("/usuarios/logout", { method: "POST" });
 
@@ -83,7 +82,8 @@ describe("serviço de API", () => {
       "http://localhost:8081/api/usuarios/csrf",
       { credentials: "include" },
     );
-    expect(new Headers((fetchMock.mock.calls[1][1] as RequestInit).headers).get("X-XSRF-TOKEN")).toBe("novo-token");
+    expect(new Headers((fetchMock.mock.calls[1][1] as RequestInit).headers).get("X-XSRF-TOKEN"))
+      .toBe("token-retornado-pela-api");
   });
 
   it("converte endereços da API para o modelo usado pela tela", async () => {
