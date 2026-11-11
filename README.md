@@ -171,3 +171,15 @@ O relato documenta o escopo e as evidências da Sprint 2.
 - **Registro e Matriz de Riscos:** [docs/RISCOS.md](docs/RISCOS.md)
 - **Registro de Uso de IA:** [docs/USO-IA.md](docs/USO-IA.md)
 - **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-3.md](docs/contribuições/CONTRIBUICOES-SPRINT-3.md)
+
+---
+## Entrega 8 — Sprint 4 (Concluída)
+
+- **Planejamento da Sprint 4:** [docs/entregas/sprint-4.md](docs/entregas/sprint-4.md)
+- **Guia de Deploy e Staging:** [docs/DEPLOY.md](docs/DEPLOY.md)
+- **Variáveis de Ambiente:** [.env.example](.env.example)
+- **Métricas Finais do Projeto:** [docs/METRICAS.md](docs/METRICAS.md)
+- **Matriz de Riscos Atualizada:** [docs/RISCOS.md](docs/RISCOS.md)
+- **Registro de Uso de IA:** [USO-IA.md](USO-IA.md)
+- **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-4.md](docs/CONTRIBUICOES-SPRINT-4.md)
+- **Ambiente de Validação Online:** https://servicehub.jvs.dev.br
