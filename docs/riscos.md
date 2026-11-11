@@ -129,3 +129,15 @@ Critério: prioridade = probabilidade x impacto (escala 1 a 3). "Prop." indica v
 |:---|:---|:---|:---|:---:|:---:|:---:|:---|:---|
 | **R11** | **Complexidade na Regra de Webhooks do Asaas** | Inexperiência com o tratamento assíncrono do retorno de pagamento via Webhook em ambiente de Sandbox. | Falha em atualizar o status da solicitação após a liquidação do pagamento pelo cliente. | 2 | 3 | 6 - Alta | Criar um endpoint/controller dedicado para simular os eventos de Webhook do Asaas no backend. | João |
 | **R12** | **Migração de Dados H2 para PostgreSQL** | Diferenças de sintaxe SQL/DDL e comportamentos de tipos entre o banco H2 (em memória) e o PostgreSQL. | Falha na inicialização da aplicação ou erros de migração JPA no ambiente de staging. | 2 | 2 | 4 - Média | Validar as propriedades do Spring Data JPA (`ddl-auto` / scripts SQL) em container local do PostgreSQL. | Leonardo |
+
+## 8. Revisão de Encerramento (Sprint 4)
+
+A revisão considera as prioridades da Sprint 4: estabilização do deploy, validação automatizada e correções de segurança. A integração com o gateway Asaas foi postergada por decisão de escopo.
+
+| ID | Risco | Situação ao final da Sprint 4 | Evidência / justificativa | Ação ou acompanhamento |
+|:---|:---|:---|:---|:---|
+| **R09** | Dificuldade no deploy/staging | **MITIGADO** | A aplicação foi direcionada ao ambiente de staging no servidor JVS, com uso de Docker no fluxo de implantação. | Monitorar disponibilidade e configuração do ambiente. A configuração Docker local ainda deve ser mantida alinhada ao staging, especialmente quanto ao PostgreSQL e às portas utilizadas. |
+| **R03** | Integração com o gateway Asaas | **POSTERGADO** | A integração de pagamento foi retirada do escopo desta entrega para priorizar deploy, estabilidade e validação dos fluxos existentes. Não deve ser contabilizada como funcionalidade concluída. | Replanejar a integração em uma etapa futura, incluindo sandbox e validação dos webhooks antes de habilitar pagamentos. |
+| **R04** | Erros de permissões, CORS e CSRF | **MITIGADO** | Foram realizados ajustes no `SecurityConfig.java` para acesso público às rotas de cadastro/login, tratamento de CSRF e headers CORS. Os testes de integração de segurança passaram. | Manter testes de segurança para as rotas públicas e protegidas e reavaliar a configuração caso novos endpoints sejam adicionados. |
+
+> **Atenção à identificação dos riscos:** no registro histórico deste documento, R04 está descrito como “Falhas no CI”. Para preservar a rastreabilidade, confirme a identificação antes de substituir o risco: se R04 continuar representando o CI, registre permissões/CORS/CSRF com um novo ID e atualize a tabela acima. Da mesma forma, R09 aparece anteriormente como “Ambiente Docker inconsistente com a stack”; alinhe sua descrição no registro principal sem apagar o histórico das revisões anteriores.
