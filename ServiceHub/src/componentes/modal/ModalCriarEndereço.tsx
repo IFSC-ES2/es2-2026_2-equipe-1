@@ -100,7 +100,7 @@ export default function ModalCriarEndereco({
 
   const enviar = async (evento: FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
-    if (jaCadastrado) return; // proteção extra além do botão desabilitado
+    if (jaCadastrado) return;
 
     setSalvando(true);
     try {

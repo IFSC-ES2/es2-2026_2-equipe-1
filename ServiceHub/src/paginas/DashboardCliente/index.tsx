@@ -229,7 +229,6 @@ export default function DashboardCliente() {
     nome: string;
     telefone: string;
     especialidades?: Usuario["especialidades"];
-    endereco?: NonNullable<Usuario["endereco"]>;
   }) {
     if (!usuario) return false;
     setSalvandoPerfil(true);
@@ -243,7 +242,6 @@ export default function DashboardCliente() {
         telefone: atualizado.telefone ?? "",
         perfil: atualizado.tipoPerfil === "PRESTADOR" ? "PRESTADOR" : "CLIENTE",
         especialidades: atualizado.especialidades ?? [],
-        endereco: atualizado.endereco ?? usuario.endereco,
       };
       setUsuario(usuarioAtualizado);
       definirUsuarioLogado(usuarioAtualizado);
@@ -256,7 +254,6 @@ export default function DashboardCliente() {
       setSalvandoPerfil(false);
     }
   }
-
   return (
     <div className="home-page dashboard-page">
       <header className="dashboard-nav">
@@ -340,22 +337,15 @@ export default function DashboardCliente() {
           ) : (
             <div className="dashboard-request-list dashboard-request-list-scroll">
               {solicitacoesFiltradas.map((solicitacao) => {
-                const expandida = solicitacaoExpandida === solicitacao.id;
                 const acoesAbertas = menuAberto === solicitacao.id;
                 return (
                   <article
-                    className={`dashboard-request dashboard-request-accordion${expandida ? " is-expanded" : ""}`}
+                    className="dashboard-request"
                     key={solicitacao.id}
                     aria-busy={excluindoSolicitacao === solicitacao.id}
                   >
                     <div className="dashboard-request-summary">
-                      <button
-                        className="dashboard-request-toggle"
-                        type="button"
-                        aria-expanded={expandida}
-                        aria-controls={`solicitacao-detalhes-${solicitacao.id}`}
-                        onClick={() => setSolicitacaoExpandida(expandida ? null : solicitacao.id)}
-                      >
+                      <div className="dashboard-request-toggle">
                         <span className="dashboard-request-summary-main">
                           <span className="dashboard-request-summary-title">{solicitacao.titulo}</span>
                           <span className="dashboard-request-summary-meta">
@@ -366,10 +356,7 @@ export default function DashboardCliente() {
                         <span className={`dashboard-request-status ${classeStatus(solicitacao.statusSolicitacao)}`}>
                           {rotuloStatus(solicitacao.statusSolicitacao)}
                         </span>
-                        {expandida
-                          ? <ChevronUp size={19} aria-hidden="true" />
-                          : <ChevronDown size={19} aria-hidden="true" />}
-                      </button>
+                      </div>
                       <div className="dashboard-request-actions">
                         <button
                           className="dashboard-icon-button"
@@ -394,78 +381,76 @@ export default function DashboardCliente() {
                       </div>
                     </div>
 
-                    {expandida && (
-                      <div className="dashboard-request-expanded" id={`solicitacao-detalhes-${solicitacao.id}`}>
-                        <p className="dashboard-description">{solicitacao.descricao}</p>
-                        <div className="dashboard-details">
+                    <div className="dashboard-request-expanded">
+                      <p className="dashboard-description">{solicitacao.descricao}</p>
+                      <div className="dashboard-details">
+                        <span>
+                          {solicitacao.enderecoAtendimento.logradouro}, {solicitacao.enderecoAtendimento.numero}
+                          {solicitacao.enderecoAtendimento.complemento
+                            ? `, ${solicitacao.enderecoAtendimento.complemento}`
+                            : ""} · {solicitacao.enderecoAtendimento.bairro}, {solicitacao.enderecoAtendimento.cidade}
+                        </span>
+                      </div>
+                      <div className="dashboard-tags">
+                        {solicitacao.especialidadesRequiridas.map((especialidade) => (
+                          <span className="dashboard-tag" key={especialidade}>{nomesEspecialidades[especialidade]}</span>
+                        ))}
+                      </div>
+
+                      {solicitacao.prestador ? (
+                        <div className="dashboard-provider">
+                          <strong>Profissional responsável: {solicitacao.prestador.nome}</strong>
+                          <span>Valor acordado: <b>{formatarMoeda(solicitacao.valorEstimado)}</b></span>
+                          {solicitacao.prestador.telefone && (
+                            <a href={`https://wa.me/${solicitacao.prestador.telefone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                              WhatsApp: {solicitacao.prestador.telefone}
+                            </a>
+                          )}
+                          <a href={`mailto:${solicitacao.prestador.email}`}>{solicitacao.prestador.email}</a>
                           <span>
-                            {solicitacao.enderecoAtendimento.logradouro}, {solicitacao.enderecoAtendimento.numero}
-                            {solicitacao.enderecoAtendimento.complemento
-                              ? `, ${solicitacao.enderecoAtendimento.complemento}`
-                              : ""} · {solicitacao.enderecoAtendimento.bairro}, {solicitacao.enderecoAtendimento.cidade}
+                            Especialidades: {solicitacao.prestador.especialidades.length
+                              ? solicitacao.prestador.especialidades.map((especialidade) => nomesEspecialidades[especialidade]).join(", ")
+                              : "Não informadas"}
                           </span>
                         </div>
-                        <div className="dashboard-tags">
-                          {solicitacao.especialidadesRequiridas.map((especialidade) => (
-                            <span className="dashboard-tag" key={especialidade}>{nomesEspecialidades[especialidade]}</span>
-                          ))}
+                      ) : solicitacao.propostas.length > 0 ? (
+                        <div className="dashboard-provider">
+                          <strong>Propostas recebidas</strong>
+                          {solicitacao.propostas.map((proposta) => {
+                            const chave = `${solicitacao.id}-${proposta.prestador.id}`;
+                            return (
+                              <div className="dashboard-proposal" key={proposta.prestador.id}>
+                                <span>De: <b>{proposta.prestador.nome}</b></span>
+                                <span>Valor proposto: <b>{formatarMoeda(proposta.valorProposto)}</b></span>
+                                <button
+                                  className="dashboard-button"
+                                  type="button"
+                                  disabled={aceitandoProposta !== null}
+                                  onClick={() => void aceitarProposta(solicitacao.id, proposta.prestador.id)}
+                                >
+                                  {aceitandoProposta === chave
+                                    ? "Confirmando..."
+                                    : `Aceitar Proposta de ${formatarMoeda(proposta.valorProposto)}`}
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
+                      ) : (
+                        <span className="dashboard-status">Aguardando profissional</span>
+                      )}
 
-                        {solicitacao.prestador ? (
-                          <div className="dashboard-provider">
-                            <strong>Profissional responsável: {solicitacao.prestador.nome}</strong>
-                            <span>Valor acordado: <b>{formatarMoeda(solicitacao.valorEstimado)}</b></span>
-                            {solicitacao.prestador.telefone && (
-                              <a href={`https://wa.me/${solicitacao.prestador.telefone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
-                                WhatsApp: {solicitacao.prestador.telefone}
-                              </a>
-                            )}
-                            <a href={`mailto:${solicitacao.prestador.email}`}>{solicitacao.prestador.email}</a>
-                            <span>
-                              Especialidades: {solicitacao.prestador.especialidades.length
-                                ? solicitacao.prestador.especialidades.map((especialidade) => nomesEspecialidades[especialidade]).join(", ")
-                                : "Não informadas"}
-                            </span>
-                          </div>
-                        ) : solicitacao.propostas.length > 0 ? (
-                          <div className="dashboard-provider">
-                            <strong>Propostas recebidas</strong>
-                            {solicitacao.propostas.map((proposta) => {
-                              const chave = `${solicitacao.id}-${proposta.prestador.id}`;
-                              return (
-                                <div className="dashboard-proposal" key={proposta.prestador.id}>
-                                  <span>De: <b>{proposta.prestador.nome}</b></span>
-                                  <span>Valor proposto: <b>{formatarMoeda(proposta.valorProposto)}</b></span>
-                                  <button
-                                    className="dashboard-button"
-                                    type="button"
-                                    disabled={aceitandoProposta !== null}
-                                    onClick={() => void aceitarProposta(solicitacao.id, proposta.prestador.id)}
-                                  >
-                                    {aceitandoProposta === chave
-                                      ? "Confirmando..."
-                                      : `Aceitar Proposta de ${formatarMoeda(proposta.valorProposto)}`}
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <span className="dashboard-status">Aguardando profissional</span>
-                        )}
-
-                        {solicitacao.statusSolicitacao === "EM_ANDAMENTO" && (
-                          <button
-                            className="dashboard-button dashboard-complete-button"
-                            type="button"
-                            disabled={concluindoSolicitacao !== null}
-                            onClick={() => void concluirServico(solicitacao.id)}
-                          >
-                            {concluindoSolicitacao === solicitacao.id ? "Concluindo..." : "Concluir Serviço"}
-                          </button>
-                        )}
-                      </div>
-                    )}
+                      {solicitacao.statusSolicitacao === "EM_ANDAMENTO" && (
+                        <button
+                          className="dashboard-button dashboard-complete-button"
+                          type="button"
+                          disabled={concluindoSolicitacao !== null}
+                          onClick={() => void concluirServico(solicitacao.id)}
+                        >
+                          {concluindoSolicitacao === solicitacao.id ? "Concluindo..." : "Concluir Serviço"}
+                        </button>
+                      )}
+                    </div>
                   </article>
                 );
               })}
