@@ -4,8 +4,9 @@ import com.es.servicehub.enums.Especialidades;
 
 import java.util.List;
 
-public record AtualizarPerfilUsuarioRequest(
+public record AtualizarUsuarioRequest(
         String nome,
         String telefone,
-        List<Especialidades> especialidades) {
+        List<Especialidades> especialidades,
+        EnderecoDTO endereco) {
 }

@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BriefcaseBusiness, CheckCheck } from "lucide-react";
 import marca from "../../assets/logo/ServiceHub_azul.png";
 import ModalAceitarSolicitacao from "../../componentes/modal/ModalAceitarSolicitacao";
+import ModalPerfilUsuario from "../../componentes/modal/ModalPerfilUsuario";
 import {
+  atualizarPerfilUsuario,
   enviarProposta,
   listarMeusChamados,
   listarSolicitacoesDisponiveis,
   type SolicitacaoApi,
 } from "../../servicos/api";
-import { nomesEspecialidades } from "../../servicos/especialidades";
-import { obterDashboardPorPerfil, obterUsuarioLogado, sairUsuario, validarUsuarioLogado, type Usuario } from "../../servicos/autenticacao";
+import { nomesEspecialidades, type Especialidade } from "../../servicos/especialidades";
+import {
+  definirUsuarioLogado,
+  obterDashboardPorPerfil,
+  obterUsuarioLogado,
+  sairUsuario,
+  validarUsuarioLogado,
+  type Usuario,
+} from "../../servicos/autenticacao";
 import "../Dashboard.css";
 
 function formatarData(data: string) {
@@ -31,6 +41,20 @@ export default function DashboardPrestador() {
   const [saindo, setSaindo] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
+  const [aba, setAba] = useState<"ATIVOS" | "CONCLUIDOS">("ATIVOS");
+  const [filtroEspecialidade, setFiltroEspecialidade] = useState<Especialidade | "TODAS">("TODAS");
+  const [perfilAberto, setPerfilAberto] = useState(false);
+  const [salvandoPerfil, setSalvandoPerfil] = useState(false);
+  const [erroPerfil, setErroPerfil] = useState("");
+
+  const chamadosAtivos = meusChamados.filter((chamado) => chamado.statusSolicitacao !== "CONCLUIDO");
+  const chamadosConcluidos = meusChamados.filter((chamado) => chamado.statusSolicitacao === "CONCLUIDO");
+  const solicitacoesDisponiveisFiltradas = disponiveis.filter((solicitacao) =>
+    filtroEspecialidade === "TODAS" || solicitacao.especialidadesRequiridas.includes(filtroEspecialidade));
+  const chamadosAtivosFiltrados = chamadosAtivos.filter((chamado) =>
+    filtroEspecialidade === "TODAS" || chamado.especialidadesRequiridas.includes(filtroEspecialidade));
+  const chamadosConcluidosFiltrados = chamadosConcluidos.filter((chamado) =>
+    filtroEspecialidade === "TODAS" || chamado.especialidadesRequiridas.includes(filtroEspecialidade));
 
   useEffect(() => {
     let cancelado = false;
@@ -98,6 +122,38 @@ export default function DashboardPrestador() {
     }
   }
 
+  async function salvarPerfil(dados: {
+    nome: string;
+    telefone: string;
+    especialidades?: Especialidade[];
+    endereco?: NonNullable<Usuario["endereco"]>;
+  }) {
+    if (!usuario) return false;
+    setSalvandoPerfil(true);
+    setErroPerfil("");
+    try {
+      const atualizado = await atualizarPerfilUsuario(usuario.id, dados);
+      const usuarioAtualizado: Usuario = {
+        ...usuario,
+        nome: atualizado.nome,
+        email: atualizado.email,
+        telefone: atualizado.telefone ?? "",
+        perfil: atualizado.tipoPerfil === "PRESTADOR" ? "PRESTADOR" : "CLIENTE",
+        especialidades: atualizado.especialidades ?? [],
+        endereco: atualizado.endereco ?? usuario.endereco,
+      };
+      setUsuario(usuarioAtualizado);
+      definirUsuarioLogado(usuarioAtualizado);
+      return true;
+    } catch (erroApi) {
+      console.error("Falha ao atualizar o perfil do usuário:", erroApi);
+      setErroPerfil(erroApi instanceof Error ? erroApi.message : "Não foi possível atualizar seu perfil.");
+      return false;
+    } finally {
+      setSalvandoPerfil(false);
+    }
+  }
+
   function renderSolicitacao(solicitacao: SolicitacaoApi, permitirAceite: boolean) {
     return (
       <article className="dashboard-request" key={solicitacao.id}>
@@ -129,7 +185,10 @@ export default function DashboardPrestador() {
             Enviar Proposta (R$) <span aria-hidden="true">↗</span>
           </button>
         ) : (
-          <span className="dashboard-status">Em andamento · {formatarMoeda(solicitacao.valorEstimado)}</span>
+          <span className="dashboard-status">
+            {solicitacao.statusSolicitacao === "CONCLUIDO" ? "Concluído" : "Em andamento"}
+            {" · "}{formatarMoeda(solicitacao.valorEstimado)}
+          </span>
         )}
       </article>
     );
@@ -143,7 +202,16 @@ export default function DashboardPrestador() {
           <span>Service<span>Hub</span></span>
         </Link>
         <div className="dashboard-nav-actions">
-          <span>Olá, {usuario?.nome.split(" ")[0] ?? "profissional"}</span>
+          <button
+            className="dashboard-profile-trigger"
+            type="button"
+            onClick={() => {
+              setErroPerfil("");
+              setPerfilAberto(true);
+            }}
+          >
+            Olá, {usuario?.nome.split(" ")[0] ?? "profissional"}
+          </button>
           <button type="button" onClick={() => void sair()} disabled={saindo}>
             {saindo ? "Saindo..." : "Sair"}
           </button>
@@ -162,22 +230,68 @@ export default function DashboardPrestador() {
         {erro && <p className="dashboard-error" role="alert">{erro}</p>}
         {sucesso && <p className="dashboard-success" role="status">{sucesso}</p>}
 
-        <div className="dashboard-grid">
+        <div className="dashboard-provider-tabs" role="tablist" aria-label="Serviços do prestador">
+          <button
+            className={`dashboard-provider-tab${aba === "ATIVOS" ? " is-active" : ""}`}
+            type="button"
+            role="tab"
+            aria-selected={aba === "ATIVOS"}
+            onClick={() => setAba("ATIVOS")}
+          >
+            <BriefcaseBusiness size={17} aria-hidden="true" />
+            Oportunidades e serviços ativos
+          </button>
+          <button
+            className={`dashboard-provider-tab${aba === "CONCLUIDOS" ? " is-active" : ""}`}
+            type="button"
+            role="tab"
+            aria-selected={aba === "CONCLUIDOS"}
+            onClick={() => setAba("CONCLUIDOS")}
+          >
+            <CheckCheck size={17} aria-hidden="true" />
+            Serviços concluídos
+            <span className="dashboard-count">{chamadosConcluidos.length}</span>
+          </button>
+        </div>
+
+        <div className="dashboard-specialty-filter" role="group" aria-label="Filtrar por especialidade">
+          <button
+            className={`dashboard-filter-chip${filtroEspecialidade === "TODAS" ? " is-active" : ""}`}
+            type="button"
+            aria-pressed={filtroEspecialidade === "TODAS"}
+            onClick={() => setFiltroEspecialidade("TODAS")}
+          >
+            Todas
+          </button>
+          {(usuario?.especialidades ?? []).map((especialidade) => (
+            <button
+              className={`dashboard-filter-chip${filtroEspecialidade === especialidade ? " is-active" : ""}`}
+              type="button"
+              key={especialidade}
+              aria-pressed={filtroEspecialidade === especialidade}
+              onClick={() => setFiltroEspecialidade(especialidade)}
+            >
+              {nomesEspecialidades[especialidade]}
+            </button>
+          ))}
+        </div>
+
+        {aba === "ATIVOS" ? <div className="dashboard-grid">
           <section className="dashboard-card">
             <div className="dashboard-section-heading">
               <div>
                 <p className="dashboard-eyebrow">NOVAS OPORTUNIDADES</p>
                 <h2>Solicitações disponíveis</h2>
               </div>
-              <span className="dashboard-count">{disponiveis.length}</span>
+              <span className="dashboard-count">{solicitacoesDisponiveisFiltradas.length}</span>
             </div>
             {carregando ? (
               <p className="dashboard-empty">Carregando solicitações...</p>
-            ) : disponiveis.length === 0 ? (
+            ) : solicitacoesDisponiveisFiltradas.length === 0 ? (
               <p className="dashboard-empty">Não há solicitações disponíveis no momento.</p>
             ) : (
               <div className="dashboard-request-list">
-                {disponiveis.map((solicitacao) => renderSolicitacao(solicitacao, true))}
+                {solicitacoesDisponiveisFiltradas.map((solicitacao) => renderSolicitacao(solicitacao, true))}
               </div>
             )}
           </section>
@@ -188,19 +302,38 @@ export default function DashboardPrestador() {
                 <p className="dashboard-eyebrow">SERVIÇOS ACEITOS</p>
                 <h2>Meus chamados em andamento</h2>
               </div>
-              <span className="dashboard-count">{meusChamados.length}</span>
+              <span className="dashboard-count">{chamadosAtivosFiltrados.length}</span>
             </div>
             {carregando ? (
               <p className="dashboard-empty">Carregando seus chamados...</p>
-            ) : meusChamados.length === 0 ? (
+            ) : chamadosAtivosFiltrados.length === 0 ? (
               <p className="dashboard-empty">Os serviços que você aceitar aparecerão aqui.</p>
             ) : (
               <div className="dashboard-request-list">
-                {meusChamados.map((solicitacao) => renderSolicitacao(solicitacao, false))}
+                {chamadosAtivosFiltrados.map((solicitacao) => renderSolicitacao(solicitacao, false))}
               </div>
             )}
           </section>
-        </div>
+        </div> : (
+          <section className="dashboard-card">
+            <div className="dashboard-section-heading">
+              <div>
+                <p className="dashboard-eyebrow">SEU HISTÓRICO</p>
+                <h2>Serviços concluídos</h2>
+              </div>
+              <span className="dashboard-count">{chamadosConcluidosFiltrados.length}</span>
+            </div>
+            {carregando ? (
+              <p className="dashboard-empty">Carregando seu histórico...</p>
+            ) : chamadosConcluidosFiltrados.length === 0 ? (
+              <p className="dashboard-empty">Não há serviços concluídos para esta especialidade.</p>
+            ) : (
+              <div className="dashboard-request-list dashboard-request-list-scroll">
+                {chamadosConcluidosFiltrados.map((solicitacao) => renderSolicitacao(solicitacao, false))}
+              </div>
+            )}
+          </section>
+        )}
       </main>
 
       <ModalAceitarSolicitacao
@@ -210,6 +343,19 @@ export default function DashboardPrestador() {
         onFechar={() => setSolicitacaoSelecionada(null)}
         onConfirmar={confirmarProposta}
       />
+      {perfilAberto && usuario && <ModalPerfilUsuario
+        usuario={usuario}
+        salvando={salvandoPerfil}
+        erro={erroPerfil}
+        onLimparErro={() => setErroPerfil("")}
+        onFechar={() => {
+          if (!salvandoPerfil) {
+            setPerfilAberto(false);
+            setErroPerfil("");
+          }
+        }}
+        onSalvar={salvarPerfil}
+      />}
     </div>
   );
 }

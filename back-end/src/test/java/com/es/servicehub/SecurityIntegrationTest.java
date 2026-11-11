@@ -12,6 +12,7 @@ import com.es.servicehub.model.Usuario;
 import com.es.servicehub.repository.SolicitacaoServiceRepository;
 import com.es.servicehub.repository.UsuarioRepository;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,7 +56,7 @@ class SecurityIntegrationTest {
         prestador.setEmail("prestador@example.com");
         prestador.setSenha("hash");
         prestador.setTipoPerfil(TipoPerfil.PRESTADOR);
-        prestador.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+        prestador.setEspecialidades(new java.util.ArrayList<>(List.of(Especialidades.ELETRICISTA)));
         usuarioRepository.save(prestador);
 
         SolicitacaoServico solicitacao = new SolicitacaoServico();
@@ -78,6 +79,35 @@ class SecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].titulo")
                         .value("Instalação elétrica"));
+    }
+
+    @Test
+    void prestadorRecebeHistoricoConcluidoDoProprioPerfil() throws Exception {
+        Usuario prestador = novoUsuario("prestador-historico@example.com", TipoPerfil.PRESTADOR);
+        prestador.setEspecialidades(new java.util.ArrayList<>(List.of(Especialidades.ELETRICISTA)));
+        usuarioRepository.save(prestador);
+        Usuario cliente = novoUsuario("cliente-historico@example.com", TipoPerfil.CLIENTE);
+
+        SolicitacaoServico concluida = new SolicitacaoServico();
+        concluida.setTitulo("Reparo elétrico concluído");
+        concluida.setDescricao("Troca da fiação");
+        concluida.setValorEstimado(new java.math.BigDecimal("235.50"));
+        concluida.setStatusSolicitacao(StatusSolicitacao.CONCLUIDO);
+        concluida.setDataCriacao(LocalDateTime.now());
+        concluida.setCliente(cliente);
+        concluida.setPrestador(prestador);
+        concluida.setEspecialidadesRequiridas(List.of(Especialidades.ELETRICISTA));
+        solicitacaoRepository.save(concluida);
+
+        mockMvc.perform(get("/api/solicitacoes/meus-chamados")
+                        .with(user(prestador.getEmail()).roles("PRESTADOR")))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$[0].titulo").value("Reparo elétrico concluído"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$[0].statusSolicitacao").value("CONCLUIDO"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$[0].valorEstimado").value(235.50));
     }
 
     @Test
@@ -134,6 +164,9 @@ class SecurityIntegrationTest {
     @Test
     void usuarioPodeAtualizarSomenteCamposDoProprioPerfil() throws Exception {
         Usuario cliente = novoUsuario("perfil-proprio@example.com", TipoPerfil.CLIENTE);
+        cliente.setCpf("52998224725");
+        cliente.setSenha("senha-original");
+        cliente = usuarioRepository.save(cliente);
 
         mockMvc.perform(put("/api/usuarios/" + cliente.getId())
                         .with(user(cliente.getEmail()).roles("CLIENTE"))
@@ -143,6 +176,15 @@ class SecurityIntegrationTest {
                                 {
                                   "nome": "Nome atualizado",
                                   "telefone": "(48) 99999-1111",
+                                  "endereco": {
+                                    "cep": "88000000",
+                                    "logradouro": "Rua Central",
+                                    "numero": "10",
+                                    "complemento": "Apto 2",
+                                    "bairro": "Centro",
+                                    "cidade": "Florianópolis",
+                                    "estado": "sc"
+                                  },
                                   "tipoPerfil": "ADMIN",
                                   "senha": "senha-injetada"
                                 }
@@ -151,7 +193,97 @@ class SecurityIntegrationTest {
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
                         .jsonPath("$.nome").value("Nome atualizado"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                        .jsonPath("$.tipoPerfil").value("CLIENTE"));
+                        .jsonPath("$.tipoPerfil").value("CLIENTE"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.endereco.logradouro").value("Rua Central"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.endereco.estado").value("SC"));
+
+        Usuario persistido = usuarioRepository.findById(cliente.getId()).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("perfil-proprio@example.com", persistido.getEmail());
+        org.junit.jupiter.api.Assertions.assertEquals("52998224725", persistido.getCpf());
+        org.junit.jupiter.api.Assertions.assertEquals("senha-original", persistido.getSenha());
+        org.junit.jupiter.api.Assertions.assertEquals(TipoPerfil.CLIENTE, persistido.getTipoPerfil());
+        org.junit.jupiter.api.Assertions.assertEquals("(48) 99999-1111", persistido.getTelefone());
+    }
+
+    @Test
+    @Transactional
+    void prestadorPodeAtualizarEspecialidades() throws Exception {
+        Usuario prestador = novoUsuario("perfil-prestador@example.com", TipoPerfil.PRESTADOR);
+        prestador.setEspecialidades(new java.util.ArrayList<>(List.of(Especialidades.ELETRICISTA)));
+        prestador = usuarioRepository.save(prestador);
+
+        mockMvc.perform(put("/api/usuarios/" + prestador.getId())
+                        .with(user(prestador.getEmail()).roles("PRESTADOR"))
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "nome": "Prestador atualizado",
+                                  "especialidades": ["PINTOR"]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.especialidades[0]").value("PINTOR"));
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                List.of(Especialidades.PINTOR),
+                usuarioRepository.findById(prestador.getId()).orElseThrow().getEspecialidades());
+    }
+
+    @Test
+    void usuarioNaoPodeEditarPerfilDeOutroUsuario() throws Exception {
+        Usuario solicitante = novoUsuario("perfil-solicitante@example.com", TipoPerfil.CLIENTE);
+        Usuario alvo = novoUsuario("perfil-alvo@example.com", TipoPerfil.CLIENTE);
+
+        mockMvc.perform(put("/api/usuarios/" + alvo.getId())
+                        .with(user(solicitante.getEmail()).roles("CLIENTE"))
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content("{\"nome\":\"Alteração não autorizada\"}"))
+                .andExpect(status().isForbidden());
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "Usuário de teste",
+                usuarioRepository.findById(alvo.getId()).orElseThrow().getNome());
+    }
+
+    @Test
+    void usuarioNaoPodeAtualizarEnderecoComUfInvalida() throws Exception {
+        Usuario cliente = novoUsuario("perfil-uf-invalida@example.com", TipoPerfil.CLIENTE);
+
+        mockMvc.perform(put("/api/usuarios/" + cliente.getId())
+                        .with(user(cliente.getEmail()).roles("CLIENTE"))
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "nome": "Nome atualizado",
+                                  "endereco": {
+                                    "cep": "88000000",
+                                    "logradouro": "Rua Central",
+                                    "numero": "10",
+                                    "bairro": "Centro",
+                                    "cidade": "Florianópolis",
+                                    "estado": "Santa Catarina"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void clienteNaoPodeEnviarEspecialidadesNoPerfil() throws Exception {
+        Usuario cliente = novoUsuario("perfil-cliente-especialidade@example.com", TipoPerfil.CLIENTE);
+
+        mockMvc.perform(put("/api/usuarios/" + cliente.getId())
+                        .with(user(cliente.getEmail()).roles("CLIENTE"))
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content("{\"nome\":\"Cliente atualizado\",\"especialidades\":[]}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

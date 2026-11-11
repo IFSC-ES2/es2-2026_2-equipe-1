@@ -2,6 +2,7 @@ package com.es.servicehub.dto;
 
 import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.enums.TipoPerfil;
+import com.es.servicehub.model.Endereco;
 import com.es.servicehub.model.Usuario;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class UsuarioRespostaDTO {
     private String telefone;
     private TipoPerfil tipoPerfil;
     private List<Especialidades> especialidades;
+    private Endereco endereco;
 
     public static UsuarioRespostaDTO fromEntity(Usuario usuario) {
         if (usuario == null) {
@@ -30,7 +32,8 @@ public class UsuarioRespostaDTO {
                 usuario.getEmail(),
                 usuario.getTelefone(),
                 usuario.getTipoPerfil(),
-                usuario.getEspecialidades() == null ? List.of() : usuario.getEspecialidades()
+                usuario.getEspecialidades() == null ? List.of() : usuario.getEspecialidades(),
+                usuario.getEndereco()
         );
     }
 }

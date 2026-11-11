@@ -3,6 +3,16 @@ import { logout, requisitarApi } from "./api";
 
 export type PerfilUsuario = "CLIENTE" | "PRESTADOR";
 
+export type EnderecoPerfilUsuario = {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+};
+
 export type Usuario = {
   id: number;
   nome: string;
@@ -10,6 +20,7 @@ export type Usuario = {
   perfil: PerfilUsuario;
   telefone: string;
   especialidades: Especialidade[];
+  endereco?: EnderecoPerfilUsuario | null;
 };
 
 export type UsuarioApi = {
@@ -19,6 +30,7 @@ export type UsuarioApi = {
   telefone: string;
   tipoPerfil: PerfilUsuario | "ADMIN";
   especialidades?: Especialidade[];
+  endereco?: EnderecoPerfilUsuario | null;
 };
 
 const USUARIO_LOGADO_KEY = "servicehub.usuarioLogado";
@@ -85,6 +97,7 @@ function mapearUsuario(usuario: UsuarioApi): Usuario {
     perfil: usuario.tipoPerfil === "PRESTADOR" ? "PRESTADOR" : "CLIENTE",
     telefone: usuario.telefone ?? "",
     especialidades: usuario.especialidades ?? [],
+    endereco: usuario.endereco ?? null,
   };
 }
 

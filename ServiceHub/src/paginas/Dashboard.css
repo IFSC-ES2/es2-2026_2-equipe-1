@@ -501,6 +501,126 @@ textarea.dashboard-field {
 	color: #fff;
 }
 
+.dashboard-profile-trigger {
+	padding: 7px 10px;
+	border: 1px solid transparent !important;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--green);
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.dashboard-profile-trigger:hover {
+	border-color: rgba(23, 107, 82, .2) !important;
+	background: rgba(23, 107, 82, .06);
+}
+
+.dashboard-profile-heading {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.dashboard-profile-icon {
+	display: grid;
+	width: 42px;
+	height: 42px;
+	place-items: center;
+	border-radius: 50%;
+	background: #edf1df;
+	color: var(--green);
+}
+
+.dashboard-profile-field {
+	display: grid;
+	gap: 6px;
+	margin: 16px 0;
+	color: var(--ink);
+	font-size: 13px;
+	font-weight: 700;
+}
+
+.dashboard-profile-field .dashboard-field:disabled {
+	background: #f5f5f0;
+	color: var(--muted);
+	opacity: 1;
+}
+
+.dashboard-profile-readonly {
+	display: flex;
+	align-items: center;
+	min-height: 48px;
+	padding: 0 12px;
+	border: 1px solid rgba(32, 45, 42, .12);
+	border-radius: 3px;
+	background: #f5f5f0;
+	color: var(--muted);
+	font-weight: 500;
+}
+
+.dashboard-profile-specialties {
+	margin: 18px 0 0;
+	padding: 0;
+	border: 0;
+}
+
+.dashboard-profile-specialties legend {
+	margin-bottom: 8px;
+	font-size: 13px;
+	font-weight: 700;
+}
+
+.dashboard-profile-specialties:disabled {
+	opacity: .75;
+}
+
+.dashboard-provider-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 16px;
+	border-bottom: 1px solid rgba(32, 45, 42, .12);
+}
+
+.dashboard-provider-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	min-height: 46px;
+	padding: 0 16px;
+	border: 0;
+	border-bottom: 3px solid transparent;
+	background: transparent;
+	color: var(--muted);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.dashboard-provider-tab:hover,
+.dashboard-provider-tab.is-active {
+	color: var(--green);
+}
+
+.dashboard-provider-tab.is-active {
+	border-bottom-color: var(--green);
+}
+
+.dashboard-provider-tab .dashboard-count {
+	min-width: 24px;
+	height: 24px;
+}
+
+.dashboard-specialty-filter {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 20px;
+}
+
 .dashboard-request-list-scroll {
 	max-height: 620px;
 	overflow-y: auto;
@@ -739,6 +859,15 @@ textarea.dashboard-field {
 
 	.dashboard-request-summary-meta {
 		white-space: normal;
+	}
+
+	.dashboard-provider-tab {
+		flex: 1 1 100%;
+		justify-content: flex-start;
+	}
+
+	.dashboard-profile-modal {
+		padding: 22px;
 	}
 }
 

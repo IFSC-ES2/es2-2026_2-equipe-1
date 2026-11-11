@@ -1,9 +1,12 @@
 package com.es.servicehub.service;
 
-import com.es.servicehub.dto.AtualizarPerfilUsuarioRequest;
+import com.es.servicehub.dto.AtualizarUsuarioRequest;
 import com.es.servicehub.dto.CadastroUsuarioRequest;
+import com.es.servicehub.dto.EnderecoDTO;
 import com.es.servicehub.enums.TipoPerfil;
+import com.es.servicehub.model.Endereco;
 import com.es.servicehub.model.Usuario;
+import com.es.servicehub.repository.EnderecoRepository;
 import com.es.servicehub.repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,10 +20,12 @@ import java.util.List;
 @Service
 public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
+    private final EnderecoRepository enderecoRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, EnderecoRepository enderecoRepository) {
         this.usuarioRepository = usuarioRepository;
+        this.enderecoRepository = enderecoRepository;
     }
 
     @Transactional
@@ -225,7 +230,7 @@ public class UsuarioService {
 
     @Transactional
     public Usuario atualizarPerfil(
-            Long id, Long solicitanteId, AtualizarPerfilUsuarioRequest dadosAtualizacao) {
+            Long id, Long solicitanteId, AtualizarUsuarioRequest dadosAtualizacao) {
         if (!id.equals(solicitanteId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você só pode editar seu próprio perfil.");
         }
@@ -233,27 +238,53 @@ public class UsuarioService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe os dados do perfil.");
         }
 
-        Usuario usuarioExistente = buscarPorId(id);
-        if (dadosAtualizacao.nome() != null) {
-            if (dadosAtualizacao.nome().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome não pode ficar vazio.");
-            }
-            usuarioExistente.setNome(dadosAtualizacao.nome().trim());
+        Usuario usuarioExistente = usuarioRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o ID: " + id));
+        if (dadosAtualizacao.nome() == null || dadosAtualizacao.nome().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome é obrigatório.");
         }
+        usuarioExistente.setNome(dadosAtualizacao.nome().trim());
         if (dadosAtualizacao.telefone() != null) {
             String telefone = dadosAtualizacao.telefone().trim();
             usuarioExistente.setTelefone(telefone.isEmpty() ? null : telefone);
         }
         if (dadosAtualizacao.especialidades() != null) {
-            if (usuarioExistente.getTipoPerfil() != TipoPerfil.PRESTADOR
-                    && !dadosAtualizacao.especialidades().isEmpty()) {
+            if (usuarioExistente.getTipoPerfil() != TipoPerfil.PRESTADOR) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST, "Somente prestadores podem cadastrar especialidades.");
             }
             usuarioExistente.setEspecialidades(new ArrayList<>(dadosAtualizacao.especialidades()));
         }
+        if (dadosAtualizacao.endereco() != null) {
+            EnderecoDTO dadosEndereco = dadosAtualizacao.endereco();
+            validarEndereco(dadosEndereco);
+            Endereco endereco = usuarioExistente.getEndereco();
+            if (endereco == null) {
+                endereco = new Endereco();
+            }
+            endereco.setCep(dadosEndereco.cep().trim());
+            endereco.setLogradouro(dadosEndereco.logradouro().trim());
+            endereco.setNumero(dadosEndereco.numero().trim());
+            endereco.setComplemento(dadosEndereco.complemento() == null ? "" : dadosEndereco.complemento().trim());
+            endereco.setBairro(dadosEndereco.bairro().trim());
+            endereco.setCidade(dadosEndereco.cidade().trim());
+            endereco.setEstado(dadosEndereco.estado().trim().toUpperCase());
+            usuarioExistente.setEndereco(enderecoRepository.save(endereco));
+        }
 
         return usuarioRepository.save(usuarioExistente);
+    }
+
+    private void validarEndereco(EnderecoDTO endereco) {
+        if (endereco.cep() == null || endereco.cep().isBlank()
+                || endereco.logradouro() == null || endereco.logradouro().isBlank()
+                || endereco.numero() == null || endereco.numero().isBlank()
+                || endereco.bairro() == null || endereco.bairro().isBlank()
+                || endereco.cidade() == null || endereco.cidade().isBlank()
+                || endereco.estado() == null || !endereco.estado().trim().matches("[A-Za-z]{2}")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Informe um endereço completo e uma UF válida de duas letras.");
+        }
     }
 
     @Transactional

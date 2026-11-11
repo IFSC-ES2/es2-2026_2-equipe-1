@@ -158,6 +158,7 @@ class SolicitacaoServicoServiceAdditionalTest {
         assertEquals(1, service.listarDoPrestador(20L).size());
         verify(solicitacaoRepository).findByStatusSolicitacaoOrderByDataCriacaoDesc(StatusSolicitacao.SOLICITADO);
         verify(solicitacaoRepository).findByCliente_IdOrderByDataCriacaoDesc(10L);
-        verify(solicitacaoRepository).findByPrestador_IdAndStatusSolicitacaoInOrderByDataCriacaoDesc(eq(20L), anyList());
+        verify(solicitacaoRepository).findByPrestador_IdAndStatusSolicitacaoInOrderByDataCriacaoDesc(
+                eq(20L), eq(List.of(StatusSolicitacao.ACEITO, StatusSolicitacao.EM_ANDAMENTO, StatusSolicitacao.CONCLUIDO)));
     }
 }

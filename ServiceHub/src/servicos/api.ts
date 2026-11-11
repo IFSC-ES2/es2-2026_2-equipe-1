@@ -1,8 +1,9 @@
 import type { DadosSolicitacao, EnderecoSelecionavel } from "../componentes/modal/ModalCriarSolicitacao";
 import type { Endereco } from "../componentes/modal/ModalCriarEndereço";
 import type { Especialidade } from "./especialidades";
+import type { EnderecoPerfilUsuario } from "./autenticacao";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081/api";
 
 function obterCookie(nome: string): string | null {
   const prefixo = `${nome}=`;
@@ -92,6 +93,7 @@ export type UsuarioSolicitacaoApi = {
   telefone: string;
   tipoPerfil: "CLIENTE" | "PRESTADOR" | "ADMIN";
   especialidades: Especialidade[];
+  endereco?: EnderecoPerfilUsuario | null;
 };
 
 export type SolicitacaoApi = {
@@ -197,6 +199,21 @@ export async function excluirSolicitacao(id: number): Promise<void> {
   if (!resposta.ok) {
     throw await erroDaResposta(resposta, "Não foi possível excluir a solicitação");
   }
+}
+
+export async function atualizarPerfilUsuario(
+  id: number,
+  dados: {
+    nome: string;
+    telefone: string;
+    especialidades?: Especialidade[];
+    endereco?: EnderecoPerfilUsuario;
+  },
+): Promise<UsuarioSolicitacaoApi> {
+  return requisicao<UsuarioSolicitacaoApi>(`/usuarios/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(dados),
+  });
 }
 
 export async function criarSolicitacao(

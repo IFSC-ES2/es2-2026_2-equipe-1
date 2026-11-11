@@ -75,9 +75,12 @@ public class SolicitacaoServicoService {
     @Transactional(readOnly = true)
     public List<SolicitacaoServicoRespostaDTO> listarDoPrestador(Long prestadorId) {
         return solicitacaoServiceRepository.findByPrestador_IdAndStatusSolicitacaoInOrderByDataCriacaoDesc(
-                        prestadorId, List.of(StatusSolicitacao.ACEITO, StatusSolicitacao.EM_ANDAMENTO))
+                        prestadorId, List.of(
+                                StatusSolicitacao.ACEITO,
+                                StatusSolicitacao.EM_ANDAMENTO,
+                                StatusSolicitacao.CONCLUIDO))
                 .stream()
-        .map(solicitacao -> SolicitacaoServicoRespostaDTO.fromEntity(solicitacao, false))
+                .map(solicitacao -> SolicitacaoServicoRespostaDTO.fromEntity(solicitacao, false))
                 .toList();
     }
 

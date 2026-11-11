@@ -7,7 +7,9 @@ import ModalCriarSolicitacao, {
   type DadosSolicitacao,
   type EnderecoSelecionavel,
 } from "../../componentes/modal/ModalCriarSolicitacao";
+import ModalPerfilUsuario from "../../componentes/modal/ModalPerfilUsuario";
 import {
+  atualizarPerfilUsuario,
   criarEndereco,
   criarSolicitacao,
   clienteAceitarProposta,
@@ -17,7 +19,14 @@ import {
   listarMinhasSolicitacoes,
   type SolicitacaoApi,
 } from "../../servicos/api";
-import { obterDashboardPorPerfil, obterUsuarioLogado, sairUsuario, validarUsuarioLogado, type Usuario } from "../../servicos/autenticacao";
+import {
+  definirUsuarioLogado,
+  obterDashboardPorPerfil,
+  obterUsuarioLogado,
+  sairUsuario,
+  validarUsuarioLogado,
+  type Usuario,
+} from "../../servicos/autenticacao";
 import { nomesEspecialidades } from "../../servicos/especialidades";
 import "../Dashboard.css";
 
@@ -75,6 +84,9 @@ export default function DashboardCliente() {
   const [menuAberto, setMenuAberto] = useState<number | null>(null);
   const [concluindoSolicitacao, setConcluindoSolicitacao] = useState<number | null>(null);
   const [excluindoSolicitacao, setExcluindoSolicitacao] = useState<number | null>(null);
+  const [perfilAberto, setPerfilAberto] = useState(false);
+  const [salvandoPerfil, setSalvandoPerfil] = useState(false);
+  const [erroPerfil, setErroPerfil] = useState("");
 
   const solicitacoesFiltradas = useMemo(
     () => filtroSolicitacao === "TODAS"
@@ -213,6 +225,38 @@ export default function DashboardCliente() {
     }
   }
 
+  async function salvarPerfil(dados: {
+    nome: string;
+    telefone: string;
+    especialidades?: Usuario["especialidades"];
+    endereco?: NonNullable<Usuario["endereco"]>;
+  }) {
+    if (!usuario) return false;
+    setSalvandoPerfil(true);
+    setErroPerfil("");
+    try {
+      const atualizado = await atualizarPerfilUsuario(usuario.id, dados);
+      const usuarioAtualizado: Usuario = {
+        ...usuario,
+        nome: atualizado.nome,
+        email: atualizado.email,
+        telefone: atualizado.telefone ?? "",
+        perfil: atualizado.tipoPerfil === "PRESTADOR" ? "PRESTADOR" : "CLIENTE",
+        especialidades: atualizado.especialidades ?? [],
+        endereco: atualizado.endereco ?? usuario.endereco,
+      };
+      setUsuario(usuarioAtualizado);
+      definirUsuarioLogado(usuarioAtualizado);
+      return true;
+    } catch (erroApi) {
+      console.error("Falha ao atualizar o perfil do usuário:", erroApi);
+      setErroPerfil(erroApi instanceof Error ? erroApi.message : "Não foi possível atualizar seu perfil.");
+      return false;
+    } finally {
+      setSalvandoPerfil(false);
+    }
+  }
+
   return (
     <div className="home-page dashboard-page">
       <header className="dashboard-nav">
@@ -221,7 +265,16 @@ export default function DashboardCliente() {
           <span>Service<span>Hub</span></span>
         </Link>
         <div className="dashboard-nav-actions">
-          <span>Olá, {usuario?.nome.split(" ")[0] ?? "Cliente"}</span>
+          <button
+            className="dashboard-profile-trigger"
+            type="button"
+            onClick={() => {
+              setErroPerfil("");
+              setPerfilAberto(true);
+            }}
+          >
+            Olá, {usuario?.nome.split(" ")[0] ?? "Cliente"}
+          </button>
           <button type="button" onClick={() => void sair()} disabled={saindo}>
             {saindo ? "Saindo..." : "Sair"}
           </button>
@@ -438,6 +491,19 @@ export default function DashboardCliente() {
         onSalvar={salvarEndereco}
         erro={erroEndereco}
       />
+      {perfilAberto && usuario && <ModalPerfilUsuario
+        usuario={usuario}
+        salvando={salvandoPerfil}
+        erro={erroPerfil}
+        onLimparErro={() => setErroPerfil("")}
+        onFechar={() => {
+          if (!salvandoPerfil) {
+            setPerfilAberto(false);
+            setErroPerfil("");
+          }
+        }}
+        onSalvar={salvarPerfil}
+      />}
     </div>
   );
 }

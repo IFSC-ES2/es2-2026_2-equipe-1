@@ -1,7 +1,7 @@
 package com.es.servicehub.controller;
 
 import com.es.servicehub.dto.CadastroUsuarioRequest;
-import com.es.servicehub.dto.AtualizarPerfilUsuarioRequest;
+import com.es.servicehub.dto.AtualizarUsuarioRequest;
 import com.es.servicehub.dto.LoginUsuarioRequest;
 import com.es.servicehub.dto.UsuarioRespostaDTO;
 import com.es.servicehub.model.Usuario;
@@ -136,7 +136,7 @@ public class UsuarioController {
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioRespostaDTO> atualizar(
             @PathVariable Long id,
-            @RequestBody AtualizarPerfilUsuarioRequest request,
+            @RequestBody AtualizarUsuarioRequest request,
             Authentication authentication) {
         Usuario solicitante = usuarioService.buscarPorEmail(authentication.getName());
         Usuario usuario = usuarioService.atualizarPerfil(id, solicitante.getId(), request);

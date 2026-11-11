@@ -1,11 +1,14 @@
 package com.es.servicehub.service;
 
 import com.es.servicehub.dto.CadastroUsuarioRequest;
-import com.es.servicehub.dto.AtualizarPerfilUsuarioRequest;
+import com.es.servicehub.dto.AtualizarUsuarioRequest;
+import com.es.servicehub.dto.EnderecoDTO;
 import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.enums.TipoPerfil;
+import com.es.servicehub.model.Endereco;
 import com.es.servicehub.model.Usuario;
 import com.es.servicehub.repository.UsuarioRepository;
+import com.es.servicehub.repository.EnderecoRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,9 @@ class UsuarioServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private EnderecoRepository enderecoRepository;
 
     @InjectMocks
     private UsuarioService usuarioService;
@@ -337,9 +343,9 @@ class UsuarioServiceTest {
     void atualizarPerfil_deveAlterarSomenteCamposPermitidos() {
         usuario.setTipoPerfil(TipoPerfil.PRESTADOR);
         usuario.setEspecialidades(List.of(Especialidades.ELETRICISTA));
-        AtualizarPerfilUsuarioRequest dados = new AtualizarPerfilUsuarioRequest(
-                "João Atualizado", "(48) 99999-0000", List.of(Especialidades.PINTOR));
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        AtualizarUsuarioRequest dados = new AtualizarUsuarioRequest(
+                "João Atualizado", "(48) 99999-0000", List.of(Especialidades.PINTOR), null);
+        when(usuarioRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(usuario));
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Usuario resultado = usuarioService.atualizarPerfil(1L, 1L, dados);
@@ -353,21 +359,52 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void atualizarPerfil_deveCriarEnderecoSemAlterarDocumentosOuSenha() {
+        usuario.setCpf("12345678901");
+        usuario.setCnpj("12345678000199");
+        EnderecoDTO dadosEndereco = new EnderecoDTO(
+                "88000000", "Rua Central", "10", "Apto 2", "Centro", "Florianópolis", "SC");
+        when(usuarioRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(usuario));
+        when(enderecoRepository.save(any(Endereco.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario resultado = usuarioService.atualizarPerfil(
+                1L, 1L, new AtualizarUsuarioRequest("João Atualizado", null, null, dadosEndereco));
+
+        assertEquals("Rua Central", resultado.getEndereco().getLogradouro());
+        assertEquals("88000000", resultado.getEndereco().getCep());
+        assertEquals("12345678901", resultado.getCpf());
+        assertEquals("12345678000199", resultado.getCnpj());
+        assertEquals("123456", resultado.getSenha());
+        verify(enderecoRepository).save(any(Endereco.class));
+    }
+
+    @Test
     void atualizarPerfil_quandoSolicitanteNaoForProprietario_deveRejeitar() {
         assertThrows(org.springframework.web.server.ResponseStatusException.class,
                 () -> usuarioService.atualizarPerfil(
-                        1L, 2L, new AtualizarPerfilUsuarioRequest("Outro", null, null)));
-        verify(usuarioRepository, never()).findById(anyLong());
+                        1L, 2L, new AtualizarUsuarioRequest("Outro", null, null, null)));
+        verify(usuarioRepository, never()).findByIdForUpdate(anyLong());
         verify(usuarioRepository, never()).save(any());
     }
 
     @Test
     void atualizarPerfil_quandoNomeFicarVazio_deveRejeitar() {
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(usuario));
 
         assertThrows(org.springframework.web.server.ResponseStatusException.class,
                 () -> usuarioService.atualizarPerfil(
-                        1L, 1L, new AtualizarPerfilUsuarioRequest("  ", null, null)));
+                        1L, 1L, new AtualizarUsuarioRequest("  ", null, null, null)));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void atualizarPerfil_clienteNaoPodeAlterarEspecialidades() {
+        when(usuarioRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(usuario));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> usuarioService.atualizarPerfil(
+                        1L, 1L, new AtualizarUsuarioRequest("João", null, List.of(), null)));
         verify(usuarioRepository, never()).save(any());
     }
 

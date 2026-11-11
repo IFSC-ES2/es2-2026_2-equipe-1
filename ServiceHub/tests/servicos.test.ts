@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  atualizarPerfilUsuario,
   clienteAceitarProposta,
   criarEndereco,
   enviarProposta,
@@ -119,6 +120,31 @@ describe("serviço de API", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("http://localhost:8081/api/solicitacoes/1/propostas");
     expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toEqual({ valorProposto: 175.5 });
     expect(fetchMock.mock.calls[1][0]).toBe("http://localhost:8081/api/solicitacoes/1/propostas/8/aceitar");
+  });
+
+  it("atualiza o perfil pelo ID e envia somente os campos editáveis", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson(usuarioApi));
+    vi.stubGlobal("fetch", fetchMock);
+    const dados = {
+      nome: "Maria Atualizada",
+      telefone: "9999",
+      especialidades: ["ELETRICISTA" as const],
+      endereco: {
+        cep: "88000000",
+        logradouro: "Rua Central",
+        numero: "10",
+        complemento: "",
+        bairro: "Centro",
+        cidade: "Florianópolis",
+        estado: "SC",
+      },
+    };
+
+    await atualizarPerfilUsuario(8, dados);
+
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/usuarios\/8$/);
+    expect((fetchMock.mock.calls[0][1] as RequestInit).method).toBe("PUT");
+    expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toEqual(dados);
   });
 
   it("transforma erro JSON da API em mensagem útil", async () => {
