@@ -60,20 +60,22 @@ public class SecurityConfig {
             SecurityContextRepository securityContextRepository) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                // A API usa autenticação por cabeçalho, portanto não depende de CSRF baseado em sessão.
+                // Desativa o CSRF completamente para a API
                 .csrf(csrf -> csrf.disable())
-                // O contexto de segurança não deve ser persistido em uma sessão HTTP.
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        // Liberar requisições OPTIONS de CORS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Liberar rotas públicas: cadastro, login e a rota de checagem do csrf
                         .requestMatchers(HttpMethod.POST, "/api/usuarios/cadastro", "/api/usuarios/login").permitAll()
+                        .requestMatchers("/api/usuarios/csrf", "/h2-console/**").permitAll()
+                        // Demais endpoints exigem autenticação
                         .anyRequest().authenticated())
-                // O filtro HTTP Basic é o filtro de autenticação por cabeçalho disponível no projeto.
                 .addFilterBefore(new BasicAuthenticationFilter(authenticationManager),
                         UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.disable())
-                .headers(headers -> headers.frameOptions(frame -> frame.deny()));
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
@@ -81,12 +83,10 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Origens explicitamente autorizadas para o frontend local e publicado.
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "https://frontservicehub.jvs.dev.br"));
+        // Permite o acesso a partir de qualquer origem no frontend (local e staging)
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
