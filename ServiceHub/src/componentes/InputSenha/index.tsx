@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import './InputSenha.css';
 
-interface InputSenhaProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+type InputSenhaProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 export function InputSenha(props: InputSenhaProps) {
   const [mostrarSenha, setMostrarSenha] = useState(false);
