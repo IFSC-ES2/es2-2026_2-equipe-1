@@ -90,4 +90,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate Docker Compose
+        env:
+          JWT_SECRET: ci-compose-validation-only-secret-not-for-runtime
         run: docker compose -f docker-compose.yml config --quiet
