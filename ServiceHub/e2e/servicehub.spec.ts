@@ -107,7 +107,6 @@ test("login apresenta erro para credenciais inválidas", async ({ page }) => {
 test("cliente edita perfil e os dados persistem após recarregar", async ({ page }) => {
   test.setTimeout(60_000);
   await entrarOuCadastrar(page, contas.cliente, /\/dashboard-cliente$/);
-  await expect(page.getByText("Você ainda não publicou solicitações.")).toBeVisible();
   await page.locator(".dashboard-profile-trigger").click();
 
   const modal = page.getByRole("dialog", { name: "Meu perfil" });
@@ -115,23 +114,19 @@ test("cliente edita perfil e os dados persistem após recarregar", async ({ page
   await expect(modal.getByLabel("E-mail")).toBeDisabled();
   await expect(tipoPerfil).toBeDisabled();
   await expect(tipoPerfil).toHaveValue("Cliente");
-  for (const campo of ["Nome", "Telefone", "CEP", "Rua", "Número", "Bairro", "Cidade", "Estado"]) {
+  for (const campo of ["Nome", "Telefone"]) {
     await expect(modal.getByLabel(campo)).toBeDisabled();
   }
+  await expect(modal.getByLabel(/CEP|Rua|Número|Complemento|Bairro|Cidade|Estado/)).toHaveCount(0);
 
   await modal.getByRole("button", { name: "Editar Perfil" }).click();
   const nomeAtualizado = `Cliente E2E Editado ${Date.now()}`;
   await modal.getByLabel("Nome").fill(nomeAtualizado);
   await modal.getByLabel("Telefone").fill("(48) 98888-7777");
-  await modal.getByLabel("CEP").fill(enderecoTeste.cep);
-  await modal.getByLabel("Rua").fill(enderecoTeste.rua);
-  await modal.getByLabel("Número").fill(enderecoTeste.numero);
-  await modal.getByLabel("Bairro").fill(enderecoTeste.bairro);
-  await modal.getByLabel("Cidade").fill(enderecoTeste.cidade);
-  await modal.getByLabel("Estado").fill(enderecoTeste.estado);
-  for (const campo of ["Nome", "Telefone", "CEP", "Rua", "Número", "Bairro", "Cidade", "Estado"]) {
+  for (const campo of ["Nome", "Telefone"]) {
     await expect(modal.getByLabel(campo)).toBeEnabled();
   }
+  await expect(modal.getByLabel(/CEP|Rua|Número|Complemento|Bairro|Cidade|Estado/)).toHaveCount(0);
   await expect(modal.getByLabel("E-mail")).toBeDisabled();
   await expect(tipoPerfil).toBeDisabled();
 
@@ -149,13 +144,11 @@ test("cliente edita perfil e os dados persistem após recarregar", async ({ page
 
   await page.reload();
   await expect(page).toHaveURL(/\/dashboard-cliente$/);
-  await expect(page.getByText("Você ainda não publicou solicitações.")).toBeVisible();
   await page.locator(".dashboard-profile-trigger").click();
   const perfilRecarregado = page.getByRole("dialog", { name: "Meu perfil" });
   await expect(perfilRecarregado.getByLabel("Nome")).toHaveValue(nomeAtualizado);
   await expect(perfilRecarregado.getByLabel("Telefone")).toHaveValue("(48) 98888-7777");
-  await expect(perfilRecarregado.getByLabel("Rua")).toHaveValue(enderecoTeste.rua);
-  await expect(perfilRecarregado.getByLabel("Estado")).toHaveValue(enderecoTeste.estado);
+  await expect(perfilRecarregado.getByLabel(/CEP|Rua|Número|Complemento|Bairro|Cidade|Estado/)).toHaveCount(0);
 });
 
 async function selecionarOuCadastrarEndereco(page: Page) {
@@ -203,7 +196,7 @@ test("cliente publica solicitação e prestador envia proposta", async ({ page }
   await modalSolicitacao.getByRole("checkbox", { name: "Eletricista" }).check();
   await modalSolicitacao.getByRole("button", { name: "Publicar solicitação" }).click();
   await expect(page.getByRole("status")).toContainText("Sua solicitação foi publicada.");
-  await expect(page.locator(".dashboard-request-accordion").filter({ hasText: tituloSolicitacao })).toBeVisible();
+  await expect(page.locator(".dashboard-request").filter({ hasText: tituloSolicitacao })).toBeVisible();
 
   await page.getByRole("button", { name: "Sair" }).click();
   await expect(page).toHaveURL(/\/login$/);
@@ -227,9 +220,8 @@ test("cliente publica solicitação e prestador envia proposta", async ({ page }
   await entrarOuCadastrar(page, contas.cliente, /\/dashboard-cliente$/);
 
   await page.getByRole("button", { name: "Criado", exact: true }).click();
-  let pedido = page.locator(".dashboard-request-accordion").filter({ hasText: tituloSolicitacao });
+  let pedido = page.locator(".dashboard-request").filter({ hasText: tituloSolicitacao });
   await expect(pedido).toHaveCount(1);
-  await pedido.locator(".dashboard-request-toggle").click();
   await expect(pedido).toContainText("Preciso de eletricista");
   await expect(pedido).toContainText(contas.prestador.nome);
   await expect(pedido).toContainText("R$ 140,00");
@@ -237,9 +229,8 @@ test("cliente publica solicitação e prestador envia proposta", async ({ page }
   await expect(page.getByRole("status")).toContainText("Proposta aceita. O contrato foi confirmado.");
 
   await page.getByRole("button", { name: "Em andamento", exact: true }).click();
-  pedido = page.locator(".dashboard-request-accordion").filter({ hasText: tituloSolicitacao });
+  pedido = page.locator(".dashboard-request").filter({ hasText: tituloSolicitacao });
   await expect(pedido).toHaveCount(1);
-  await pedido.locator(".dashboard-request-toggle").click();
   await expect(pedido).toContainText("Profissional responsável");
   await expect(pedido.getByRole("link", { name: /WhatsApp/ })).toBeVisible();
   await pedido.getByRole("button", { name: "Concluir Serviço" }).click();
@@ -257,7 +248,7 @@ test("cliente publica solicitação e prestador envia proposta", async ({ page }
   await expect(page).toHaveURL(/\/login$/);
   await entrarOuCadastrar(page, contas.cliente, /\/dashboard-cliente$/);
   await page.getByRole("button", { name: "Concluído", exact: true }).click();
-  pedido = page.locator(".dashboard-request-accordion").filter({ hasText: tituloSolicitacao });
+  pedido = page.locator(".dashboard-request").filter({ hasText: tituloSolicitacao });
   await expect(pedido).toHaveCount(1);
   await expect(pedido.locator(".dashboard-request-status")).toHaveText("Concluída");
 
