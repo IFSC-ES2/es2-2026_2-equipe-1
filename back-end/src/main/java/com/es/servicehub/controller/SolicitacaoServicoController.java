@@ -2,6 +2,7 @@ package com.es.servicehub.controller;
 
 import com.es.servicehub.dto.EnviarPropostaRequest;
 import com.es.servicehub.dto.SolicitacaoServicoRespostaDTO;
+import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.model.SolicitacaoServico;
 import com.es.servicehub.model.Usuario;
 import com.es.servicehub.repository.UsuarioRepository;
@@ -35,8 +36,11 @@ public class SolicitacaoServicoController {
     }
 
     @GetMapping("/disponiveis")
-    public ResponseEntity<List<SolicitacaoServicoRespostaDTO>> listarDisponiveis() {
-        return ResponseEntity.ok(solicitacaoServicoService.listarDisponiveis());
+    public ResponseEntity<List<SolicitacaoServicoRespostaDTO>> listarDisponiveis(
+            @RequestParam(required = false) Especialidades especialidade,
+            Authentication authentication) {
+        Usuario prestador = usuarioAutenticado(authentication);
+        return ResponseEntity.ok(solicitacaoServicoService.listarDisponiveis(prestador.getId(), especialidade));
     }
 
     @GetMapping("/minhas")
@@ -102,6 +106,13 @@ public class SolicitacaoServicoController {
                 id, cliente.getId(), prestadorId));
     }
 
+    @PutMapping("/{id}/concluir")
+    public ResponseEntity<SolicitacaoServicoRespostaDTO> concluir(
+            @PathVariable Long id, Authentication authentication) {
+        Usuario cliente = usuarioAutenticado(authentication);
+        return ResponseEntity.ok(solicitacaoServicoService.concluirComoResposta(id, cliente.getId()));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<SolicitacaoServicoRespostaDTO> atualizar(
             @PathVariable Long id,
@@ -111,8 +122,9 @@ public class SolicitacaoServicoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        solicitacaoServicoService.deletar(id);
+    public ResponseEntity<Void> deletar(@PathVariable Long id, Authentication authentication) {
+        Usuario cliente = usuarioAutenticado(authentication);
+        solicitacaoServicoService.deletarComoCliente(id, cliente.getId());
         return ResponseEntity.noContent().build();
     }
 

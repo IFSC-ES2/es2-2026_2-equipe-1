@@ -1,0 +1,22 @@
+.input-senha-container {
+  position: relative;
+  width: 100%;
+}
+
+.input-senha-container input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.input-senha-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #666;
+}

@@ -1,10 +1,14 @@
 package com.es.servicehub.service;
 
 import com.es.servicehub.dto.CadastroUsuarioRequest;
+import com.es.servicehub.dto.AtualizarUsuarioRequest;
+import com.es.servicehub.dto.EnderecoDTO;
 import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.enums.TipoPerfil;
+import com.es.servicehub.model.Endereco;
 import com.es.servicehub.model.Usuario;
 import com.es.servicehub.repository.UsuarioRepository;
+import com.es.servicehub.repository.EnderecoRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +32,9 @@ class UsuarioServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    @Mock
+    private EnderecoRepository enderecoRepository;
+
     @InjectMocks
     private UsuarioService usuarioService;
 
@@ -48,6 +55,7 @@ class UsuarioServiceTest {
         CadastroUsuarioRequest request = new CadastroUsuarioRequest();
         request.setNome("Maria Silva");
         request.setEmail(" MARIA@EMAIL.COM ");
+        request.setCpf("529.982.247-25");
         request.setSenha("senha-segura-123");
         request.setTipoPerfil(TipoPerfil.CLIENTE);
 
@@ -58,6 +66,7 @@ class UsuarioServiceTest {
 
         assertEquals("Maria Silva", resultado.getNome());
         assertEquals("maria@email.com", resultado.getEmail());
+        assertEquals("52998224725", resultado.getCpf());
         assertNotEquals("senha-segura-123", resultado.getSenha());
         assertTrue(new BCryptPasswordEncoder().matches("senha-segura-123", resultado.getSenha()));
         verify(usuarioRepository).save(any(Usuario.class));
@@ -79,6 +88,7 @@ class UsuarioServiceTest {
         CadastroUsuarioRequest request = new CadastroUsuarioRequest();
         request.setNome("Pedro Prestador");
         request.setEmail("pedro@email.com");
+        request.setCpf("52998224725");
         request.setSenha("senha-segura-123");
         request.setTipoPerfil(TipoPerfil.PRESTADOR);
 
@@ -91,6 +101,7 @@ class UsuarioServiceTest {
         CadastroUsuarioRequest request = new CadastroUsuarioRequest();
         request.setNome("Pedro Prestador");
         request.setEmail("pedro@email.com");
+        request.setCpf("52998224725");
         request.setSenha("senha-segura-123");
         request.setTipoPerfil(TipoPerfil.PRESTADOR);
         request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
@@ -100,7 +111,74 @@ class UsuarioServiceTest {
         Usuario resultado = usuarioService.cadastrar(request);
 
         assertEquals(TipoPerfil.PRESTADOR, resultado.getTipoPerfil());
+        assertEquals("52998224725", resultado.getCpf());
         assertEquals(List.of(Especialidades.ELETRICISTA), resultado.getEspecialidades());
+    }
+
+    @Test
+    void cadastrar_prestadorComCnpjValido_deveSalvarSomenteCnpj() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@empresa.com");
+        request.setCnpj("04.252.011/0001-10");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+        request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+        when(usuarioRepository.findByEmail("pedro@empresa.com")).thenReturn(Optional.empty());
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+        Usuario resultado = usuarioService.cadastrar(request);
+
+        assertNull(resultado.getCpf());
+        assertEquals("04252011000110", resultado.getCnpj());
+    }
+
+    @Test
+    void cadastrar_prestadorSemDocumento_deveRejeitarENaoSalvar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@email.com");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+        request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+
+        RuntimeException erro = assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+
+        assertEquals("Informe CPF ou CNPJ para continuar.", erro.getMessage());
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_prestadorComCpfECnpj_deveRejeitarENaoSalvar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@email.com");
+        request.setCpf("52998224725");
+        request.setCnpj("04252011000110");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+        request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+
+        RuntimeException erro = assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+
+        assertEquals("Informe somente CPF ou CNPJ.", erro.getMessage());
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_prestadorComCnpjInvalido_deveRejeitarENaoSalvar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Pedro Prestador");
+        request.setEmail("pedro@email.com");
+        request.setCnpj("04.252.011/0001-11");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.PRESTADOR);
+        request.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+
+        RuntimeException erro = assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+
+        assertEquals("Informe um CNPJ válido.", erro.getMessage());
+        verify(usuarioRepository, never()).save(any());
     }
 
     @Test
@@ -108,11 +186,28 @@ class UsuarioServiceTest {
         CadastroUsuarioRequest request = new CadastroUsuarioRequest();
         request.setNome("Maria Silva");
         request.setEmail("maria@email.com");
+        request.setCpf("52998224725");
         request.setSenha("senha-segura-123");
         request.setTipoPerfil(TipoPerfil.CLIENTE);
         when(usuarioRepository.findByEmail("maria@email.com")).thenReturn(Optional.of(usuario));
 
         assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void cadastrar_clienteComCpfInvalido_deveRejeitarENaoSalvar() {
+        CadastroUsuarioRequest request = new CadastroUsuarioRequest();
+        request.setNome("Maria Silva");
+        request.setEmail("maria@email.com");
+        request.setSenha("senha-segura-123");
+        request.setTipoPerfil(TipoPerfil.CLIENTE);
+
+        for (String cpf : List.of("11111111111", "529.982.247-24")) {
+            request.setCpf(cpf);
+            RuntimeException erro = assertThrows(RuntimeException.class, () -> usuarioService.cadastrar(request));
+            assertEquals("Informe um CPF válido.", erro.getMessage());
+        }
         verify(usuarioRepository, never()).save(any());
     }
 
@@ -242,6 +337,75 @@ class UsuarioServiceTest {
         assertEquals("João Atualizado", resultado.getNome());
         assertEquals("novo@email.com", resultado.getEmail());
         assertEquals(TipoPerfil.PRESTADOR, resultado.getTipoPerfil());
+    }
+
+    @Test
+    void atualizarPerfil_deveAlterarSomenteCamposPermitidos() {
+        usuario.setTipoPerfil(TipoPerfil.PRESTADOR);
+        usuario.setEspecialidades(List.of(Especialidades.ELETRICISTA));
+        AtualizarUsuarioRequest dados = new AtualizarUsuarioRequest(
+                "João Atualizado", "(48) 99999-0000", List.of(Especialidades.PINTOR), null);
+        when(usuarioRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario resultado = usuarioService.atualizarPerfil(1L, 1L, dados);
+
+        assertEquals("João Atualizado", resultado.getNome());
+        assertEquals("(48) 99999-0000", resultado.getTelefone());
+        assertEquals(List.of(Especialidades.PINTOR), resultado.getEspecialidades());
+        assertEquals("joao@email.com", resultado.getEmail());
+        assertEquals("123456", resultado.getSenha());
+        assertEquals(TipoPerfil.PRESTADOR, resultado.getTipoPerfil());
+    }
+
+    @Test
+    void atualizarPerfil_deveCriarEnderecoSemAlterarDocumentosOuSenha() {
+        usuario.setCpf("12345678901");
+        usuario.setCnpj("12345678000199");
+        EnderecoDTO dadosEndereco = new EnderecoDTO(
+                "88000000", "Rua Central", "10", "Apto 2", "Centro", "Florianópolis", "SC");
+        when(usuarioRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(usuario));
+        when(enderecoRepository.save(any(Endereco.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario resultado = usuarioService.atualizarPerfil(
+                1L, 1L, new AtualizarUsuarioRequest("João Atualizado", null, null, dadosEndereco));
+
+        assertEquals("Rua Central", resultado.getEndereco().getLogradouro());
+        assertEquals("88000000", resultado.getEndereco().getCep());
+        assertEquals("12345678901", resultado.getCpf());
+        assertEquals("12345678000199", resultado.getCnpj());
+        assertEquals("123456", resultado.getSenha());
+        verify(enderecoRepository).save(any(Endereco.class));
+    }
+
+    @Test
+    void atualizarPerfil_quandoSolicitanteNaoForProprietario_deveRejeitar() {
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> usuarioService.atualizarPerfil(
+                        1L, 2L, new AtualizarUsuarioRequest("Outro", null, null, null)));
+        verify(usuarioRepository, never()).findByIdForUpdate(anyLong());
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void atualizarPerfil_quandoNomeFicarVazio_deveRejeitar() {
+        when(usuarioRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(usuario));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> usuarioService.atualizarPerfil(
+                        1L, 1L, new AtualizarUsuarioRequest("  ", null, null, null)));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void atualizarPerfil_clienteNaoPodeAlterarEspecialidades() {
+        when(usuarioRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(usuario));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> usuarioService.atualizarPerfil(
+                        1L, 1L, new AtualizarUsuarioRequest("João", null, List.of(), null)));
+        verify(usuarioRepository, never()).save(any());
     }
 
     @Test

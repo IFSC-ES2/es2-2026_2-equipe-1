@@ -43,7 +43,7 @@ O ServiceHub permite que o cliente **solicite um serviço**, que prestadores pos
 ## Como executar
 
 ```bash
-# Backend (JDK 25) - http://localhost:8080
+# Backend (JDK 25) - http://localhost:8081
 cd back-end && ./gradlew bootRun
 
 # Frontend (Node 24) - http://localhost:5173
@@ -56,6 +56,19 @@ cd ServiceHub && npm ci && npm run dev
 cd back-end && ./gradlew test jacocoTestReport --no-daemon
 cd ServiceHub && npm ci && npm test && npm run build && npm run lint
 ```
+
+### Teste E2E do fluxo de solicitação e proposta
+
+Com o backend em execução em `http://localhost:8081`, execute:
+
+```bash
+cd ServiceHub
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+O teste inicia o frontend Vite em `http://localhost:5173`. Ele cria as contas fixas de teste apenas na primeira execução; depois, faz login e reutiliza as mesmas contas e o endereço já cadastrado. Os dados são exclusivos para teste e não devem ser usados em produção. Para assistir ao fluxo no Chromium, com as ações desaceleradas, execute `npm run test:e2e:visivel`. Para usar outra URL do frontend, defina `PLAYWRIGHT_BASE_URL`.
 
 ## Linha do Projeto
 
@@ -155,6 +168,20 @@ O relato documenta o escopo e as evidências da Sprint 2.
 - **Arquitetura Efetiva (C4 Níveis 1 e 2):** [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
 - **Relatório de Reengenharia:** [docs/REENGENHARIA.md](docs/REENGENHARIA.md)
 - **Acompanhamento de Métricas:** [docs/METRICAS.md](docs/METRICAS.md)
-- **Registro e Matriz de Riscos:** [docs/RISCOS.md](docs/RISCOS.md)
-- **Registro de Uso de IA:** [docs/USO-IA.md](docs/USO-IA.md)
+- **Registro e Matriz de Riscos:** [docs/riscos.md](docs/riscos.md)
+- **Registro de Uso de IA:** [USO-IA.md](USO-IA.md)
 - **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-3.md](docs/contribuições/CONTRIBUICOES-SPRINT-3.md)
+
+---
+## Entrega 8 — Sprint 4 (Concluída)
+
+- **Planejamento da Sprint 4:** [docs/entregas/sprint-4.md](docs/entregas/sprint-4.md)
+- **Guia de Deploy e Staging:** [docs/DEPLOY.md](docs/DEPLOY.md)
+- **Variáveis de Ambiente:** [.env.example](.env.example)
+- **Plano de Testes e Resultados da Sprint 4:** [docs/PLANO-DE-TESTES.md](docs/PLANO-DE-TESTES.md)
+- **Evidência de Cobertura (backend e frontend):** [docs/COBERTURA-JACOCO.md](docs/COBERTURA-JACOCO.md)
+- **Métricas Finais do Projeto:** [docs/METRICAS.md](docs/METRICAS.md)
+- **Matriz de Riscos Atualizada:** [docs/riscos.md](docs/riscos.md)
+- **Registro de Uso de IA:** [USO-IA.md](USO-IA.md)
+- **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-4.md](docs/CONTRIBUICOES-SPRINT-4.md)
+- **Ambiente de Validação Online:** https://servicehub.jvs.dev.br

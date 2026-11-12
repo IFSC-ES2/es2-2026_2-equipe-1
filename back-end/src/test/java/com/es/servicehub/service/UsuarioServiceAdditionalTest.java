@@ -36,6 +36,7 @@ class UsuarioServiceAdditionalTest {
         CadastroUsuarioRequest request = new CadastroUsuarioRequest();
         request.setNome("  Maria  ");
         request.setEmail(" MARIA@EMAIL.COM ");
+        request.setCpf("529.982.247-25");
         request.setSenha("senha-segura-123");
         request.setTipoPerfil(TipoPerfil.CLIENTE);
         when(usuarioRepository.findByEmail("maria@email.com")).thenReturn(Optional.empty());
@@ -45,6 +46,7 @@ class UsuarioServiceAdditionalTest {
 
         assertEquals("Maria", resultado.getNome());
         assertEquals("maria@email.com", resultado.getEmail());
+        assertEquals("52998224725", resultado.getCpf());
     }
 
     @Test

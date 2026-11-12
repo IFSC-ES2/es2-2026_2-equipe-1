@@ -1,47 +1,36 @@
 import type { DadosSolicitacao, EnderecoSelecionavel } from "../componentes/modal/ModalCriarSolicitacao";
 import type { Endereco } from "../componentes/modal/ModalCriarEndereço";
 import type { Especialidade } from "./especialidades";
+import type { EnderecoPerfilUsuario } from "./autenticacao";
 
-const API_URL = "http://localhost:8080/api";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081/api";
+const TOKEN_STORAGE_KEY = "token";
 
-function obterCookie(nome: string): string | null {
-  const prefixo = `${nome}=`;
-  const cookie = document.cookie.split(";").map((parte) => parte.trim()).find((parte) => parte.startsWith(prefixo));
-  return cookie ? decodeURIComponent(cookie.slice(prefixo.length)) : null;
-}
-
-async function obterTokenCsrf(): Promise<string> {
-  let token = obterCookie("XSRF-TOKEN");
-  if (token) {
-    return token;
+function obterTokenAutenticacao(): string | null {
+  if (typeof window === "undefined") {
+    return null;
   }
 
-  const resposta = await fetch(`${API_URL}/usuarios/csrf`, { credentials: "include" });
-  if (!resposta.ok) {
-    throw new Error("Não foi possível iniciar uma sessão segura.");
-  }
-
-  token = obterCookie("XSRF-TOKEN");
-  if (!token) {
-    throw new Error("O servidor não forneceu o token de segurança.");
-  }
-  return token;
+  return window.localStorage?.getItem(TOKEN_STORAGE_KEY)
+    ?? window.sessionStorage?.getItem(TOKEN_STORAGE_KEY)
+    ?? null;
 }
 
 export async function requisitarApi(rota: string, opcoes: RequestInit = {}): Promise<Response> {
-  const metodo = (opcoes.method ?? "GET").toUpperCase();
   const headers = new Headers(opcoes.headers);
+  const token = obterTokenAutenticacao();
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
   if (opcoes.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  if (!["GET", "HEAD", "OPTIONS"].includes(metodo)) {
-    headers.set("X-XSRF-TOKEN", await obterTokenCsrf());
-  }
-
   return fetch(`${API_URL}${rota}`, {
     ...opcoes,
-    method: metodo,
+    method: opcoes.method ?? "GET",
     headers,
     credentials: "include",
   });
@@ -91,6 +80,7 @@ export type UsuarioSolicitacaoApi = {
   telefone: string;
   tipoPerfil: "CLIENTE" | "PRESTADOR" | "ADMIN";
   especialidades: Especialidade[];
+  endereco?: EnderecoPerfilUsuario | null;
 };
 
 export type SolicitacaoApi = {
@@ -182,6 +172,34 @@ export async function enviarProposta(id: number, valorProposto: number): Promise
 export async function clienteAceitarProposta(id: number, prestadorId: number): Promise<SolicitacaoApi> {
   return requisicao<SolicitacaoApi>(`/solicitacoes/${id}/propostas/${prestadorId}/aceitar`, {
     method: "POST",
+  });
+}
+
+export async function concluirSolicitacao(id: number): Promise<SolicitacaoApi> {
+  return requisicao<SolicitacaoApi>(`/solicitacoes/${id}/concluir`, {
+    method: "PUT",
+  });
+}
+
+export async function excluirSolicitacao(id: number): Promise<void> {
+  const resposta = await requisitarApi(`/solicitacoes/${id}`, { method: "DELETE" });
+  if (!resposta.ok) {
+    throw await erroDaResposta(resposta, "Não foi possível excluir a solicitação");
+  }
+}
+
+export async function atualizarPerfilUsuario(
+  id: number,
+  dados: {
+    nome: string;
+    telefone: string;
+    especialidades?: Especialidade[];
+    endereco?: EnderecoPerfilUsuario;
+  },
+): Promise<UsuarioSolicitacaoApi> {
+  return requisicao<UsuarioSolicitacaoApi>(`/usuarios/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(dados),
   });
 }
 

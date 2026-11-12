@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  atualizarPerfilUsuario,
   clienteAceitarProposta,
   criarEndereco,
   enviarProposta,
@@ -48,14 +49,28 @@ describe("serviço de API", () => {
     await requisitarApi("/solicitacao");
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8080/api/solicitacao",
+      "http://localhost:8081/api/solicitacao",
       expect.objectContaining({ method: "GET", credentials: "include" }),
     );
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     expect(new Headers(init.headers).has("X-XSRF-TOKEN")).toBe(false);
   });
 
-  it("inclui Content-Type e CSRF em operações mutáveis", async () => {
+  it("injeta o token JWT armazenado no cabeçalho Authorization", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson([]));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("window", {
+      localStorage: { getItem: vi.fn().mockReturnValue("jwt-local") },
+      sessionStorage: { getItem: vi.fn().mockReturnValue(null) },
+    });
+
+    await requisitarApi("/usuarios/me");
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(new Headers(init.headers).get("Authorization")).toBe("Bearer jwt-local");
+  });
+
+  it("inclui Content-Type sem depender de CSRF em operações mutáveis", async () => {
     const fetchMock = vi.fn().mockResolvedValue(respostaJson({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -64,26 +79,7 @@ describe("serviço de API", () => {
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = new Headers(init.headers);
     expect(headers.get("Content-Type")).toBe("application/json");
-    expect(headers.get("X-XSRF-TOKEN")).toBe("token+seguro");
-  });
-
-  it("busca o token no endpoint CSRF quando o cookie não existe", async () => {
-    vi.stubGlobal("document", { cookie: "" });
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(respostaJson({ token: "ok" }))
-      .mockResolvedValueOnce(respostaJson({ ok: true }));
-    vi.stubGlobal("fetch", fetchMock);
-    vi.stubGlobal("document", { get cookie() { return fetchMock.mock.calls.length ? "XSRF-TOKEN=novo-token" : ""; } });
-
-    await requisitarApi("/usuarios/logout", { method: "POST" });
-
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      1,
-      "http://localhost:8080/api/usuarios/csrf",
-      { credentials: "include" },
-    );
-    expect(new Headers((fetchMock.mock.calls[1][1] as RequestInit).headers).get("X-XSRF-TOKEN")).toBe("novo-token");
+    expect(headers.has("X-XSRF-TOKEN")).toBe(false);
   });
 
   it("converte endereços da API para o modelo usado pela tela", async () => {
@@ -116,9 +112,34 @@ describe("serviço de API", () => {
     await enviarProposta(1, 175.5);
     await clienteAceitarProposta(1, 8);
 
-    expect(fetchMock.mock.calls[0][0]).toBe("http://localhost:8080/api/solicitacoes/1/propostas");
+    expect(fetchMock.mock.calls[0][0]).toBe("http://localhost:8081/api/solicitacoes/1/propostas");
     expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toEqual({ valorProposto: 175.5 });
-    expect(fetchMock.mock.calls[1][0]).toBe("http://localhost:8080/api/solicitacoes/1/propostas/8/aceitar");
+    expect(fetchMock.mock.calls[1][0]).toBe("http://localhost:8081/api/solicitacoes/1/propostas/8/aceitar");
+  });
+
+  it("atualiza o perfil pelo ID e envia somente os campos editáveis", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson(usuarioApi));
+    vi.stubGlobal("fetch", fetchMock);
+    const dados = {
+      nome: "Maria Atualizada",
+      telefone: "9999",
+      especialidades: ["ELETRICISTA" as const],
+      endereco: {
+        cep: "88000000",
+        logradouro: "Rua Central",
+        numero: "10",
+        complemento: "",
+        bairro: "Centro",
+        cidade: "Florianópolis",
+        estado: "SC",
+      },
+    };
+
+    await atualizarPerfilUsuario(8, dados);
+
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/usuarios\/8$/);
+    expect((fetchMock.mock.calls[0][1] as RequestInit).method).toBe("PUT");
+    expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toEqual(dados);
   });
 
   it("transforma erro JSON da API em mensagem útil", async () => {
@@ -166,27 +187,133 @@ describe("serviço de autenticação", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(cadastrarUsuario({ nome: "", email: "invalido", senha: "123", confirmarSenha: "123", perfil: "CLIENTE", telefone: "", especialidades: [] }))
+    await expect(cadastrarUsuario({ nome: "", email: "invalido", cpf: "", cnpj: "", senha: "123", confirmarSenha: "123", perfil: "CLIENTE", telefone: "", especialidades: [] }))
       .resolves.toEqual({ ok: false, mensagem: "Preencha todos os campos obrigatórios." });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("recusa senha divergente e prestador sem especialidade", async () => {
-    const base = { nome: "Maria", email: "maria@email.com", senha: "senha-segura", telefone: "999", especialidades: [] as never[] };
+    const base = { nome: "Maria", email: "maria@email.com", cpf: "52998224725", cnpj: "", senha: "senha-segura", telefone: "999", especialidades: [] as never[] };
     await expect(cadastrarUsuario({ ...base, confirmarSenha: "outra", perfil: "CLIENTE" })).resolves.toMatchObject({ ok: false, mensagem: "As senhas não conferem." });
     await expect(cadastrarUsuario({ ...base, confirmarSenha: base.senha, perfil: "PRESTADOR" })).resolves.toMatchObject({ ok: false, mensagem: "Selecione pelo menos uma especialidade para prestadores." });
   });
 
-  it("realiza login, normaliza email e persiste o usuário", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(respostaJson(usuarioApi));
+  it("rejeita CPF inválido antes de chamar a API", async () => {
+    const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubGlobal("document", { cookie: "XSRF-TOKEN=token" });
+
+    const dados: Parameters<typeof cadastrarUsuario>[0] = {
+      nome: "Maria",
+      email: "maria@email.com",
+      cpf: "",
+      cnpj: "",
+      senha: "senha-segura",
+      confirmarSenha: "senha-segura",
+      perfil: "CLIENTE",
+      telefone: "999",
+      especialidades: [],
+    };
+
+    for (const cpf of ["", "11111111111", "529.982.247-24"]) {
+      await expect(cadastrarUsuario({ ...dados, cpf }))
+        .resolves.toEqual({ ok: false, mensagem: "Informe um CPF válido." });
+    }
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("exige somente um documento válido para prestadores", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const base: Parameters<typeof cadastrarUsuario>[0] = {
+      nome: "Pedro",
+      email: "pedro@email.com",
+      cpf: "",
+      cnpj: "",
+      senha: "senha-segura",
+      confirmarSenha: "senha-segura",
+      perfil: "PRESTADOR",
+      telefone: "999",
+      especialidades: ["ELETRICISTA"],
+    };
+
+    await expect(cadastrarUsuario(base))
+      .resolves.toEqual({ ok: false, mensagem: "Informe CPF ou CNPJ para continuar." });
+    await expect(cadastrarUsuario({ ...base, cpf: "52998224725", cnpj: "04252011000110" }))
+      .resolves.toEqual({ ok: false, mensagem: "Informe somente CPF ou CNPJ." });
+    await expect(cadastrarUsuario({ ...base, cnpj: "04252011000111" }))
+      .resolves.toEqual({ ok: false, mensagem: "Informe um CNPJ válido." });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("valida CNPJ formatado e envia seus dígitos para a API", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson(usuarioApi, 201));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("document", { cookie: "XSRF-TOKEN=token%2Bseguro" });
+
+    const resultado = await cadastrarUsuario({
+      nome: "Pedro",
+      email: "pedro@email.com",
+      cpf: "",
+      cnpj: "04.252.011/0001-10",
+      senha: "senha-segura",
+      confirmarSenha: "senha-segura",
+      perfil: "PRESTADOR",
+      telefone: "999",
+      especialidades: ["ELETRICISTA"],
+    });
+
+    expect(resultado).toEqual({ ok: true, usuario: expect.any(Object) });
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as { cpf: string | null; cnpj: string };
+    expect(body.cpf).toBeNull();
+    expect(body.cnpj).toBe("04252011000110");
+  });
+
+  it("valida CPF e envia somente os dígitos para a API", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson(usuarioApi, 201));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("document", { cookie: "XSRF-TOKEN=token%2Bseguro" });
+
+    const resultado = await cadastrarUsuario({
+      nome: "Maria",
+      email: "maria@email.com",
+      cpf: "529.982.247-25",
+      cnpj: "",
+      senha: "senha-segura",
+      confirmarSenha: "senha-segura",
+      perfil: "CLIENTE",
+      telefone: "999",
+      especialidades: [],
+    });
+
+    expect(resultado).toEqual({ ok: true, usuario: expect.any(Object) });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as { cpf: string };
+    expect(body.cpf).toBe("52998224725");
+  });
+
+  it("realiza login, normaliza email e persiste o usuário", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(respostaJson({ ...usuarioApi, token: "jwt-login" }));
+    vi.stubGlobal("fetch", fetchMock);
+    const storage = new Map<string, string>();
+    const localStorage = {
+      getItem: vi.fn((key: string) => storage.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => storage.set(key, value)),
+      removeItem: vi.fn((key: string) => storage.delete(key)),
+    };
+    const sessionStorage = {
+      getItem: vi.fn((key: string) => storage.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => storage.set(key, value)),
+      removeItem: vi.fn((key: string) => storage.delete(key)),
+    };
+    vi.stubGlobal("window", { localStorage, sessionStorage });
 
     const resultado = await entrarUsuario("  Maria@Email.com ", "senha-segura");
 
     expect(resultado.ok).toBe(true);
     expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string).email).toBe("maria@email.com");
     expect(obterUsuarioLogado()).toMatchObject({ id: 8, perfil: "PRESTADOR" });
+    expect(localStorage.getItem("token")).toBe("jwt-login");
   });
 
   it("retorna mensagem do backend quando login falha", async () => {

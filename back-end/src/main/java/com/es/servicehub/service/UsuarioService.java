@@ -1,12 +1,18 @@
 package com.es.servicehub.service;
 
+import com.es.servicehub.dto.AtualizarUsuarioRequest;
 import com.es.servicehub.dto.CadastroUsuarioRequest;
+import com.es.servicehub.dto.EnderecoDTO;
 import com.es.servicehub.enums.TipoPerfil;
+import com.es.servicehub.model.Endereco;
 import com.es.servicehub.model.Usuario;
+import com.es.servicehub.repository.EnderecoRepository;
 import com.es.servicehub.repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +20,12 @@ import java.util.List;
 @Service
 public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
+    private final EnderecoRepository enderecoRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, EnderecoRepository enderecoRepository) {
         this.usuarioRepository = usuarioRepository;
+        this.enderecoRepository = enderecoRepository;
     }
 
     @Transactional
@@ -81,6 +89,28 @@ public class UsuarioService {
             throw new RuntimeException("Não é permitido criar contas administrativas pelo cadastro público.");
         }
 
+        String cpf = request.getCpf() == null ? "" : request.getCpf().trim();
+        String cnpj = request.getCnpj() == null ? "" : request.getCnpj().trim();
+        if (request.getTipoPerfil() == TipoPerfil.CLIENTE && !cpfValido(cpf)) {
+            throw new RuntimeException("Informe um CPF válido.");
+        }
+        if (request.getTipoPerfil() == TipoPerfil.CLIENTE && !cnpj.isEmpty()) {
+            throw new RuntimeException("Clientes devem informar CPF, não CNPJ.");
+        }
+        if (request.getTipoPerfil() == TipoPerfil.PRESTADOR) {
+            if (cpf.isEmpty() == cnpj.isEmpty()) {
+                throw new RuntimeException(cpf.isEmpty()
+                        ? "Informe CPF ou CNPJ para continuar."
+                        : "Informe somente CPF ou CNPJ.");
+            }
+            if (!cpf.isEmpty() && !cpfValido(cpf)) {
+                throw new RuntimeException("Informe um CPF válido.");
+            }
+            if (!cnpj.isEmpty() && !cnpjValido(cnpj)) {
+                throw new RuntimeException("Informe um CNPJ válido.");
+            }
+        }
+
         if (request.getSenha().length() < 10) {
             throw new RuntimeException("A senha deve ter pelo menos 10 caracteres.");
         }
@@ -98,12 +128,67 @@ public class UsuarioService {
         Usuario usuario = new Usuario();
         usuario.setNome(request.getNome().trim());
         usuario.setEmail(email);
+        usuario.setCpf(cpf.isEmpty() ? null : cpf.replaceAll("\\D", ""));
+        usuario.setCnpj(cnpj.isEmpty() ? null : cnpj.replaceAll("\\D", ""));
         usuario.setSenha(passwordEncoder.encode(request.getSenha()));
         usuario.setTelefone(request.getTelefone() == null ? null : request.getTelefone().trim());
         usuario.setTipoPerfil(request.getTipoPerfil());
         usuario.setEspecialidades(request.getEspecialidades() == null ? new ArrayList<>() : request.getEspecialidades());
 
         return usuarioRepository.save(usuario);
+    }
+
+    private boolean cpfValido(String cpf) {
+        if (!cpf.matches("(?:\\d{11}|\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2})")) {
+            return false;
+        }
+
+        String digitos = cpf.replaceAll("\\D", "");
+        if (digitos.matches("(\\d)\\1{10}")) {
+            return false;
+        }
+
+        int primeiroDigito = calcularDigitoCpf(digitos, 9);
+        int segundoDigito = calcularDigitoCpf(digitos, 10);
+        return digitos.charAt(9) - '0' == primeiroDigito
+                && digitos.charAt(10) - '0' == segundoDigito;
+    }
+
+    private int calcularDigitoCpf(String cpf, int quantidade) {
+        int soma = 0;
+        for (int indice = 0; indice < quantidade; indice++) {
+            soma += (cpf.charAt(indice) - '0') * (quantidade + 1 - indice);
+        }
+        int resto = soma % 11;
+        return resto < 2 ? 0 : 11 - resto;
+    }
+
+    private boolean cnpjValido(String cnpj) {
+        if (!cnpj.matches("(?:\\d{14}|\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2})")) {
+            return false;
+        }
+
+        String digitos = cnpj.replaceAll("\\D", "");
+        if (digitos.matches("(\\d)\\1{13}")) {
+            return false;
+        }
+
+        int primeiroDigito = calcularDigitoCnpj(digitos, 12);
+        int segundoDigito = calcularDigitoCnpj(digitos, 13);
+        return digitos.charAt(12) - '0' == primeiroDigito
+                && digitos.charAt(13) - '0' == segundoDigito;
+    }
+
+    private int calcularDigitoCnpj(String cnpj, int quantidade) {
+        int[] pesos = quantidade == 12
+                ? new int[] { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 }
+                : new int[] { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
+        int soma = 0;
+        for (int indice = 0; indice < quantidade; indice++) {
+            soma += (cnpj.charAt(indice) - '0') * pesos[indice];
+        }
+        int resto = soma % 11;
+        return resto < 2 ? 0 : 11 - resto;
     }
 
     @Transactional
@@ -141,6 +226,65 @@ public class UsuarioService {
         usuarioExistente.setEndereco(usuarioAtualizado.getEndereco());
 
         return usuarioRepository.save(usuarioExistente);
+    }
+
+    @Transactional
+    public Usuario atualizarPerfil(
+            Long id, Long solicitanteId, AtualizarUsuarioRequest dadosAtualizacao) {
+        if (!id.equals(solicitanteId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você só pode editar seu próprio perfil.");
+        }
+        if (dadosAtualizacao == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe os dados do perfil.");
+        }
+
+        Usuario usuarioExistente = usuarioRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o ID: " + id));
+        if (dadosAtualizacao.nome() == null || dadosAtualizacao.nome().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome é obrigatório.");
+        }
+        usuarioExistente.setNome(dadosAtualizacao.nome().trim());
+        if (dadosAtualizacao.telefone() != null) {
+            String telefone = dadosAtualizacao.telefone().trim();
+            usuarioExistente.setTelefone(telefone.isEmpty() ? null : telefone);
+        }
+        if (dadosAtualizacao.especialidades() != null) {
+            if (usuarioExistente.getTipoPerfil() != TipoPerfil.PRESTADOR) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Somente prestadores podem cadastrar especialidades.");
+            }
+            usuarioExistente.setEspecialidades(new ArrayList<>(dadosAtualizacao.especialidades()));
+        }
+        if (dadosAtualizacao.endereco() != null) {
+            EnderecoDTO dadosEndereco = dadosAtualizacao.endereco();
+            validarEndereco(dadosEndereco);
+            Endereco endereco = usuarioExistente.getEndereco();
+            if (endereco == null) {
+                endereco = new Endereco();
+            }
+            endereco.setCep(dadosEndereco.cep().trim());
+            endereco.setLogradouro(dadosEndereco.logradouro().trim());
+            endereco.setNumero(dadosEndereco.numero().trim());
+            endereco.setComplemento(dadosEndereco.complemento() == null ? "" : dadosEndereco.complemento().trim());
+            endereco.setBairro(dadosEndereco.bairro().trim());
+            endereco.setCidade(dadosEndereco.cidade().trim());
+            endereco.setEstado(dadosEndereco.estado().trim().toUpperCase());
+            usuarioExistente.setEndereco(enderecoRepository.save(endereco));
+        }
+
+        return usuarioRepository.save(usuarioExistente);
+    }
+
+    private void validarEndereco(EnderecoDTO endereco) {
+        if (endereco.cep() == null || endereco.cep().isBlank()
+                || endereco.logradouro() == null || endereco.logradouro().isBlank()
+                || endereco.numero() == null || endereco.numero().isBlank()
+                || endereco.bairro() == null || endereco.bairro().isBlank()
+                || endereco.cidade() == null || endereco.cidade().isBlank()
+                || endereco.estado() == null || !endereco.estado().trim().matches("[A-Za-z]{2}")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Informe um endereço completo e uma UF válida de duas letras.");
+        }
     }
 
     @Transactional

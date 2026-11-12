@@ -1,20 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { MoreVertical } from "lucide-react";
 import marca from "../../assets/logo/ServiceHub_azul.png";
 import ModalCriarEndereco, { type Endereco } from "../../componentes/modal/ModalCriarEndereço";
 import ModalCriarSolicitacao, {
   type DadosSolicitacao,
   type EnderecoSelecionavel,
 } from "../../componentes/modal/ModalCriarSolicitacao";
+import ModalPerfilUsuario from "../../componentes/modal/ModalPerfilUsuario";
 import {
+  atualizarPerfilUsuario,
   criarEndereco,
   criarSolicitacao,
   clienteAceitarProposta,
+  concluirSolicitacao,
+  excluirSolicitacao,
   listarEnderecos,
   listarMinhasSolicitacoes,
   type SolicitacaoApi,
 } from "../../servicos/api";
-import { obterDashboardPorPerfil, obterUsuarioLogado, sairUsuario, validarUsuarioLogado, type Usuario } from "../../servicos/autenticacao";
+import {
+  definirUsuarioLogado,
+  obterDashboardPorPerfil,
+  obterUsuarioLogado,
+  sairUsuario,
+  validarUsuarioLogado,
+  type Usuario,
+} from "../../servicos/autenticacao";
 import { nomesEspecialidades } from "../../servicos/especialidades";
 import "../Dashboard.css";
 
@@ -28,7 +40,7 @@ function formatarMoeda(valor: number) {
 
 function rotuloStatus(status: SolicitacaoApi["statusSolicitacao"]) {
   const rotulos: Record<SolicitacaoApi["statusSolicitacao"], string> = {
-    SOLICITADO: "Aguardando profissional",
+    SOLICITADO: "Criado",
     ACEITO: "Aceita",
     RECUSADO: "Recusada",
     EM_ANDAMENTO: "Em andamento",
@@ -36,6 +48,22 @@ function rotuloStatus(status: SolicitacaoApi["statusSolicitacao"]) {
     CANCELADO: "Cancelada",
   };
   return rotulos[status] ?? status;
+}
+
+type FiltroSolicitacao = "TODAS" | "SOLICITADO" | "EM_ANDAMENTO" | "CONCLUIDO";
+
+const filtrosSolicitacao: { valor: FiltroSolicitacao; rotulo: string }[] = [
+  { valor: "TODAS", rotulo: "Todas" },
+  { valor: "SOLICITADO", rotulo: "Criado" },
+  { valor: "EM_ANDAMENTO", rotulo: "Em andamento" },
+  { valor: "CONCLUIDO", rotulo: "Concluído" },
+];
+
+function classeStatus(status: SolicitacaoApi["statusSolicitacao"]) {
+  if (status === "SOLICITADO") return "dashboard-request-status-created";
+  if (status === "EM_ANDAMENTO" || status === "ACEITO") return "dashboard-request-status-progress";
+  if (status === "CONCLUIDO") return "dashboard-request-status-completed";
+  return "dashboard-request-status-other";
 }
 
 export default function DashboardCliente() {
@@ -51,6 +79,20 @@ export default function DashboardCliente() {
   const [erroEndereco, setErroEndereco] = useState("");
   const [sucesso, setSucesso] = useState("");
   const [aceitandoProposta, setAceitandoProposta] = useState<string | null>(null);
+  const [filtroSolicitacao, setFiltroSolicitacao] = useState<FiltroSolicitacao>("TODAS");
+  const [menuAberto, setMenuAberto] = useState<number | null>(null);
+  const [concluindoSolicitacao, setConcluindoSolicitacao] = useState<number | null>(null);
+  const [excluindoSolicitacao, setExcluindoSolicitacao] = useState<number | null>(null);
+  const [perfilAberto, setPerfilAberto] = useState(false);
+  const [salvandoPerfil, setSalvandoPerfil] = useState(false);
+  const [erroPerfil, setErroPerfil] = useState("");
+
+  const solicitacoesFiltradas = useMemo(
+    () => filtroSolicitacao === "TODAS"
+      ? solicitacoes
+      : solicitacoes.filter((solicitacao) => solicitacao.statusSolicitacao === filtroSolicitacao),
+    [filtroSolicitacao, solicitacoes],
+  );
 
   useEffect(() => {
     let cancelado = false;
@@ -134,6 +176,40 @@ export default function DashboardCliente() {
     }
   }
 
+  async function concluirServico(solicitacaoId: number) {
+    setConcluindoSolicitacao(solicitacaoId);
+    setErro("");
+    setSucesso("");
+    try {
+      const atualizada = await concluirSolicitacao(solicitacaoId);
+      setSolicitacoes((atuais) => atuais.map((item) => item.id === atualizada.id ? atualizada : item));
+      setSucesso("Serviço concluído.");
+    } catch (erroApi) {
+      setErro(erroApi instanceof Error ? erroApi.message : "Não foi possível concluir o serviço.");
+    } finally {
+      setConcluindoSolicitacao(null);
+    }
+  }
+
+  async function excluirPedido(solicitacao: SolicitacaoApi) {
+    const confirmado = window.confirm(`Deseja excluir a solicitação "${solicitacao.titulo}"? Esta ação não pode ser desfeita.`);
+    setMenuAberto(null);
+    if (!confirmado) return;
+
+    setExcluindoSolicitacao(solicitacao.id);
+    setErro("");
+    setSucesso("");
+    try {
+      await excluirSolicitacao(solicitacao.id);
+      setSolicitacoes((atuais) => atuais.filter((item) => item.id !== solicitacao.id));
+      setSucesso("Solicitação excluída.");
+    } catch (erroApi) {
+      setErro(erroApi instanceof Error ? erroApi.message : "Não foi possível excluir a solicitação.");
+    } finally {
+      setExcluindoSolicitacao(null);
+    }
+  }
+
   async function sair() {
     setSaindo(true);
     setErro("");
@@ -147,6 +223,37 @@ export default function DashboardCliente() {
     }
   }
 
+  async function salvarPerfil(dados: {
+    nome: string;
+    telefone: string;
+    especialidades?: Usuario["especialidades"];
+    endereco?: NonNullable<Usuario["endereco"]>;
+  }) {
+    if (!usuario) return false;
+    setSalvandoPerfil(true);
+    setErroPerfil("");
+    try {
+      const atualizado = await atualizarPerfilUsuario(usuario.id, dados);
+      const usuarioAtualizado: Usuario = {
+        ...usuario,
+        nome: atualizado.nome,
+        email: atualizado.email,
+        telefone: atualizado.telefone ?? "",
+        perfil: atualizado.tipoPerfil === "PRESTADOR" ? "PRESTADOR" : "CLIENTE",
+        especialidades: atualizado.especialidades ?? [],
+        endereco: atualizado.endereco ?? usuario.endereco,
+      };
+      setUsuario(usuarioAtualizado);
+      definirUsuarioLogado(usuarioAtualizado);
+      return true;
+    } catch (erroApi) {
+      console.error("Falha ao atualizar o perfil do usuário:", erroApi);
+      setErroPerfil(erroApi instanceof Error ? erroApi.message : "Não foi possível atualizar seu perfil.");
+      return false;
+    } finally {
+      setSalvandoPerfil(false);
+    }
+  }
   return (
     <div className="home-page dashboard-page">
       <header className="dashboard-nav">
@@ -155,7 +262,16 @@ export default function DashboardCliente() {
           <span>Service<span>Hub</span></span>
         </Link>
         <div className="dashboard-nav-actions">
-          <span>Olá, {usuario?.nome.split(" ")[0] ?? "Cliente"}</span>
+          <button
+            className="dashboard-profile-trigger"
+            type="button"
+            onClick={() => {
+              setErroPerfil("");
+              setPerfilAberto(true);
+            }}
+          >
+            Olá, {usuario?.nome.split(" ")[0] ?? "Cliente"}
+          </button>
           <button type="button" onClick={() => void sair()} disabled={saindo}>
             {saindo ? "Saindo..." : "Sair"}
           </button>
@@ -191,48 +307,112 @@ export default function DashboardCliente() {
               <p className="dashboard-eyebrow">ACOMPANHAMENTO</p>
               <h2>Minhas solicitações</h2>
             </div>
-            <span className="dashboard-count">{solicitacoes.length}</span>
+            <span className="dashboard-count">{solicitacoesFiltradas.length}</span>
+          </div>
+
+          <div className="dashboard-request-filters" role="group" aria-label="Filtrar solicitações por status">
+            {filtrosSolicitacao.map((filtro) => (
+              <button
+                className={`dashboard-filter-chip${filtroSolicitacao === filtro.valor ? " is-active" : ""}`}
+                type="button"
+                key={filtro.valor}
+                aria-pressed={filtroSolicitacao === filtro.valor}
+                onClick={() => {
+                  setFiltroSolicitacao(filtro.valor);
+                  setMenuAberto(null);
+                }}
+              >
+                {filtro.rotulo}
+              </button>
+            ))}
           </div>
 
           {carregando ? (
             <p className="dashboard-empty">Carregando suas solicitações...</p>
           ) : solicitacoes.length === 0 ? (
             <p className="dashboard-empty">Você ainda não publicou solicitações.</p>
+          ) : solicitacoesFiltradas.length === 0 ? (
+            <p className="dashboard-empty">Não há solicitações neste status.</p>
           ) : (
-            <div className="dashboard-request-list">
-              {solicitacoes.map((solicitacao) => (
-                <article className="dashboard-request" key={solicitacao.id}>
-                  <div className="dashboard-request-top">
-                    <div>
-                      <h3>{solicitacao.titulo}</h3>
-                      <p className="dashboard-muted">Pedido #{solicitacao.id} · {formatarData(solicitacao.dataCriacao)}</p>
+            <div className="dashboard-request-list dashboard-request-list-scroll">
+              {solicitacoesFiltradas.map((solicitacao) => {
+                const acoesAbertas = menuAberto === solicitacao.id;
+                return (
+                  <article
+                    className="dashboard-request"
+                    key={solicitacao.id}
+                    aria-busy={excluindoSolicitacao === solicitacao.id}
+                  >
+                    <div className="dashboard-request-summary">
+                      <div className="dashboard-request-toggle">
+                        <span className="dashboard-request-summary-main">
+                          <span className="dashboard-request-summary-title">{solicitacao.titulo}</span>
+                          <span className="dashboard-request-summary-meta">
+                            Pedido #{solicitacao.id} · {formatarData(solicitacao.dataCriacao)}
+                          </span>
+                        </span>
+                        <strong className="dashboard-price">{formatarMoeda(solicitacao.valorEstimado)}</strong>
+                        <span className={`dashboard-request-status ${classeStatus(solicitacao.statusSolicitacao)}`}>
+                          {rotuloStatus(solicitacao.statusSolicitacao)}
+                        </span>
+                      </div>
+                      <div className="dashboard-request-actions">
+                        <button
+                          className="dashboard-icon-button"
+                          type="button"
+                          aria-label={`Ações da solicitação ${solicitacao.titulo}`}
+                          aria-expanded={acoesAbertas}
+                          onClick={() => setMenuAberto(acoesAbertas ? null : solicitacao.id)}
+                        >
+                          <MoreVertical size={19} aria-hidden="true" />
+                        </button>
+                        {acoesAbertas && (
+                          <div className="dashboard-action-menu">
+                            <button
+                              type="button"
+                              disabled={excluindoSolicitacao !== null}
+                              onClick={() => void excluirPedido(solicitacao)}
+                            >
+                              {excluindoSolicitacao === solicitacao.id ? "Excluindo..." : "Excluir solicitação"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <strong className="dashboard-price">{formatarMoeda(solicitacao.valorEstimado)}</strong>
-                  </div>
-                  <p className="dashboard-description">{solicitacao.descricao}</p>
-                  <div className="dashboard-details">
-                    <span>{solicitacao.enderecoAtendimento.logradouro}, {solicitacao.enderecoAtendimento.numero} · {solicitacao.enderecoAtendimento.cidade}</span>
-                    <span>{rotuloStatus(solicitacao.statusSolicitacao)}</span>
-                  </div>
-                  {solicitacao.prestador ? (
-                    <div className="dashboard-provider">
-                      <strong>Profissional responsável: {solicitacao.prestador.nome}</strong>
-                      <span>Valor acordado: <b>{formatarMoeda(solicitacao.valorEstimado)}</b></span>
-                      {solicitacao.prestador.telefone && (
-                        <a href={`https://wa.me/${solicitacao.prestador.telefone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
-                          WhatsApp: {solicitacao.prestador.telefone}
-                        </a>
-                      )}
-                      <a href={`mailto:${solicitacao.prestador.email}`}>{solicitacao.prestador.email}</a>
-                      <span>
-                        Especialidades: {solicitacao.prestador.especialidades.length
-                        ? solicitacao.prestador.especialidades.map((especialidade) => nomesEspecialidades[especialidade]).join(", ")
-                          : "Não informadas"}
-                      </span>
-                    </div>
-                  ) : (
-                    <>
-                      {solicitacao.statusSolicitacao === "SOLICITADO" && solicitacao.propostas.length > 0 ? (
+
+                    <div className="dashboard-request-expanded">
+                      <p className="dashboard-description">{solicitacao.descricao}</p>
+                      <div className="dashboard-details">
+                        <span>
+                          {solicitacao.enderecoAtendimento.logradouro}, {solicitacao.enderecoAtendimento.numero}
+                          {solicitacao.enderecoAtendimento.complemento
+                            ? `, ${solicitacao.enderecoAtendimento.complemento}`
+                            : ""} · {solicitacao.enderecoAtendimento.bairro}, {solicitacao.enderecoAtendimento.cidade}
+                        </span>
+                      </div>
+                      <div className="dashboard-tags">
+                        {solicitacao.especialidadesRequiridas.map((especialidade) => (
+                          <span className="dashboard-tag" key={especialidade}>{nomesEspecialidades[especialidade]}</span>
+                        ))}
+                      </div>
+
+                      {solicitacao.prestador ? (
+                        <div className="dashboard-provider">
+                          <strong>Profissional responsável: {solicitacao.prestador.nome}</strong>
+                          <span>Valor acordado: <b>{formatarMoeda(solicitacao.valorEstimado)}</b></span>
+                          {solicitacao.prestador.telefone && (
+                            <a href={`https://wa.me/${solicitacao.prestador.telefone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                              WhatsApp: {solicitacao.prestador.telefone}
+                            </a>
+                          )}
+                          <a href={`mailto:${solicitacao.prestador.email}`}>{solicitacao.prestador.email}</a>
+                          <span>
+                            Especialidades: {solicitacao.prestador.especialidades.length
+                              ? solicitacao.prestador.especialidades.map((especialidade) => nomesEspecialidades[especialidade]).join(", ")
+                              : "Não informadas"}
+                          </span>
+                        </div>
+                      ) : solicitacao.propostas.length > 0 ? (
                         <div className="dashboard-provider">
                           <strong>Propostas recebidas</strong>
                           {solicitacao.propostas.map((proposta) => {
@@ -256,16 +436,23 @@ export default function DashboardCliente() {
                           })}
                         </div>
                       ) : (
-                        <span className="dashboard-status">
-                          {solicitacao.statusSolicitacao === "SOLICITADO"
-                            ? "Aguardando profissional"
-                            : rotuloStatus(solicitacao.statusSolicitacao)}
-                        </span>
+                        <span className="dashboard-status">Aguardando profissional</span>
                       )}
-                    </>
-                  )}
-                </article>
-              ))}
+
+                      {solicitacao.statusSolicitacao === "EM_ANDAMENTO" && (
+                        <button
+                          className="dashboard-button dashboard-complete-button"
+                          type="button"
+                          disabled={concluindoSolicitacao !== null}
+                          onClick={() => void concluirServico(solicitacao.id)}
+                        >
+                          {concluindoSolicitacao === solicitacao.id ? "Concluindo..." : "Concluir Serviço"}
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
@@ -288,6 +475,19 @@ export default function DashboardCliente() {
         onSalvar={salvarEndereco}
         erro={erroEndereco}
       />
+      {perfilAberto && usuario && <ModalPerfilUsuario
+        usuario={usuario}
+        salvando={salvandoPerfil}
+        erro={erroPerfil}
+        onLimparErro={() => setErroPerfil("")}
+        onFechar={() => {
+          if (!salvandoPerfil) {
+            setPerfilAberto(false);
+            setErroPerfil("");
+          }
+        }}
+        onSalvar={salvarPerfil}
+      />}
     </div>
   );
 }

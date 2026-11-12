@@ -82,14 +82,30 @@ Entre as evidências previstas estão:
 
 As métricas já definidas em `docs/metricas/` serão utilizadas como apoio à avaliação.
 
-## 5. Evidência da Entrega 7
+## 5. Evidência da Entrega 8 (Sprint 4 — final)
 
-Foi executado:
+Foi executado em 11/11/2026:
 
 ```bash
-./gradlew test jacocoTestReport --no-daemon
+cd back-end && ./gradlew test jacocoTestReport --no-daemon
+cd ServiceHub && npm test && npm run test:coverage && npm run lint && npm run build
+cd ServiceHub && npm run test:e2e
 ```
 
-Resultado: **57 testes backend passaram**, sem falhas, erros ou testes ignorados. O relatório JaCoCo registrou **77,35% de cobertura de linhas**, acima da meta de 70%. A cobertura de branches foi de 63,89% e permanece como oportunidade de melhoria.
+Resultado: **129 testes backend aprovados**, sem falhas, erros ou testes ignorados, com **93,37% de
+cobertura de linhas**, **80,80% de branches**, **87,22% de métodos** e **100% de classes**. No
+frontend, **29 testes aprovados** (3 arquivos) e cobertura de **25,22% de linhas**; `tsc -b`, `vite
+build` e `eslint` sem erros; **3 cenários E2E aprovados**.
 
-Também foi adicionado o teste de integração `UsuarioSessionIntegrationTest`, que valida o fluxo login → acesso autenticado -> logout -> bloqueio de acesso após a invalidação da sessão.
+Foram acrescentados nesta entrega:
+
+- `back-end/src/test/java/com/es/servicehub/service/UsuarioServiceRegrasAdicionaisTest.java` — 31 casos
+  sobre cadastro (documentos, senha, perfil, especialidades, duplicidade), `atualizarPerfil`,
+  `listarDisponiveis` e aceite de proposta;
+- `back-end/src/test/java/com/es/servicehub/SolicitacaoPropostaIntegrationTest.java` — 11 casos de
+  integração HTTP autenticados por sessão real (login + CSRF), cobrindo proposta, aceite, conclusão,
+  autorização por proprietário, isolamento das listagens e cadastro inválido;
+- `ServiceHub/tests/InputSenha.test.tsx` — 5 casos do componente `InputSenha`;
+- cobertura de frontend configurada em `ServiceHub/vitest.config.ts` e script `npm run test:coverage`.
+
+O detalhamento dos testes, comandos e resultados está em `docs/PLANO-DE-TESTES.md`.

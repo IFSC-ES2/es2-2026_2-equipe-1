@@ -2,6 +2,17 @@ import type { Especialidade } from "./especialidades";
 import { logout, requisitarApi } from "./api";
 
 export type PerfilUsuario = "CLIENTE" | "PRESTADOR";
+const TOKEN_STORAGE_KEY = "token";
+
+export type EnderecoPerfilUsuario = {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+};
 
 export type Usuario = {
   id: number;
@@ -10,6 +21,7 @@ export type Usuario = {
   perfil: PerfilUsuario;
   telefone: string;
   especialidades: Especialidade[];
+  endereco?: EnderecoPerfilUsuario | null;
 };
 
 export type UsuarioApi = {
@@ -19,11 +31,63 @@ export type UsuarioApi = {
   telefone: string;
   tipoPerfil: PerfilUsuario | "ADMIN";
   especialidades?: Especialidade[];
+  endereco?: EnderecoPerfilUsuario | null;
 };
 
 const USUARIO_LOGADO_KEY = "servicehub.usuarioLogado";
 function normalizarEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+function cpfValido(cpf: string): boolean {
+  const valor = cpf.trim();
+  if (!/^(?:\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$/.test(valor)) {
+    return false;
+  }
+
+  const digitos = valor.replace(/\D/g, "");
+  if (/^(\d)\1{10}$/.test(digitos)) {
+    return false;
+  }
+
+  const calcularDigito = (quantidade: number) => {
+    const soma = digitos
+      .slice(0, quantidade)
+      .split("")
+      .reduce((total, digito, indice) => total + Number(digito) * (quantidade + 1 - indice), 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+
+  return Number(digitos[9]) === calcularDigito(9)
+    && Number(digitos[10]) === calcularDigito(10);
+}
+
+function cnpjValido(cnpj: string): boolean {
+  const valor = cnpj.trim();
+  if (!/^(?:\d{14}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})$/.test(valor)) {
+    return false;
+  }
+
+  const digitos = valor.replace(/\D/g, "");
+  if (/^(\d)\1{13}$/.test(digitos)) {
+    return false;
+  }
+
+  const calcularDigito = (quantidade: number) => {
+    const pesos = quantidade === 12
+      ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+      : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const soma = digitos
+      .slice(0, quantidade)
+      .split("")
+      .reduce((total, digito, indice) => total + Number(digito) * pesos[indice], 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+
+  return Number(digitos[12]) === calcularDigito(12)
+    && Number(digitos[13]) === calcularDigito(13);
 }
 
 function mapearUsuario(usuario: UsuarioApi): Usuario {
@@ -34,6 +98,7 @@ function mapearUsuario(usuario: UsuarioApi): Usuario {
     perfil: usuario.tipoPerfil === "PRESTADOR" ? "PRESTADOR" : "CLIENTE",
     telefone: usuario.telefone ?? "",
     especialidades: usuario.especialidades ?? [],
+    endereco: usuario.endereco ?? null,
   };
 }
 
@@ -108,6 +173,8 @@ function extrairMensagemErro(payload: unknown): string {
 export async function cadastrarUsuario(dados: {
   nome: string;
   email: string;
+  cpf: string;
+  cnpj: string;
   senha: string;
   confirmarSenha: string;
   perfil: PerfilUsuario;
@@ -116,6 +183,8 @@ export async function cadastrarUsuario(dados: {
 }): Promise<{ ok: true; usuario: Usuario } | { ok: false; mensagem: string }> {
   const nome = dados.nome.trim();
   const email = normalizarEmail(dados.email);
+  const cpf = dados.cpf.trim();
+  const cnpj = dados.cnpj.trim();
   const telefone = dados.telefone.trim();
   const senha = dados.senha;
   const confirmarSenha = dados.confirmarSenha;
@@ -126,6 +195,27 @@ export async function cadastrarUsuario(dados: {
 
   if (!/\S+@\S+\.\S+/.test(email)) {
     return { ok: false, mensagem: "Informe um e-mail válido." };
+  }
+
+  if (dados.perfil === "CLIENTE" && !cpfValido(cpf)) {
+    return { ok: false, mensagem: "Informe um CPF válido." };
+  }
+
+  if (dados.perfil === "PRESTADOR") {
+    if (Boolean(cpf) === Boolean(cnpj)) {
+      return {
+        ok: false,
+        mensagem: cpf ? "Informe somente CPF ou CNPJ." : "Informe CPF ou CNPJ para continuar.",
+      };
+    }
+
+    if (cpf && !cpfValido(cpf)) {
+      return { ok: false, mensagem: "Informe um CPF válido." };
+    }
+
+    if (cnpj && !cnpjValido(cnpj)) {
+      return { ok: false, mensagem: "Informe um CNPJ válido." };
+    }
   }
 
   if (senha.length < 10) {
@@ -147,6 +237,8 @@ export async function cadastrarUsuario(dados: {
       body: JSON.stringify({
         nome,
         email,
+        cpf: cpf ? cpf.replace(/\D/g, "") : null,
+        cnpj: cnpj ? cnpj.replace(/\D/g, "") : null,
         senha,
         telefone,
         tipoPerfil: dados.perfil,
@@ -194,6 +286,12 @@ export async function entrarUsuario(
       throw new Error(extrairMensagemErro(payload));
     }
 
+    const token = payload && typeof payload === "object" && "token" in payload
+      && typeof payload.token === "string" ? payload.token : null;
+    if (token) {
+      window.localStorage?.setItem(TOKEN_STORAGE_KEY, token);
+    }
+
     const usuario = mapearUsuario(payload as UsuarioApi);
     definirUsuarioLogado(usuario);
     return { ok: true, usuario };
@@ -207,5 +305,7 @@ export async function entrarUsuario(
 
 export async function sairUsuario() {
   await logout();
+  window.localStorage?.removeItem(TOKEN_STORAGE_KEY);
+  window.sessionStorage?.removeItem(TOKEN_STORAGE_KEY);
   definirUsuarioLogado(null);
 }

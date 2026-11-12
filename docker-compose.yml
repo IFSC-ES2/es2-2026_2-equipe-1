@@ -7,10 +7,9 @@ services:
       dockerfile: Dockerfile
     container_name: servicehub_backend
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
-      - PORT=3000
-      - NODE_ENV=development
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET com pelo menos 32 bytes aleatórios}
 
   frontend:
     build:
@@ -19,10 +18,7 @@ services:
     container_name: servicehub_frontend
     ports:
       - "5173:5173"
-    volumes:
-      - ./ServiceHub:/app
-      - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - backend
