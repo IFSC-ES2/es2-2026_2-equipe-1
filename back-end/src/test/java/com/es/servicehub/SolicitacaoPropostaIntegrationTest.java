@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -29,8 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -42,9 +41,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Testes de integração HTTP dos fluxos de proposta, aceite, conclusão e autorização por proprietário.
  *
  * <p>Diferentemente de {@code SecurityIntegrationTest}, que usa o pós-processador {@code user(...)}
- * e não exercita o login real, estes testes autenticam pelo endpoint {@code POST /api/usuarios/login},
- * carregam o cookie de sessão ({@code JSESSIONID}) e o token CSRF emitido pela API, e reutilizam a
- * mesma sessão nas requisições seguintes. Assim cobrem o caminho HTTP efetivamente usado pelo front-end.</p>
+ * e não exercita o login real, estes testes autenticam pelo endpoint {@code POST /api/usuarios/login}
+ * e reutilizam o JWT emitido no header {@code Authorization} das requisições seguintes. Assim cobrem
+ * o fluxo stateless usado pelo front-end.</p>
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -126,27 +125,30 @@ class SolicitacaoPropostaIntegrationTest {
         return propostaRepository.findBySolicitacao_Id(solicitacaoId).getFirst().getValorProposto();
     }
 
-    private MockHttpSession autenticar(Usuario usuario) throws Exception {
+    private String autenticar(Usuario usuario) throws Exception {
         MvcResult resultado = mockMvc.perform(post("/api/usuarios/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + usuario.getEmail() + "\",\"senha\":\"" + SENHA + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn();
-        MockHttpSession sessao = (MockHttpSession) resultado.getRequest().getSession(false);
-        assertNotNull(sessao, "O login deve criar uma sessão HTTP");
-        return sessao;
+        String respostaLogin = resultado.getResponse().getContentAsString();
+        java.util.regex.Matcher tokenMatcher = java.util.regex.Pattern
+                .compile("\"token\"\\s*:\\s*\"([^\"]+)\"")
+                .matcher(respostaLogin);
+        assertTrue(tokenMatcher.find(), "Login deve retornar um JWT.");
+        return tokenMatcher.group(1);
     }
 
     @Test
-    @DisplayName("prestador autenticado por sessão envia proposta e cliente proprietário aceita")
+    @DisplayName("prestador autenticado por JWT envia proposta e cliente proprietário aceita")
     void fluxoPropostaAceite_eConcluidoViaHttp() throws Exception {
         SolicitacaoServico solicitacao = criarSolicitacao(StatusSolicitacao.SOLICITADO);
-        MockHttpSession sessaoPrestador = autenticar(prestador);
-        MockHttpSession sessaoCliente = autenticar(cliente);
+        String tokenPrestador = autenticar(prestador);
+        String tokenCliente = autenticar(cliente);
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas")
-                        .session(sessaoPrestador)
+                        .header("Authorization", "Bearer " + tokenPrestador)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"valorProposto\":140.00}"))
@@ -155,7 +157,7 @@ class SolicitacaoPropostaIntegrationTest {
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas/"
                         + prestador.getId() + "/aceitar")
-                        .session(sessaoCliente)
+                        .header("Authorization", "Bearer " + tokenCliente)
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusSolicitacao").value("EM_ANDAMENTO"))
@@ -163,7 +165,7 @@ class SolicitacaoPropostaIntegrationTest {
                 .andExpect(jsonPath("$.prestador.id").value(prestador.getId()));
 
         mockMvc.perform(put("/api/solicitacoes/" + solicitacao.getId() + "/concluir")
-                        .session(sessaoCliente)
+                        .header("Authorization", "Bearer " + tokenCliente)
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusSolicitacao").value("CONCLUIDO"));
@@ -179,29 +181,29 @@ class SolicitacaoPropostaIntegrationTest {
     @DisplayName("cliente que não é proprietário não pode aceitar proposta nem excluir solicitação")
     void clienteNaoProprietario_naoPodeAlterarSolicitacao() throws Exception {
         SolicitacaoServico solicitacao = criarSolicitacao(StatusSolicitacao.SOLICITADO);
-        MockHttpSession sessaoPrestador = autenticar(prestador);
+        String tokenPrestador = autenticar(prestador);
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas")
-                        .session(sessaoPrestador)
+                        .header("Authorization", "Bearer " + tokenPrestador)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"valorProposto\":120.00}"))
                 .andExpect(status().isOk());
 
-        MockHttpSession sessaoOutro = autenticar(outroCliente);
+        String tokenOutro = autenticar(outroCliente);
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas/"
                         + prestador.getId() + "/aceitar")
-                        .session(sessaoOutro)
+                        .header("Authorization", "Bearer " + tokenOutro)
                         .with(csrf()))
                 .andExpect(status().isForbidden());
 
         mockMvc.perform(put("/api/solicitacoes/" + solicitacao.getId() + "/concluir")
-                        .session(sessaoOutro)
+                        .header("Authorization", "Bearer " + tokenOutro)
                         .with(csrf()))
                 .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/api/solicitacoes/" + solicitacao.getId())
-                        .session(sessaoOutro))
+                        .header("Authorization", "Bearer " + tokenOutro))
                 .andExpect(status().isForbidden());
 
         assertEquals(StatusSolicitacao.SOLICITADO,
@@ -212,17 +214,17 @@ class SolicitacaoPropostaIntegrationTest {
     @DisplayName("proposta com valor zero ou nulo retorna 400 e não persiste proposta")
     void propostaValorInvalido_deveRetornar400() throws Exception {
         SolicitacaoServico solicitacao = criarSolicitacao(StatusSolicitacao.SOLICITADO);
-        MockHttpSession sessaoPrestador = autenticar(prestador);
+        String tokenPrestador = autenticar(prestador);
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas")
-                        .session(sessaoPrestador)
+                        .header("Authorization", "Bearer " + tokenPrestador)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"valorProposto\":0.00}"))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas")
-                        .session(sessaoPrestador)
+                        .header("Authorization", "Bearer " + tokenPrestador)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"valorProposto\":-10.00}"))
@@ -235,10 +237,10 @@ class SolicitacaoPropostaIntegrationTest {
     @DisplayName("proposta em solicitação já aceita retorna 409")
     void propostaEmSolicitacaoAceita_deveRetornar409() throws Exception {
         SolicitacaoServico solicitacao = criarSolicitacao(StatusSolicitacao.EM_ANDAMENTO);
-        MockHttpSession sessaoPrestador = autenticar(prestador);
+        String tokenPrestador = autenticar(prestador);
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas")
-                        .session(sessaoPrestador)
+                        .header("Authorization", "Bearer " + tokenPrestador)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"valorProposto\":50.00}"))
@@ -249,17 +251,17 @@ class SolicitacaoPropostaIntegrationTest {
     @DisplayName("reenvio de proposta pelo mesmo prestador atualiza o valor sem duplicar o registro")
     void reenvioDeProposta_naoDeveDuplicar() throws Exception {
         SolicitacaoServico solicitacao = criarSolicitacao(StatusSolicitacao.SOLICITADO);
-        MockHttpSession sessaoPrestador = autenticar(prestador);
+        String tokenPrestador = autenticar(prestador);
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas")
-                        .session(sessaoPrestador)
+                        .header("Authorization", "Bearer " + tokenPrestador)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"valorProposto\":90.00}"))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas")
-                        .session(sessaoPrestador)
+                        .header("Authorization", "Bearer " + tokenPrestador)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"valorProposto\":95.00}"))
@@ -273,11 +275,11 @@ class SolicitacaoPropostaIntegrationTest {
     @DisplayName("cliente não pode enviar proposta e prestador não pode aceitar proposta")
     void perfisTrocados_devemReceber403() throws Exception {
         SolicitacaoServico solicitacao = criarSolicitacao(StatusSolicitacao.SOLICITADO);
-        MockHttpSession sessaoCliente = autenticar(cliente);
-        MockHttpSession sessaoPrestador = autenticar(prestador);
+        String tokenCliente = autenticar(cliente);
+        String tokenPrestador = autenticar(prestador);
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas")
-                        .session(sessaoCliente)
+                        .header("Authorization", "Bearer " + tokenCliente)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"valorProposto\":80.00}"))
@@ -285,7 +287,7 @@ class SolicitacaoPropostaIntegrationTest {
 
         mockMvc.perform(post("/api/solicitacoes/" + solicitacao.getId() + "/propostas/"
                         + prestador.getId() + "/aceitar")
-                        .session(sessaoPrestador)
+                        .header("Authorization", "Bearer " + tokenPrestador)
                         .with(csrf()))
                 .andExpect(status().isForbidden());
     }
@@ -302,21 +304,23 @@ class SolicitacaoPropostaIntegrationTest {
         deOutro.setEspecialidadesRequiridas(new ArrayList<>(List.of(Especialidades.PINTOR)));
         solicitacaoRepository.save(deOutro);
 
-        MockHttpSession sessaoCliente = autenticar(cliente);
-        MockHttpSession sessaoPrestador = autenticar(prestador);
+        String tokenCliente = autenticar(cliente);
+        String tokenPrestador = autenticar(prestador);
 
-        mockMvc.perform(get("/api/solicitacoes/minhas").session(sessaoCliente))
+        mockMvc.perform(get("/api/solicitacoes/minhas")
+                        .header("Authorization", "Bearer " + tokenCliente))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(doCliente.getId()));
 
-        mockMvc.perform(get("/api/solicitacoes/disponiveis").session(sessaoPrestador))
+        mockMvc.perform(get("/api/solicitacoes/disponiveis")
+                        .header("Authorization", "Bearer " + tokenPrestador))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].titulo").value("Troca de fiação"));
 
         mockMvc.perform(get("/api/solicitacoes/disponiveis")
                         .param("especialidade", "PINTOR")
-                        .session(sessaoPrestador))
+                        .header("Authorization", "Bearer " + tokenPrestador))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].titulo").value("Solicitação de outro cliente"));
     }
@@ -353,25 +357,27 @@ class SolicitacaoPropostaIntegrationTest {
     }
 
     @Test
-    @DisplayName("requisição mutável sem token CSRF é rejeitada mesmo com sessão autenticada")
-    void requisicaoSemCsrf_comSessaoAutenticada_deveRetornar403() throws Exception {
-        MockHttpSession sessaoCliente = autenticar(cliente);
+    @DisplayName("requisição mutável com JWT não exige token CSRF")
+    void requisicaoComJwtSemCsrf_deveSerAceita() throws Exception {
+        SolicitacaoServico solicitacao = criarSolicitacao(StatusSolicitacao.EM_ANDAMENTO);
+        String tokenCliente = autenticar(cliente);
 
-        mockMvc.perform(post("/api/solicitacao")
-                        .session(sessaoCliente)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"titulo\":\"Sem CSRF\"}"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/solicitacoes/" + solicitacao.getId() + "/concluir")
+                        .header("Authorization", "Bearer " + tokenCliente))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusSolicitacao").value("CONCLUIDO"));
+
+        assertEquals(StatusSolicitacao.CONCLUIDO,
+                solicitacaoRepository.findById(solicitacao.getId()).orElseThrow().getStatusSolicitacao());
     }
 
     @Test
     @DisplayName("endereço cadastrado por um cliente fica visível na listagem usada pelo modal")
     void enderecoCadastrado_deveAparecerNaListagem() throws Exception {
-        MockHttpSession sessaoCliente = autenticar(cliente);
+        String tokenCliente = autenticar(cliente);
 
         mockMvc.perform(post("/api/enderecos")
-                        .session(sessaoCliente)
-                        .with(csrf())
+                        .header("Authorization", "Bearer " + tokenCliente)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"logradouro":"Rua Nova","numero":"77","complemento":"",
@@ -379,7 +385,8 @@ class SolicitacaoPropostaIntegrationTest {
                                 """))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/enderecos").session(sessaoCliente))
+        mockMvc.perform(get("/api/enderecos")
+                        .header("Authorization", "Bearer " + tokenCliente))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.logradouro == 'Rua Nova')]").isNotEmpty());
     }

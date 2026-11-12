@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronUp, MoreVertical } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import marca from "../../assets/logo/ServiceHub_azul.png";
 import ModalCriarEndereco, { type Endereco } from "../../componentes/modal/ModalCriarEndereço";
 import ModalCriarSolicitacao, {
@@ -80,7 +80,6 @@ export default function DashboardCliente() {
   const [sucesso, setSucesso] = useState("");
   const [aceitandoProposta, setAceitandoProposta] = useState<string | null>(null);
   const [filtroSolicitacao, setFiltroSolicitacao] = useState<FiltroSolicitacao>("TODAS");
-  const [solicitacaoExpandida, setSolicitacaoExpandida] = useState<number | null>(null);
   const [menuAberto, setMenuAberto] = useState<number | null>(null);
   const [concluindoSolicitacao, setConcluindoSolicitacao] = useState<number | null>(null);
   const [excluindoSolicitacao, setExcluindoSolicitacao] = useState<number | null>(null);
@@ -203,7 +202,6 @@ export default function DashboardCliente() {
     try {
       await excluirSolicitacao(solicitacao.id);
       setSolicitacoes((atuais) => atuais.filter((item) => item.id !== solicitacao.id));
-      setSolicitacaoExpandida((atual) => atual === solicitacao.id ? null : atual);
       setSucesso("Solicitação excluída.");
     } catch (erroApi) {
       setErro(erroApi instanceof Error ? erroApi.message : "Não foi possível excluir a solicitação.");
@@ -229,6 +227,7 @@ export default function DashboardCliente() {
     nome: string;
     telefone: string;
     especialidades?: Usuario["especialidades"];
+    endereco?: NonNullable<Usuario["endereco"]>;
   }) {
     if (!usuario) return false;
     setSalvandoPerfil(true);
@@ -242,6 +241,7 @@ export default function DashboardCliente() {
         telefone: atualizado.telefone ?? "",
         perfil: atualizado.tipoPerfil === "PRESTADOR" ? "PRESTADOR" : "CLIENTE",
         especialidades: atualizado.especialidades ?? [],
+        endereco: atualizado.endereco ?? usuario.endereco,
       };
       setUsuario(usuarioAtualizado);
       definirUsuarioLogado(usuarioAtualizado);
@@ -319,7 +319,6 @@ export default function DashboardCliente() {
                 aria-pressed={filtroSolicitacao === filtro.valor}
                 onClick={() => {
                   setFiltroSolicitacao(filtro.valor);
-                  setSolicitacaoExpandida(null);
                   setMenuAberto(null);
                 }}
               >
