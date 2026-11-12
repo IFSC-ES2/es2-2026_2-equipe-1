@@ -47,9 +47,10 @@ describe("ModalPerfilUsuario", () => {
     renderModal();
 
     expect(screen.getByRole("button", { name: "Editar Perfil" })).toBeEnabled();
-    for (const nome of ["Nome", "Telefone", "CEP", "Rua", "Número", "Bairro", "Cidade", "Estado"]) {
+    for (const nome of ["Nome", "Telefone"]) {
       expect(screen.getByLabelText(nome)).toBeDisabled();
     }
+    expect(screen.queryByLabelText(/CEP|Rua|Número|Complemento|Bairro|Cidade|Estado/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("E-mail")).toBeDisabled();
     expect(screen.getByDisplayValue("Prestador")).toBeDisabled();
   });
@@ -59,9 +60,10 @@ describe("ModalPerfilUsuario", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Editar Perfil" }));
 
-    for (const nome of ["Nome", "Telefone", "CEP", "Rua", "Número", "Bairro", "Cidade", "Estado"]) {
+    for (const nome of ["Nome", "Telefone"]) {
       expect(screen.getByLabelText(nome)).toBeEnabled();
     }
+    expect(screen.queryByLabelText(/CEP|Rua|Número|Complemento|Bairro|Cidade|Estado/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("E-mail")).toBeDisabled();
     expect(screen.getByDisplayValue("Prestador")).toBeDisabled();
     expect(screen.getByLabelText("Eletricista")).toBeEnabled();
@@ -73,8 +75,6 @@ describe("ModalPerfilUsuario", () => {
     fireEvent.click(screen.getByRole("button", { name: "Editar Perfil" }));
     fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "  Maria Nova  " } });
     fireEvent.change(screen.getByLabelText("Telefone"), { target: { value: "  48988887777  " } });
-    fireEvent.change(screen.getByLabelText("Rua"), { target: { value: " Avenida Brasil " } });
-    fireEvent.change(screen.getByLabelText("Estado"), { target: { value: " sc " } });
     fireEvent.click(screen.getByLabelText("Pintor"));
     fireEvent.click(screen.getByRole("button", { name: "Salvar Alterações" }));
 
@@ -83,15 +83,6 @@ describe("ModalPerfilUsuario", () => {
         nome: "Maria Nova",
         telefone: "48988887777",
         especialidades: ["ELETRICISTA", "PINTOR"],
-        endereco: {
-          cep: "88000000",
-          logradouro: "Avenida Brasil",
-          numero: "10",
-          complemento: "Casa",
-          bairro: "Centro",
-          cidade: "Florianópolis",
-          estado: "SC",
-        },
       });
     });
     expect(await screen.findByRole("status")).toHaveTextContent("Perfil atualizado.");
@@ -116,7 +107,6 @@ describe("ModalPerfilUsuario", () => {
               nome: dados.nome,
               telefone: dados.telefone,
               especialidades: dados.especialidades ?? atual.especialidades,
-              endereco: dados.endereco ?? atual.endereco,
             }));
             return true;
           }}

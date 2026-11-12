@@ -2,7 +2,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { Pencil, Save, UserRound, X } from "lucide-react";
 import type { Especialidade } from "../../servicos/especialidades";
 import { especialidades, nomesEspecialidades } from "../../servicos/especialidades";
-import type { EnderecoPerfilUsuario, Usuario } from "../../servicos/autenticacao";
+import type { Usuario } from "../../servicos/autenticacao";
 
 type ModalPerfilUsuarioProps = {
   usuario: Usuario | null;
@@ -14,20 +14,12 @@ type ModalPerfilUsuarioProps = {
     nome: string;
     telefone: string;
     especialidades?: Especialidade[];
-    endereco?: EnderecoPerfilUsuario;
   }) => Promise<boolean>;
 };
 
 type FormDataPerfil = {
   nome: string;
   telefone: string;
-  cep: string;
-  rua: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
   especialidades: Especialidade[];
 };
 
@@ -35,13 +27,6 @@ function criarFormData(usuario: Usuario | null): FormDataPerfil {
   return {
     nome: usuario?.nome ?? "",
     telefone: usuario?.telefone ?? "",
-    cep: usuario?.endereco?.cep ?? "",
-    rua: usuario?.endereco?.logradouro ?? "",
-    numero: usuario?.endereco?.numero ?? "",
-    complemento: usuario?.endereco?.complemento ?? "",
-    bairro: usuario?.endereco?.bairro ?? "",
-    cidade: usuario?.endereco?.cidade ?? "",
-    estado: usuario?.endereco?.estado ?? "",
     especialidades: usuario?.especialidades ?? [],
   };
 }
@@ -79,7 +64,7 @@ export default function ModalPerfilUsuario({
     const { name, value } = event.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "estado" ? value.toUpperCase() : value,
+      [name]: value,
     }));
   }
 
@@ -103,25 +88,11 @@ export default function ModalPerfilUsuario({
     onLimparErro();
     setMensagemSucesso("");
 
-    const { nome, telefone, especialidades: selecionadas, ...camposEndereco } = formData;
-    const temEndereco = Object.values(camposEndereco).some((valor) => valor.trim() !== "");
+    const { nome, telefone, especialidades: selecionadas } = formData;
     const salvo = await onSalvar({
       nome: nome.trim(),
       telefone: telefone.trim(),
       ...(perfil?.perfil === "PRESTADOR" ? { especialidades: selecionadas } : {}),
-      ...(temEndereco
-        ? {
-            endereco: {
-              cep: camposEndereco.cep.trim(),
-              logradouro: camposEndereco.rua.trim(),
-              numero: camposEndereco.numero.trim(),
-              complemento: camposEndereco.complemento.trim(),
-              bairro: camposEndereco.bairro.trim(),
-              cidade: camposEndereco.cidade.trim(),
-              estado: camposEndereco.estado.trim(),
-            },
-          }
-        : {}),
     });
 
     if (salvo) {
@@ -180,30 +151,6 @@ export default function ModalPerfilUsuario({
               required
             />
           </label>
-
-          <div className="dashboard-address-grid">
-            {([
-              ["cep", "CEP"],
-              ["rua", "Rua"],
-              ["numero", "Número"],
-              ["complemento", "Complemento"],
-              ["bairro", "Bairro"],
-              ["cidade", "Cidade"],
-              ["estado", "Estado"],
-            ] as const).map(([campo, rotulo]) => (
-              <label className="dashboard-profile-field" key={campo}>
-                <span>{rotulo}</span>
-                <input
-                  className="dashboard-field"
-                  name={campo}
-                  value={formData[campo]}
-                  onChange={handleChange}
-                  disabled={desabilitado}
-                  maxLength={campo === "estado" ? 2 : undefined}
-                />
-              </label>
-            ))}
-          </div>
 
           <label className="dashboard-profile-field">
             <span>E-mail</span>
