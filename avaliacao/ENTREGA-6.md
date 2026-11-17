@@ -8,7 +8,7 @@
 - Repositório confirmado pela configuração: `IFSC-ES2/es2-2026_2-equipe-1`
 - Pull request avaliado: PR #25, de `entrega-6` para `main`
 - Versão considerada: commit `8969a44`, merge do PR #25 em 01/10/2026 às 23:58:10 (UTC-3)
-- Release esperada: `v0.2.0`
+- Release esperada: `v0.3.0`
 
 ## Documentos Consultados
 
