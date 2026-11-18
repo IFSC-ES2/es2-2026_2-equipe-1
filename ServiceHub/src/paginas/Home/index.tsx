@@ -96,7 +96,7 @@ function Home() {
                     </div>
                     <div className="pro-carousel" aria-label="Conheça alguns profissionais">
                         <div className="pro-track">
-                            {[0, 1].map((copy) => <div className="pro-group" key={copy} aria-hidden={copy === 1}>
+                            {[0, 1, 2, 3].map((copy) => <div className="pro-group" key={copy} aria-hidden={copy > 0}>
                                 {profissionais.map((profissional) => <article className="pro-card" key={`${copy}-${profissional.nome}`}>
                                     <img src={profissional.foto} alt={copy === 0 ? profissional.descricao : ""} loading="lazy" />
                                     <div className="pro-card-content"><span className="pro-role">{profissional.servico}</span><h3>{profissional.nome}</h3><p>{profissional.local}</p></div>

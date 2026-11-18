@@ -412,8 +412,7 @@
 }
 
 .pro-track {
-	gap: 18px;
-	animation-duration: 55s;
+	animation-duration: 110s;
 }
 
 .pro-group {
@@ -421,7 +420,6 @@
 	flex: none;
 	align-items: center;
 	gap: 18px;
-	justify-content: space-around;
 	padding-right: 18px;
 }
 
