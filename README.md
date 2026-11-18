@@ -42,12 +42,36 @@ O ServiceHub permite que o cliente **solicite um serviço**, que prestadores pos
 
 ## Como executar
 
-```bash
-# Backend (JDK 25) - http://localhost:8081
-cd back-end && ./gradlew bootRun
+### Execução Local do Backend
 
-# Frontend (Node 24) - http://localhost:5173
-cd ServiceHub && npm ci && npm run dev
+O backend requer `JWT_SECRET` no ambiente antes de iniciar. Os comandos abaixo geram 32 bytes aleatórios e os exportam em Base64. Execute-os a partir da raiz do repositório.
+
+**PowerShell (Windows):**
+
+```powershell
+cd back-end
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
+.\gradlew.bat bootRun
+```
+
+**Bash (Linux/macOS):**
+
+```bash
+cd back-end
+export JWT_SECRET=$(openssl rand -base64 32)
+./gradlew bootRun
+```
+
+O backend fica disponível em <http://localhost:8081>.
+
+### Frontend
+
+```bash
+cd ServiceHub
+npm ci
+npm run dev
 ```
 
 ## Como testar
@@ -153,12 +177,12 @@ O projeto está relacionado à linha:
 ---
 
 ## Entrega 6 - Sprint 2
-- **Relato da Sprint e situação do PR/release:** [docs/entregas/sprint-2.md](docs/entregas/sprint-2.md)
+- **Planejamento da Sprint 2:** [docs/entregas/sprint-2-planejamento.md](docs/entregas/sprint-2-planejamento.md)
 - **Métricas e lacunas de coleta:** [docs/METRICAS.md](docs/METRICAS.md)
 - **Revisão dos riscos:** [docs/riscos.md](docs/riscos.md)
 - **Padrões de projeto OO:** [docs/PADROES-DE-PROJETO.md](docs/PADROES-DE-PROJETO.md)
 - **ADR-0003: Autenticação:** [docs/adrs/ADR-0003-autenticacao.md](docs/adrs/ADR-0003-autenticacao.md)
-O relato documenta o escopo e as evidências da Sprint 2.
+O planejamento documenta o escopo definido para a Sprint 2.
 - **Registro de uso de IA:** [USO-IA.md](USO-IA.md)
 
 ---
@@ -170,18 +194,18 @@ O relato documenta o escopo e as evidências da Sprint 2.
 - **Acompanhamento de Métricas:** [docs/METRICAS.md](docs/METRICAS.md)
 - **Registro e Matriz de Riscos:** [docs/riscos.md](docs/riscos.md)
 - **Registro de Uso de IA:** [USO-IA.md](USO-IA.md)
-- **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-3.md](docs/contribuições/CONTRIBUICOES-SPRINT-3.md)
+- **Contribuições Individuais:** [docs/contribuições/CONTRIBUICOES-SPRINT-3.md](docs/contribuições/CONTRIBUICOES-SPRINT-3.md)
 
 ---
 ## Entrega 8 — Sprint 4 (Concluída)
 
-- **Planejamento da Sprint 4:** [docs/entregas/sprint-4.md](docs/entregas/sprint-4.md)
+- **Planejamento da Sprint 4:** [docs/entregas/sprint-4-planejamento.md](docs/entregas/sprint-4-planejamento.md)
 - **Guia de Deploy e Staging:** [docs/DEPLOY.md](docs/DEPLOY.md)
-- **Variáveis de Ambiente:** [.env.example](.env.example)
+- **Execução local e variáveis de ambiente:** [docs/DEPLOY.md — Execução Local do Backend](docs/DEPLOY.md#execu%C3%A7%C3%A3o-local-do-backend)
 - **Plano de Testes e Resultados da Sprint 4:** [docs/PLANO-DE-TESTES.md](docs/PLANO-DE-TESTES.md)
 - **Evidência de Cobertura (backend e frontend):** [docs/COBERTURA-JACOCO.md](docs/COBERTURA-JACOCO.md)
 - **Métricas Finais do Projeto:** [docs/METRICAS.md](docs/METRICAS.md)
 - **Matriz de Riscos Atualizada:** [docs/riscos.md](docs/riscos.md)
 - **Registro de Uso de IA:** [USO-IA.md](USO-IA.md)
-- **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-4.md](docs/CONTRIBUICOES-SPRINT-4.md)
-- **Ambiente de Validação Online:** https://servicehub.jvs.dev.br
+- **Contribuições Individuais:** [docs/contribuições/CONTRIBUICOES-SPRINT-4.md](docs/contribuições/CONTRIBUICOES-SPRINT-4.md)
+- **Ambiente de Validação Online:** <https://servicehub.jvs.dev.br>
