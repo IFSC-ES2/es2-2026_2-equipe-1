@@ -1,7 +1,9 @@
 # Arquitetura Efetiva de Software — ServiceHub
 
-**Marco:** Entrega 7 - Sprint 3  
-**Data:** 22 de Outubro de 2026  
+**Marco:** Entrega 7 - Sprint 3 (revisão da implementação atual)
+
+**Data da revisão:** 18 de Novembro de 2026
+
 **Status da Arquitetura:** Implementada / Efetiva  
 
 ---
@@ -10,7 +12,7 @@
 
 O **ServiceHub** é uma aplicação web desenvolvida no modelo de arquitetura Cliente-Servidor (*Client-Server*) para a intermediação e gestão de serviços autônomos na região de São José e Grande Florianópolis[cite: 62].
 
-A arquitetura divide a solução em uma **Aplicação de Página Única (SPA)** no front-end e uma **API RESTful** no back-end, conectada a uma camada de persistência relacional e securitizada por controle de sessão e tokens de segurança.
+A arquitetura divide a solução em uma **Aplicação de Página Única (SPA)** no frontend e uma **API REST** no backend, conectada a persistência relacional. As chamadas protegidas usam JWT stateless no cabeçalho `Authorization: Bearer`; o perfil local de desenvolvimento usa H2 em memória.
 
 ---
 
@@ -51,13 +53,15 @@ graph TB
 
     subgraph Ecossistema[" 🏢 Ecossistema ServiceHub "]
         Frontend["🌐 Web Frontend (SPA)<br/><b>React + TypeScript + Vite</b><br/><i>Interface responsiva e chamadas REST</i>"]:::container
-        Backend["⚙️ API Backend (REST)<br/><b>Java + Spring Boot + Security</b><br/><i>Regras de negócio, autorização e sessão</i>"]:::container
-        Database[("🗄️ Banco de Dados<br/><b>H2 Database / PostgreSQL</b><br/><i>Persistência de Usuários, Chamados e Propostas</i>")]:::db
+        Backend["⚙️ API Backend (REST)<br/><b>Java + Spring Boot + Security</b><br/><i>Regras de negócio e autorização JWT stateless</i>"]:::container
+        Database[("🗄️ Banco de Dados<br/><b>H2 em memória</b><br/><i>Configuração atual do repositório</i>")]:::db
     end
 
     Usuario -->|"1. Acesse e interage (HTTPS)"| Frontend
-    Frontend -->|"2. Consome API REST (HTTPS / JSON / Session / CSRF)"| Backend
+    Frontend -->|"2. API REST (HTTPS / JSON / Authorization: Bearer JWT)"| Backend
     Backend -->|"3. Executa consultas e bloqueio transacional (JDBC / JPA)"| Database
+    ViaCEP["🌐 API externa ViaCEP"]:::container
+    Frontend -->|"Consulta CEP (HTTPS / JSON)"| ViaCEP
 ```
 
 ## 3. Descrição dos Componentes e Responsabilidades
@@ -68,13 +72,27 @@ em [Diagrama de Classes do Backend](./diagramas/Diagrama-de-Classes.md).
 * **Web Frontend (`ServiceHub/src`):**
   * **Módulo de Autenticação (`Login.tsx`, `Cadastro.tsx`):** Formulários com validação de perfil.
   * **Dashboards (`DashboardCliente.tsx`, `DashboardPrestador.tsx`):** Visões para criação de chamados, cartões de serviços e listagem de propostas.
-  * **Cliente API (`/servicos/api.ts`):** Módulo centralizador de requisições que utiliza o padrão *Adapter*.
+  * **Cliente API (`src/servicos/api.ts`):** Centraliza chamadas REST e acrescenta `Authorization: Bearer <token>` obtido do armazenamento do navegador.
+  * **Consulta de CEP (`src/servicos/cep.ts`):** Consulta diretamente a API pública ViaCEP, normaliza a resposta para o modelo de endereço e a utiliza no fluxo de cadastro de endereço. Não há integração direta com a API dos Correios no código atual.
+  * **Edição de perfil (`ModalPerfilUsuario.tsx`):** Modal React reutilizado nos dashboards de cliente e prestador. Recebe dados e callbacks por props; as telas chamadoras controlam o salvamento e acionam o cliente da API, mantendo o componente desacoplado da persistência.
 
 * **API Backend (`back-end/src`):**
-  * **Segurança (`SecurityConfig.java`):** Configura a autenticação por sessão HTTP, BCrypt, CORS e CSRF (`SpaCsrfTokenRequestHandler` aplicando o padrão *Strategy*).
+  * **Segurança (`SecurityConfig.java`):** Configura Spring Security stateless com `SessionCreationPolicy.STATELESS`, validação JWT de Bearer token pelo Resource Server e BCrypt para senhas. O filtro efetivo para Bearer é `BearerTokenAuthenticationFilter`; não há configuração de autenticação HTTP Basic via `BasicAuthenticationFilter`.
   * **Controladores (`controller/`):** Expõe os endpoints REST (`/api/usuarios`, `/api/solicitacoes`, `/api/propostas`).
-  * **Serviços (`SolicitacaoServicoService.java`):** Lógica de negócio central. Valida o proprietário, o estado `SOLICITADO` e aplica transação com bloqueio no banco.
+  * **Serviços (`service/`):** Encapsulam as regras de negócio de usuários, endereços, solicitações e propostas; operações concorrentes usam transações e bloqueio quando necessário.
   * **Repositório (`repository/`):** Interfaces Spring Data JPA estendendo `JpaRepository`.
+
+### Autenticação e logout
+
+O endpoint de login valida as credenciais e `JwtTokenService` emite um JWT assinado com expiração de uma hora. O frontend armazena o token na chave `token` do `localStorage` e o envia nas chamadas protegidas pelo cabeçalho `Authorization: Bearer`. As requisições são autenticadas individualmente, sem sessão HTTP de usuário.
+
+No logout, o frontend chama `/api/usuarios/logout` e remove o token do armazenamento local. O backend limpa o `SecurityContext` da requisição atual, mas não mantém blacklist nem revoga o JWT emitido; o token ainda pode ser usado até expirar.
+
+### Fluxo de endereço e perfil
+
+No cadastro de endereço, o frontend valida e normaliza o CEP e consulta `https://viacep.com.br/ws/{cep}/json/`. Os campos retornados pelo ViaCEP são convertidos para o modelo de endereço usado pela interface; CEP inexistente ou falha da consulta é tratado no fluxo de formulário. O backend persiste os dados do endereço, mas não faz chamada à API de CEP.
+
+`ModalPerfilUsuario` é uma interface reutilizada por ambos os dashboards. O modal cuida dos campos, edição e validação visual e recebe `onSalvar` como callback; os componentes de página executam a atualização via cliente REST. Assim, a apresentação do perfil não depende diretamente do backend.
 
 ---
 
@@ -88,11 +106,11 @@ Para fins de transparência acadêmica na Entrega 7, registram-se os ajustes fei
 
 2. **Banco de Dados (Infraestrutura):** 
    - *Planejado:* Execução em PostgreSQL via Docker.
-   - *Efetivo:* Uso do banco em memória (H2) na Sprint 3 para agilizar a execução dos testes automatizados no CI. A migração para PostgreSQL será realizada na Sprint 4.
+   - *Efetivo no repositório:* `application.properties` usa `jdbc:h2:mem:testdb`; o Compose não declara PostgreSQL. Embora o staging tenha sido descrito como PostgreSQL, o código atual não inclui o driver JDBC desse banco nem comprova a conexão. A topologia de staging não é reproduzível a partir deste checkout.
 
 3. **Integração com Gateway de Pagamento (Asaas):** 
    - *Planejado:* Pagamento integrado no MVP.
-   - *Efetivo:* A decisão técnica está registrada na ADR-0002, mas a implementação dos endpoints do Asaas foi postergada para a Sprint 4 para priorizar a estabilização do fluxo de propostas.
+   - *Efetivo:* A decisão técnica está registrada na ADR-0002, mas a integração com o Asaas não está implementada no código atual.
 ---
 
 ## 5. Apoio da Arquitetura ao MVP
