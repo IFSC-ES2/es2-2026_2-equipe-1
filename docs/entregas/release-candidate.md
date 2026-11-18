@@ -142,7 +142,7 @@ nesta RC.
 |:---|:---|
 | **Leonardo Victor Muller De Morais** | Revisou e consolidou a arquitetura efetiva com JWT stateless; participou da correção e revisão das regras de negociação, autorização por proprietário e integração de proposta/aceite/conclusão; implementou/parametrizou cenários Playwright; revisou os critérios de aceitação e a retrospectiva; validou os riscos residuais de JWT, logout e permissões em rotas secundárias. |
 | **João Vitor Schmitt** | Manteve e revisou o staging em <https://frontservicehub.jvs.dev.br>, a API em <https://servicehub.jvs.dev.br>, Docker/Compose, CORS e domínios permitidos; consolidou a configuração de `JWT_SECRET` e o checklist de deploy; atualizou a validação técnica da infraestrutura no registro da RC e revisou os riscos de disponibilidade e CORS. |
-| **Davi Israel Quirino** | Consolidou o hardening visual e funcional dos dashboards, perfil, componente de senha, filtros de solicitações e integração REST no frontend; revisou o fluxo de cadastro/endereço e a usabilidade da apresentação; validou a experiência da demonstração entre cliente e prestador. |
+| **Davi Israel Quirino** | Consolidou o hardening visual e funcional dos dashboards, perfil, componente de senha, correção do carrossel, revisou o fluxo de cadastro/endereço e a usabilidade da apresentação; validou a experiência da demonstração entre cliente e prestador. |
 | **Ana Clara Teixeira Ronzani** | Coordenou a consolidação da qualidade da RC e revisou os resultados reais de testes backend, frontend e E2E; atualizou métricas, riscos, plano de testes, matriz de aceitação, retrospectiva e registro de uso de IA; verificou cobertura JaCoCo, 29 testes Vitest e os três cenários Playwright antes da apresentação. |
 
 ## 5. Evidências relacionadas

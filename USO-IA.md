@@ -237,3 +237,13 @@ Uso: Redação da revisão final de escopo (comparativo planejado vs. entregue),
 Artefatos: docs/RETROSPECTIVA.md, docs/METRICAS.md, docs/riscos.md, docs/entregas/release-candidate.md e USO-IA.md
 Validação: Revisado por Leonardo Victor Muller de Morais e Ana Clara Teixeira Ronzani antes da abertura do Pull Request da branch entrega-9 para main
 ```
+
+```
+Registro de uso 21
+
+Data: 18/11/2026
+Ferramenta: Claude Code
+Uso: Auxilio na resolução do problema do carrossel
+Artefatos: resolução do problema do carrossel através do css + react
+Validação: Foi revisado pelo Davi.
+```
