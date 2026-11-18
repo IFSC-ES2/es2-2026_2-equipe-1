@@ -2,17 +2,13 @@
 
 ## 1. Visão geral do ambiente
 
-O ambiente online de staging/validação informado para a Entrega 8 é:
+O ambiente de staging informado para a Entrega 8 publica o frontend em <https://frontservicehub.jvs.dev.br> e a API por um endereço configurado no Coolify. O endereço público exato da API não está versionado; o frontend deve recebê-lo em `VITE_API_URL`, incluindo o sufixo `/api`.
 
-- **Aplicação e frontend:** <https://servicehub.jvs.dev.br>
-- **Frontend:** aplicação SPA em React, compilada/servida com Vite.
-- **Backend:** API REST em Java com Spring Boot.
-- **Banco de dados previsto para o ambiente online:** PostgreSQL.
-- **Acesso externo:** proxy reverso mantido no servidor do João, que encaminha as requisições ao frontend e à API.
+A publicação foi declarada como feita via Coolify, a partir da branch `main`, com um banco PostgreSQL de staging. A configuração do Coolify, do proxy e do banco fica fora deste repositório; as etapas abaixo registram o procedimento operacional informado e apontam o que precisa ser conferido no painel.
 
 O staging é destinado à validação da equipe e da disciplina. Não deve ser tratado como ambiente de produção nem receber dados pessoais ou credenciais reais.
 
-> **Diferença entre staging e o Compose deste repositório:** a descrição do staging acima é a arquitetura informada para o ambiente online. No estado atual do repositório, o `docker-compose.yml` não declara um serviço PostgreSQL nem configura o backend para utilizá-lo. O `application.properties` configura H2 em memória e o backend escuta na porta `8081`. O Compose publica o frontend em `5173` e o backend em `8081`; portanto, ele ainda não reproduz localmente a arquitetura de staging descrita nesta seção.
+> **Diferença entre staging e o Compose deste repositório:** o Compose não declara PostgreSQL. O backend local usa `jdbc:h2:mem:testdb` e o container frontend executa Vite em modo de desenvolvimento. Portanto, o Compose não reproduz o banco, o proxy nem o modo de publicação do staging.
 
 ## 2. Execução local
 
@@ -20,13 +16,14 @@ O staging é destinado à validação da equipe e da disciplina. Não deve ser t
 
 - Git.
 - JDK 25 para executar o backend diretamente.
+- Node.js 24 e npm para executar o frontend e os testes.
 - Docker Desktop em execução.
 - Docker Compose v2 ou superior (`docker compose`).
 
-### Clonar a branch da entrega
+### Clonar o repositório
 
 ```bash
-git clone --branch entrega-8 https://github.com/IFSC-ES2/es2-2026_2-equipe-1.git
+git clone https://github.com/IFSC-ES2/es2-2026_2-equipe-1.git
 cd es2-2026_2-equipe-1
 ```
 
@@ -54,23 +51,29 @@ export JWT_SECRET=$(openssl rand -base64 32)
 
 O backend local fica disponível em <http://localhost:8081/api>. Gere um segredo novo para cada terminal ou ambiente; não versione nem compartilhe o valor.
 
-### Configurar o ambiente
+### Variáveis locais e Compose
 
-Não há um arquivo `.env.example` neste checkout. A execução direta do backend não depende de `.env`: defina `JWT_SECRET` conforme a seção anterior. Para usar o Compose, configure localmente as variáveis necessárias em `.env` ou no ambiente do terminal; o Compose exige `JWT_SECRET` e esse arquivo local não deve ser commitado.
+O repositório não utiliza nem contém `.env.example`; não há arquivo de exemplo para copiar. Defina as variáveis diretamente no terminal. `JWT_SECRET` é obrigatório para iniciar o backend. Para o Compose, defina também `VITE_API_URL` para que o frontend encontre a API local.
 
-O `.env` está no `.gitignore` e **não deve ser commitado**. Não crie um `.env` com valores de produção ou reutilize credenciais reais.
+No PowerShell, a partir da raiz do repositório:
 
-As variáveis disponíveis estão descritas na seção [Variáveis de ambiente e segurança](#4-vari%C3%A1veis-de-ambiente-e-seguran%C3%A7a). As variáveis do PostgreSQL e do Asaas ainda não estão ligadas ao Compose/backend.
-
-### Construir e iniciar os serviços
-
-Com o arquivo de ambiente disponível e preenchido com valores locais de desenvolvimento:
-
-```bash
+```powershell
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
+$env:VITE_API_URL = "http://localhost:8081/api"
 docker compose up --build -d
 ```
 
-O comando legado equivalente é `docker-compose up --build -d`. Para acompanhar a inicialização:
+No Bash (Linux/macOS), também a partir da raiz:
+
+```bash
+export JWT_SECRET=$(openssl rand -base64 32)
+export VITE_API_URL=http://localhost:8081/api
+docker compose up --build -d
+```
+
+As variáveis ficam disponíveis apenas no terminal atual. Para acompanhar a inicialização:
 
 ```bash
 docker compose ps
@@ -94,104 +97,120 @@ O endereço `http://localhost:8080/api` não corresponde ao mapeamento atual do 
 
 ### Limitações de reprodutibilidade do Compose atual
 
-Antes de considerar o Compose uma reprodução completa do ambiente, é necessário alinhar os arquivos de infraestrutura com esta documentação. No estado atual:
+O Compose é um ambiente local de desenvolvimento, não uma reprodução do staging:
 
-1. Não há `.env.example` neste checkout; configure manualmente as variáveis locais necessárias ao Compose.
-2. O Compose não declara um container PostgreSQL.
-3. O backend usa H2 em memória, não PostgreSQL; os dados podem ser perdidos ao reiniciar a aplicação.
-4. O Compose publica a API em `8081`, não em `8080`.
-5. O Compose passa `VITE_API_URL` ao frontend, mas o valor depende da configuração local do ambiente.
-6. O Compose passa `JWT_SECRET` ao backend; as configurações `SPRING_DATASOURCE_URL`, `POSTGRES_USER` e `POSTGRES_PASSWORD` não estão atualmente ligadas ao Compose/backend.
+1. Não existe `.env.example`; variáveis são fornecidas pelo terminal.
+2. O Compose não declara um serviço PostgreSQL.
+3. O backend usa `jdbc:h2:mem:testdb`; os dados são voláteis e se perdem ao reiniciar o backend.
+4. O `back-end/build.gradle` inclui H2, mas não declara o driver JDBC do PostgreSQL. Definir variáveis `SPRING_DATASOURCE_*`, por si só, não habilita essa integração nesta versão.
+5. O container frontend executa `npm run dev -- --host` (Vite em modo de desenvolvimento), não um servidor de produção.
+6. As portas locais são `5173` (frontend) e `8081` (API).
 
-Consequentemente, os comandos acima registram o procedimento esperado, mas a execução local plenamente reproduzível depende dessas pendências. Não use a URL de staging como substituição automática para a API local.
+## 3. Deploy no staging via Coolify
 
-## 3. Validação automatizada com Playwright
+O procedimento abaixo registra a publicação operacional informada pela equipe. Os recursos e segredos do Coolify não estão versionados; confirme no painel o repositório, domínio da API, gatilho de deploy e valores atuais antes de publicar.
 
-Os testes de navegador ficam em `ServiceHub/e2e`. Requerem Node.js/npm e o Chromium do Playwright instalado. Na primeira preparação do ambiente, instale as dependências e o navegador:
+1. Integre as alterações aprovadas na branch `main`.
+2. No Coolify, confira que os recursos de frontend e backend apontam para o repositório e para a branch `main`. Se o webhook/auto-deploy estiver habilitado, a integração da branch inicia uma publicação; caso contrário, acione **Deploy** no painel para o commit desejado.
+3. Confirme os domínios dos recursos: frontend em <https://frontservicehub.jvs.dev.br> e API no endereço público exibido pelo recurso backend. Configure `VITE_API_URL` com esse endereço e `/api`.
+4. Configure as variáveis nos recursos correspondentes do Coolify:
 
-```bash
+| Recurso | Variável | Valor esperado |
+|---|---|---|
+| Frontend | `VITE_API_URL` | URL pública da API com `/api`, por exemplo `https://<dominio-da-api>/api`. |
+| Backend | `JWT_SECRET` | Segredo aleatório de 32 bytes codificado em Base64; não reutilize o valor local nem o registre no Git. |
+| Backend | `SPRING_DATASOURCE_URL` | JDBC URL do PostgreSQL de staging, usando o host interno do serviço no Coolify: `jdbc:postgresql://<host-interno>:5432/<base>`. |
+| Backend | `SPRING_DATASOURCE_USERNAME` | Usuário dedicado da base de staging. |
+| Backend | `SPRING_DATASOURCE_PASSWORD` | Senha dedicada, armazenada somente no painel do Coolify. |
+
+5. Dispare a publicação e confira o estado e os logs dos dois recursos. Registre no controle da entrega o SHA do commit efetivamente implantado e a data da publicação.
+
+> **Limitação importante:** a topologia informada para staging inclui PostgreSQL, mas este checkout ainda configura H2 em `application.properties` e não inclui o driver PostgreSQL em `build.gradle`. As variáveis de banco acima descrevem o que deve ser configurado no painel; elas não tornam o código atual compatível com PostgreSQL. Não declare a conexão validada até que a imagem implantada inclua o driver e o backend inicie usando a URL JDBC do staging.
+
+### Checklist pós-deploy
+
+- [ ] O Coolify concluiu o deploy sem erro e mostra o SHA esperado da branch `main`.
+- [ ] A página inicial do frontend retorna HTTP 200 em <https://frontservicehub.jvs.dev.br>.
+- [ ] O login com uma conta de teste autorizada funciona pela interface.
+- [ ] Após o login, o frontend mantém o token JWT na chave `token` do `localStorage` e as chamadas autenticadas enviam `Authorization: Bearer <token>`.
+- [ ] Uma chamada autenticada a `<VITE_API_URL>/usuarios/me` retorna HTTP 200 e os dados do usuário.
+- [ ] O console do navegador não aponta falhas de CORS e os logs do backend não mostram erro de conexão com o banco.
+- [ ] Se a conexão PostgreSQL estiver habilitada na versão implantada, um dado de teste permanece disponível após reiniciar o backend.
+
+O repositório não configura Spring Boot Actuator nem uma rota dedicada `/actuator/health`. Para a API, use login e a chamada autenticada a `/usuarios/me` como smoke checks; não interprete apenas a resposta do frontend como prova de API ou persistência.
+
+## 4. Testes locais e CI
+
+### Testes executados pelo CI
+
+O workflow `.github/workflows/ci.yml` roda em pull requests direcionados a `main`:
+
+- Backend: `./gradlew test jacocoTestReport --no-daemon`, incluindo testes JUnit unitários e de integração.
+- Frontend: `npm run build`, `npm test -- --run` (Vitest) e `npm run lint`.
+- Configuração: validação sintática do Compose.
+
+O CI **não** executa Playwright/E2E e não publica o staging.
+
+### Testes End-to-End locais com Playwright
+
+`npm run test:e2e` é executado localmente, contra frontend e backend locais e a base H2 isolada em memória. A configuração Playwright inicia os servidores locais; ela não deve ser apontada ao staging compartilhado. No PowerShell, na raiz do repositório, gere o segredo e execute:
+
+```powershell
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
 cd ServiceHub
 npm ci
 npx playwright install chromium
-```
-
-Com o backend acessível na URL configurada em `ServiceHub/playwright.config.ts` (atualmente `http://localhost:8081`), execute:
-
-```bash
 npm run test:e2e
 ```
 
-O comando roda os testes em modo headless. Para executar com o navegador visível:
+Os cenários usam contas sintéticas e as cadastram quando ainda não existem. Eles criam e alteram dados; a base H2 de teste é descartada ao reiniciar o backend. Para ver o navegador, execute `npm run test:e2e:visivel`. Não use esses testes contra o staging ou uma base com dados reais.
 
-```bash
-npm run test:e2e:visivel
-```
+## 5. Variáveis de ambiente e autenticação
 
-O modo visível usa `--headed --workers=1`. Apesar de ser interativo/visível, a configuração atual não define desaceleração (`slowMo`).
-
-### Contas de teste e dados
-
-As contas de demonstração indicadas para validação são:
-
-| Perfil | E-mail | Senha informada para demonstração |
-|---|---|---|
-| Cliente E2E | `servicehub.e2e.cliente@example.test` | `SenhaE2E123!` |
-| Prestador E2E | `servicehub.e2e.prestador@example.test` | `SenhaE2E123!` |
-
-Esses usuários não são criados por migração ou seed do Compose. Os testes Playwright tentam autenticar e, se a conta ainda não existir, realizam o cadastro durante a execução. Portanto, a disponibilidade dessas credenciais no staging não é garantida.
-
-> **Divergência a resolver:** o arquivo E2E atual (`ServiceHub/e2e/servicehub.spec.ts`) usa a senha `ServiceHubE2E!2026`, diferente da senha de demonstração acima. Antes de divulgar ou usar `SenhaE2E123!`, alinhe o teste e a senha das contas no ambiente que será validado. As contas E2E e seus dados são exclusivamente sintéticos; não reutilize essa senha em contas pessoais ou de produção.
-
-Os testes podem criar ou atualizar dados persistentes. Em particular, o cenário de fluxo de negócio publica uma solicitação, cria uma proposta e percorre as etapas do serviço. Execute-os apenas contra uma base isolada para testes; não os direcione ao staging compartilhado sem autorização e preparação da equipe.
-
-## 4. Variáveis de ambiente e segurança
-
-As variáveis abaixo são a configuração prevista para parametrizar a aplicação. Os valores da tabela são exemplos de desenvolvimento local, não credenciais de staging ou produção.
+O backend usa autenticação JWT stateless: o login emite um token com expiração de uma hora; o frontend o armazena em `localStorage` (chave `token`) e envia `Authorization: Bearer <token>` nas chamadas protegidas. O backend não depende de sessão HTTP para autenticar as chamadas da API. O logout local remove o token do navegador; como o JWT não tem revogação no servidor, um token emitido permanece válido até expirar.
 
 | Variável | Finalidade | Exemplo/observação |
 |---|---|---|
-| `VITE_API_URL` | URL base da API usada pelo frontend. | Para o mapeamento backend atual: `http://localhost:8081/api`. |
-| `SPRING_DATASOURCE_URL` | JDBC URL que o Spring usaria para conectar ao banco. | Exemplo de rede Compose: `jdbc:postgresql://db:5432/servicehub`. Não está conectado à configuração atual, que usa H2. |
-| `POSTGRES_USER` | Usuário do banco PostgreSQL local. | Defina um valor exclusivo de desenvolvimento; não reutilize usuário de staging. |
-| `POSTGRES_PASSWORD` | Senha do usuário PostgreSQL local. | Gere uma senha local forte e não a compartilhe nem a versione. |
-| `JWT_SECRET` | Segredo usado para criar as chaves de assinatura e validação JWT; obrigatório para iniciar o backend. | Gere 32 bytes aleatórios e exporte-os em Base64 conforme a seção [Execução Local do Backend](#execu%C3%A7%C3%A3o-local-do-backend). |
-
-**Estado dos arquivos de configuração:** não há `.env.example` neste checkout. O Compose exige e injeta `JWT_SECRET` no backend e referencia `VITE_API_URL`; o `application.properties` usa H2 em memória. As variáveis PostgreSQL listadas acima não estão conectadas à configuração atual.
+| `JWT_SECRET` | Segredo usado para assinatura e validação do JWT; obrigatório para iniciar o backend. | Gere 32 bytes aleatórios e codifique em Base64. Passe pelo ambiente do terminal local ou pelo painel do Coolify. |
+| `VITE_API_URL` | URL base usada pelo frontend para acessar a API. | Local: `http://localhost:8081/api`. Staging: endereço público da API configurado no Coolify, com `/api`. |
+| `SPRING_DATASOURCE_URL` | JDBC URL do banco do backend. | Staging PostgreSQL: `jdbc:postgresql://<host-interno>:5432/<base>`. No checkout atual, a configuração padrão é H2 em memória. |
+| `SPRING_DATASOURCE_USERNAME` | Usuário da conexão JDBC. | Defina diretamente no terminal local ou no painel; não registre credenciais no repositório. |
+| `SPRING_DATASOURCE_PASSWORD` | Senha da conexão JDBC. | Defina diretamente no terminal local ou no painel; não registre credenciais no repositório. |
 
 > **Importante para o build do frontend:** `ServiceHub/src/servicos/api.ts` lê `import.meta.env.VITE_API_URL` com valor padrão `http://localhost:8081/api`. O Vite **embute** a variável no bundle em tempo de build. Para servir o frontend em outro domínio, defina `VITE_API_URL` **antes** de `npm run build` / `docker compose build`.
 
 **Proteção de segredos:**
 
-- Não versione `.env`, tokens, chaves privadas, senhas reais ou dados pessoais.
-- Mantenha `.env` fora do Git e use apenas valores fictícios para desenvolvimento.
+- Não versione tokens, chaves privadas, senhas reais ou dados pessoais.
 - Configure segredos de staging no mecanismo privado de configuração do servidor, nunca neste documento ou no repositório.
 - Não publique arquivos de configuração preenchidos com valores reais em logs, capturas de tela ou relatórios.
-- Na inspeção dos arquivos de ambiente versionados, não foi localizado `.env` nem `.env.example`. Isso não substitui uma varredura formal de segredos em todo o histórico Git; qualquer suspeita de segredo comprometido deve ser tratada com rotação/revogação imediata.
 
-## 5. Validação do ambiente e da versão entregue
+## 6. Validação do ambiente e da versão entregue
 
-Checklist objetivo para confirmar que o ambiente implantado corresponde à versão `v0.4.0`:
+Use este checklist após o deploy para confirmar a revisão implantada e os fluxos essenciais:
 
 | # | Verificação | Como validar | Resultado esperado |
 |:--:|:---|:---|:---|
-| 1 | Aplicação no ar | abrir a URL do frontend | tela inicial do ServiceHub (Home) carregada |
-| 2 | API respondendo | `curl -i https://<frontend>/api/usuarios/csrf` ou `http://localhost:8081/api/usuarios/csrf` | `200` com `{"token": ...}` |
-| 3 | Versão entregue | comparar o commit implantado com a tag `v0.4.0` | mesmo commit |
-| 4 | Login | entrar com uma conta de teste (cliente e prestador) | redirecionamento ao dashboard do perfil |
-| 5 | Fluxo principal | publicar solicitação (cliente), enviar proposta (prestador) e aceitar (cliente) | mensagens de sucesso na interface |
-| 6 | CORS | requisição do frontend ao domínio da API | sem erro de CORS no console |
-| 7 | Segurança | acessar `/dashboard-cliente` sem login | redirecionamento para `/login` |
-| 8 | Suíte automatizada | `./gradlew test jacocoTestReport` e `npm test` | 129 e 29 testes aprovados |
+| 1 | Revisão implantada | conferir o SHA no Coolify contra o commit aprovado em `main` | SHA correspondente e deploy concluído |
+| 2 | Frontend | abrir <https://frontservicehub.jvs.dev.br> ou executar `curl -i https://frontservicehub.jvs.dev.br/` | HTTP 200 e Home carregada |
+| 3 | Login e API | entrar com conta de teste autorizada; depois consultar `<VITE_API_URL>/usuarios/me` com `Authorization: Bearer <token>` | login concluído e `/usuarios/me` responde HTTP 200 |
+| 4 | Autenticação no browser | conferir a chave `token` em `localStorage` e o header da requisição protegida | `Authorization: Bearer ...` presente |
+| 5 | Banco | verificar logs do backend e persistência de um registro de teste após reiniciar o serviço | conexão sem erros; registro persiste se PostgreSQL estiver realmente integrado |
+| 6 | CORS | observar a chamada do frontend à API no console/network do navegador | sem bloqueio CORS |
 
-O pipeline `.github/workflows/ci.yml` executa os mesmos testes a cada pull request, além do E2E com
-Playwright. Os resultados da Sprint 4 estão em `docs/PLANO-DE-TESTES.md`.
+O projeto não expõe endpoint dedicado do Actuator para healthcheck. A página inicial e o fluxo login + `/usuarios/me` são smoke checks; confirme separadamente a conexão e a persistência do banco.
 
-## 6. Limitações conhecidas
+O workflow `.github/workflows/ci.yml` não faz deploy. Os resultados de testes registrados para a Sprint 4 estão em `docs/PLANO-DE-TESTES.md`.
+
+## 7. Limitações conhecidas
 
 - **Sandbox financeiro (Asaas):** integração postergada nesta entrega para priorizar deploy e estabilidade. Não considerar pagamentos reais disponíveis ou validados.
-- **Banco de staging:** pode ser limpo periodicamente para permitir a execução das suítes automatizadas. Não depender da permanência de contas ou registros de teste.
-- **Compose local:** ainda não reproduz o PostgreSQL de staging; usa H2 em memória e portas diferentes da URL `localhost:8080/api` inicialmente prevista.
-- **Contas E2E:** são dados sintéticos e podem precisar ser recriados após a limpeza do banco. A senha indicada para demonstração diverge da senha atualmente presente no teste Playwright.
-- **Disponibilidade do staging:** depende do servidor e do proxy reverso mantidos pela equipe. Falhas de acesso devem ser verificadas junto ao responsável pela infraestrutura antes de concluir que a aplicação está indisponível.
-- **Frontend em staging:** o endereço informado para validação da Entrega 8 é <https://servicehub.jvs.dev.br>. Use esse mesmo endereço nas referências ao staging deste guia e do README.
-- **Cobertura do frontend:** medida a partir da Entrega 8 (`npm run test:coverage`), mas ainda concentrada em `servicos/` e em componentes isolados; as páginas são cobertas apenas pelo E2E.
+- **Compose local:** usa `jdbc:h2:mem:testdb` em memória e perde os dados ao reiniciar o backend; não reproduz o PostgreSQL de staging.
+- **Frontend local/Compose:** o `ServiceHub/Dockerfile` inicia Vite em modo de desenvolvimento; não representa um artefato de frontend de produção.
+- **PostgreSQL:** o `back-end/build.gradle` atual não declara o driver PostgreSQL. A existência de variáveis no painel não comprova que o backend implantado esteja usando esse banco.
+- **Coolify:** a configuração do serviço, os gatilhos, o domínio da API e os valores de ambiente não estão versionados. O procedimento depende de conferência no painel e registro do SHA implantado.
+- **Playwright:** os testes E2E são locais, alteram dados e não fazem parte do pipeline CI; execute-os somente com a base H2 isolada.
+- **Staging:** a disponibilidade depende do servidor e do proxy mantidos pela equipe; não presuma que a URL pública ou a persistência estejam operacionais sem repetir o checklist pós-deploy.
+- **Cobertura do frontend:** o CI executa Vitest, mas não Playwright; a cobertura informada na Sprint 4 não é produzida pelo workflow atual.
