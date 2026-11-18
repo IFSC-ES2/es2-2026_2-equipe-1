@@ -156,3 +156,28 @@ A revisão considera as prioridades da Sprint 4: estabilização do deploy, vali
 | **R14** | Divergência entre staging e execução local | 2 | 2 | 4 - Média | O Compose não reproduz o PostgreSQL de staging e usa portas diferentes. Mitigação: checklist de validação em `docs/DEPLOY.md`. |
 | **R15** | Build do frontend com `VITE_API_URL` incorreta | 2 | 3 | 6 - Alta | A variável é embutida no bundle pelo Vite; valor errado aponta o frontend para uma API inacessível. Mitigação: `.env.example` versionado e verificação no checklist de deploy. |
 | **R16** | Banco de staging limpo periodicamente | 3 | 2 | 6 - Alta | Contas e registros de demonstração podem desaparecer; os cenários E2E usam dados sintéticos e recriáveis. |
+
+---
+
+## 9. Status final da Release Candidate - Entrega 9
+
+| ID | Risco | Situação na RC | Evidência / avaliação final | Resposta |
+|:---|:---|:---|:---|:---|
+| **R09/R14** | Deploy e divergência local/staging | **MITIGADO** | O staging <https://servicehub.jvs.dev.br> foi disponibilizado por João Vitor; Docker, configuração de ambiente e checklist estão registrados em `docs/DEPLOY.md`. Diferenças H2/PostgreSQL e de portas continuam documentadas, mas não impedem a implantação atual. | Monitorar disponibilidade, manter credenciais fora do Git e executar o checklist antes de cada release. |
+| **R13** | CORS e controle de origem | **MITIGADO** | `SecurityConfig` usa origens explícitas para localhost e domínio `*.jvs.dev.br`/`servicehub.jvs.dev.br`, com cabeçalhos Authorization e JSON permitidos. | Rever a lista ao publicar novos frontends e cobrir origin/token com testes de integração. |
+| **R13b** | CSRF na API migrada para JWT | **MITIGADO** | A API desativou CSRF deliberadamente por operar em modo stateless; chamadas protegidas usam JWT Bearer. O endpoint `/api/usuarios/csrf` informa `enabled: false`. | Não reativar mecanismos de cookie sem também ajustar frontend e testes. |
+| **R17** | JWT expira em 1 hora, sem blacklist no logout | **RESIDUAL - MÉDIO** | `JwtTokenService` define `Duration.ofHours(1)`; o logout limpa o `SecurityContext` e remove o token no navegador, mas não revoga uma cópia já obtida. | Tratar como limitação aceita na RC. Para produção, avaliar lista de revogação, cookies seguros/rotatable refresh tokens ou encurtamento e rotação da validade. |
+| **R18** | Permissões amplas em rotas genéricas secundárias | **RESIDUAL - MÉDIO** | `GET /api/usuarios`, `GET /api/usuarios/{id}`, `POST /api/usuarios` e `DELETE /api/usuarios/{id}` exigem autenticação, mas não aplicam controle adicional explícito por perfil/proprietário na mesma configuração. | Endurecer rotas administrativas/usuário por perfil e dono do recurso; adicionar testes MockMvc de autorização negativa. |
+| **R19** | Dependência do servidor de staging | **RESIDUAL - MÉDIO** | A demonstração depende da disponibilidade da infraestrutura JVS e do proxy HTTPS mantido pela equipe. | Definir responsável de plantão, health check, backup mínimo e procedimento de retomada. |
+| **R20** | Ausência de gateway de pagamento | **RESIDUAL/ESCOPO REMOVIDO - ALTO** | Asaas não foi integrado; não existem cobrança, liquidação, confirmação por webhook ou status financeiro nesta RC. | Manter fora da matriz de concluídos e replanejar homologação sandbox, webhooks e testes antes de reintroduzir. |
+| **R21** | Recusa e notificação em tempo real ausentes | **RESIDUAL/ESCOPO PARCIAL - MÉDIO** | A proposta pode ser enviada e aceita, mas não há recusa persistida pelo prestador nem canal de notificação ativa. | Implementar estado/endpoint de recusa e, se necessário ao produto, polling ou mensagens assíncronas em etapa futura. |
+| **R12** | Migração H2 para PostgreSQL | **RESIDUAL - MÉDIO** | O Compose local continua em H2 em memória; staging pode usar uma base diferente. | Validar DDL/JPA e importar dados no ambiente PostgreSQL antes de uma instalação produtiva. |
+| **R15** | `VITE_API_URL` incorreta no build | **RESIDUAL - MÉDIO/ALTO** | A URL é incorporada pelo Vite no bundle. Um valor incorreto impede o frontend de alcançar a API. | Manter checklist de deploy e teste de acesso real após cada build publicado. |
+| **R16** | Dados do staging podem ser limpos | **RESIDUAL - MÉDIO** | Contas e solicitações sintéticas podem desaparecer quando o banco for reiniciado ou limpo. | Documentar período de limpeza e preparar script de seed antes das demonstrações. |
+
+### 9.1 Conclusão da gestão de risco
+
+A Release Candidate pode ser considerada estável para os fluxos entregues, desde que os riscos
+residuais sejam apresentados na demonstração e não sejam confundidos com funcionalidades concluídas.
+Deploy, CORS e a migração para JWT estão mitigados por configuração e testes; payment Asaas e
+notificação ativa permanecem fora do escopo entregue.

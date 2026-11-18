@@ -139,3 +139,49 @@ A cobertura do frontend passou a ser medida nesta entrega (`npm run test:coverag
 - Workflow de CI: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)
 - Testes backend: `back-end/src/test/`
 - Testes frontend: `ServiceHub/tests/`
+
+---
+
+## 7. Consolidação da Release Candidate - Entrega 9
+
+**Marco:** `v1.0.0-rc.1`  
+**Data da validação local registrada:** 18/11/2026  
+**Situação do escopo:** o Release Candidate consolida o fluxo funcional revisado e mantém integração
+de pagamento com Asaas fora do escopo entregue.
+
+### 7.1 Indicadores finais
+
+| Métrica | Resultado final da RC | Evidência vinculada | Responsável/participação |
+|:---|:---|:---|:---|
+| M-01 Backend | **129 testes aprovados**, 0 falhas; **93,37% de linhas**, **80,80% de branches**, **87,22% de métodos** e **100% de classes** | Execução JUnit/Spring Boot com JaCoCo registrada em `docs/COBERTURA-JACOCO.md`, `docs/PLANO-DE-TESTES.md` e `back-end/src/test/` | Ana Clara Teixeira Ronzani consolidou a medição; Leonardo participou da evolução e revisão dos testes de regra e integração |
+| M-01 Frontend | **29 testes Vitest aprovados**, cobertura medida em **25,22% de linhas** | `ServiceHub/tests/`, `ServiceHub/vitest.config.ts`, `npm run test:coverage` | Davi implementou o componente/filtro cobertos; Ana Clara mediu e consolidou o resultado |
+| M-01 E2E | **3 cenários Playwright aprovados** na validação local da RC | `docs/ACEITACAO.md`; Playwright para login inválido, edição de perfil e publicação/proposta | Leonardo participou da implementação e validação dos cenários; Ana Clara validou os resultados |
+| M-02 Pull Requests/CI | Fluxo por PR ativo; pipeline verifica arquivos, backend, frontend, lint e Compose. Lead time numérico ainda depende do registro histórico de abertura/aprovação/merge no GitHub | `.github/workflows/ci.yml`, `docs/PLANO-DE-TESTES.md` e histórico de merges | Davi acompanha o fluxo de PR; João mantém CI/infra; Ana Clara valida qualidade; Leonardo revisa arquitetura e integração |
+| M-03 Escopo revisado | **100% do escopo revisado entregue**; não corresponde às 88 horas integrais do backlog original | `docs/RETROSPECTIVA.md`, `docs/riscos.md` e planejamento da Sprint 4 | Equipe: Leonardo nas regras/arquitetura, Davi no frontend, João no staging/CI e Ana Clara nos testes/documentação |
+
+### 7.2 Participação da equipe na RC
+
+- **Leonardo Victor Muller De Morais:** arquitetura JWT stateless, regras de negociação, testes de
+  integração, autorização por proprietário e validação técnica da Release Candidate.
+- **João Vitor Schmitt:** ambiente de staging, Docker/Compose, CORS, configuração de variáveis,
+  pipeline de CI e validação da implantação.
+- **Davi Israel Quirino:** evolução dos dashboards, edição de perfil, filtros, integração REST no
+  frontend e correção de fluxo de interface.
+- **Ana Clara Teixeira Ronzani:** suítes/backend, cobertura JaCoCo, testes Vitest/E2E, matriz de
+  aceitação, métricas, riscos e consolidação da documentação da RC.
+
+### 7.3 Dados reais e limitações
+
+Os resultados acima são baseados em comandos e arquivos existentes no repositório. O backend conta
+com testes unitários e de integração de regras de usuário, solicitações, propostas, autenticação JWT
+e autorização. Os testes frontend cobrem componentes e serviços; as páginas são exercitadas
+principalmente pelos três cenários E2E. A matriz de aceitação registra cadastro/login, CEP/endereço,
+perfil, publicação/filtro, proposta, aceite e conclusão.
+
+Limitações verificáveis da RC:
+
+- não há integração concluída com o gateway Asaas;
+- não há recusa formal persistida pelo prestador nem notificação ativa em tempo real;
+- a cobertura do frontend permanece inferior à cobertura do backend;
+- o lead time médio de PR não deve ser apresentado como métrica numérica até a coleta de timestamps
+  individuais no GitHub.
