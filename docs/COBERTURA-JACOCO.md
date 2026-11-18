@@ -1,71 +1,50 @@
-# Evidência de testes e cobertura — Entrega 8
+# Evidência de testes e cobertura JaCoCo — v1.0.0-rc.1
 
-**Data da execução:** 11/11/2026  
-**Comando executado:**
+**Data da execução local:** 18/11/2026
+**Comando executado:** `.\gradlew.bat test jacocoTestReport --no-daemon` em `back-end/`
 
-```bash
-cd back-end
-./gradlew test jacocoTestReport --no-daemon
-```
+## Resultado do backend
 
-## Resultado
-
-- Testes executados: **129**
-- Falhas: **0**
-- Erros: **0**
-- Testes ignorados: **0**
-- Cobertura de linhas: **93,37%**
-- Cobertura de instruções: **93,03%**
-- Cobertura de branches: **80,80%**
-- Cobertura de métodos: **87,22%**
-- Cobertura de classes: **100,00%**
-
-A cobertura de linhas supera a meta de 70% definida na métrica M-01, e a cobertura de branches passou
-de 63,89% (Entrega 7) para 80,80%. O crescimento vem dos testes acrescentados na Entrega 8:
-`UsuarioServiceRegrasAdicionaisTest` (31 casos) e `SolicitacaoPropostaIntegrationTest` (11 casos), este
-último autenticando pelo endpoint real de login e reutilizando sessão e token CSRF.
-
-### Execução por classe de teste
-
-| Classe de teste | Casos |
+| Métrica | Resultado |
 |:---|---:|
-| `service.UsuarioServiceTest` | 29 |
-| `service.UsuarioServiceRegrasAdicionaisTest` | 31 |
-| `service.SolicitacaoServicoServiceTest` | 21 |
-| `SecurityIntegrationTest` | 18 |
-| `SolicitacaoPropostaIntegrationTest` | 11 |
-| `service.SolicitacaoServicoServiceAdditionalTest` | 9 |
-| `service.UsuarioServiceAdditionalTest` | 4 |
-| `service.EnderecoServiceTest` | 2 |
-| `service.PropostaValidacaoTest` | 2 |
-| `UsuarioSessionIntegrationTest` | 1 |
-| `ServicehubApplicationTests` | 1 |
-| **Total** | **129** |
+| Testes executados | 131 |
+| Falhas / erros / ignorados | 0 / 0 / 0 |
+| Cobertura de linhas | 95,38% |
+| Cobertura de instruções | 94,46% |
+| Cobertura de branches | 81,53% |
+| Cobertura de métodos | 91,43% |
+| Cobertura de classes | 100,00% |
 
-## Frontend
+O relatório foi gerado localmente pelo Gradle. O workflow de CI executa o mesmo
+comando em `back-end/` e publica o relatório HTML como artefato. Os números
+acima correspondem à execução local registrada para esta RC; não são uma
+afirmação de execução do GitHub Actions.
 
-```bash
-cd ServiceHub
-npm run test:coverage
-```
+## Testes de autenticação e fluxos atuais
 
-- Testes executados: **29** (3 arquivos), sem falhas
-- Cobertura de linhas: **25,22%** — medida a partir da Entrega 8
-- Cobertura de branches: **67,02%**
-- Cobertura de funções: **61,66%**
-- Relatório: `ServiceHub/coverage/index.html`
+A autenticação é stateless com JWT. As evidências atuais incluem:
 
-A cobertura do frontend é menor porque as páginas (`DashboardCliente`, `DashboardPrestador`,
-`Cadastro`, `Home`, `SelecaoUser`) não possuem testes de componente e são validadas apenas pelos
-três cenários E2E do Playwright. Está registrada como oportunidade de melhoria em `docs/METRICAS.md`.
+- `UsuarioJwtIntegrationTest.loginEmiteJwtQueAutenticaRequisicoesStateless`:
+  autentica pelo endpoint de login e usa o JWT em `Authorization: Bearer`.
+- `SolicitacaoPropostaIntegrationTest.fluxoPropostaAceite_eConcluidoViaHttp`:
+  percorre envio de proposta pelo prestador, aceite pelo cliente e conclusão,
+  usando os tokens JWT emitidos pelo endpoint real.
+- `SolicitacaoPropostaIntegrationTest.enderecoCadastrado_deveAparecerNaListagem`:
+  valida cadastro e listagem HTTP de endereço.
+
+As evidências de cobertura e execução do frontend e do Playwright estão
+separadas no [Plano de Testes](./PLANO-DE-TESTES.md) e na
+[Matriz de Aceitação](./ACEITACAO.md). Playwright é executado localmente e não
+faz parte do CI.
 
 ## Relatórios gerados
-
-O comando gera os relatórios locais em:
 
 ```text
 back-end/build/reports/jacoco/test/html/index.html
 back-end/build/reports/jacoco/test/jacocoTestReport.xml
 ```
 
-A execução também valida o fluxo de sessão no teste `UsuarioSessionIntegrationTest`, incluindo login, acesso autenticado, logout e bloqueio posterior.
+O job de backend do CI publica o relatório HTML. O frontend usa Vitest, mas o
+workflow executa `npm test -- --run`, sem a opção de cobertura; `npm run
+test:coverage` não foi executado nesta validação da RC. Por isso, este documento
+não atribui um percentual atual de cobertura ao frontend.
