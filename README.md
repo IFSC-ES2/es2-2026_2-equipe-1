@@ -209,3 +209,13 @@ O planejamento documenta o escopo definido para a Sprint 2.
 - **Registro de Uso de IA:** [USO-IA.md](USO-IA.md)
 - **Contribuições Individuais:** [docs/contribuições/CONTRIBUICOES-SPRINT-4.md](docs/contribuições/CONTRIBUICOES-SPRINT-4.md)
 - **Ambiente de Validação Online:** <https://servicehub.jvs.dev.br>
+
+---
+
+## Entrega 9 — Release Candidate v1.0.0-rc.1
+
+- **Release Candidate:** [docs/entregas/release-candidate.md](docs/entregas/release-candidate.md)
+- **Matriz de Aceitação:** [docs/ACEITACAO.md](docs/ACEITACAO.md)
+- **Retrospectiva da RC:** [docs/RETROSPECTIVA.md](docs/RETROSPECTIVA.md)
+- **Staging do frontend:** <https://frontservicehub.jvs.dev.br>
+- **API de staging:** <https://servicehub.jvs.dev.br>
