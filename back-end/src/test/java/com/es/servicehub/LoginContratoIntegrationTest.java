@@ -1,4 +1,4 @@
-package com.es.servicehub.controller;
+package com.es.servicehub;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
