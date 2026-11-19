@@ -12,7 +12,7 @@ que dependem do ambiente local. A matriz de aceitação do MVP está em
 
 | Camada | Ferramenta | O que verifica | Onde é executada |
 |:---|:---|:---|:---|
-| Backend | JUnit 5, Spring Boot Test, MockMvc e JaCoCo | Regras de negócio, integração HTTP, autenticação JWT, autorização, solicitações, propostas e endereços | CI e localmente |
+| Backend | JUnit 5, Spring Boot Test, MockMvc e JaCoCo | Regras de negócio, integração HTTP, autenticação JWT (emissão e expiração), contrato do login, autorização, solicitações, propostas e endereços | CI e localmente |
 | Frontend | Vitest e Testing Library | Serviços de API/autenticação e componentes React | CI e localmente |
 | Build e lint do frontend | TypeScript, Vite e ESLint | Compilação de produção, tipos e padrões de código | CI e localmente |
 | End-to-End | Playwright | Fluxos completos no navegador, incluindo cadastro/login, perfil e ciclo da solicitação | **Localmente; não executado pelo CI** |
@@ -21,17 +21,18 @@ que dependem do ambiente local. A matriz de aceitação do MVP está em
 ### O que o CI executa
 
 O workflow `.github/workflows/ci.yml` é acionado em pull requests direcionados à
-branch `main`. Ele executa:
+branch `main` e em push na `main`. Ele executa:
 
+- Arquivos obrigatórios: `check_files` verifica a presença dos documentos essenciais.
 - Backend: `./gradlew test jacocoTestReport --no-daemon` em `back-end/` e publica
   o relatório HTML JaCoCo como artefato.
 - Frontend: `npm ci`, `npm run build`, `npm test -- --run` (Vitest) e
   `npm run lint` em `ServiceHub/`.
 - Validação de configuração: `docker compose -f docker-compose.yml config --quiet`.
 
-O workflow **não executa Playwright**. Portanto, os resultados E2E desta RC são
-execuções locais e não devem ser apresentados como resultados do GitHub Actions.
-O CI também não executa `npm run test:coverage`; a cobertura JaCoCo é gerada
+O workflow **não executa Playwright** e **não faz varredura de segredos**. Portanto, os
+resultados E2E desta RC são execuções locais e não devem ser apresentados como resultados do
+GitHub Actions. O CI também não executa `npm run test:coverage`; a cobertura JaCoCo é gerada
 para o backend, enquanto a cobertura do frontend é uma medição local separada.
 
 ## 2. Execução local
@@ -71,15 +72,20 @@ iniciar o backend local. Consulte [DEPLOY.md](./DEPLOY.md) para a configuração
 local da variável. O comando E2E inicia o ambiente definido em
 `ServiceHub/playwright.config.ts`; não é um job do CI.
 
+A configuração é reprodutível em Windows, Linux e macOS: o backend é iniciado a
+partir de `back-end/` com `gradlew.bat bootRun` no Windows e `./gradlew bootRun`
+no Linux/macOS, e a URL da API pode ser trocada com `PLAYWRIGHT_API_URL`. Se
+`JWT_SECRET` não estiver definido, a configuração usa um segredo local de teste.
+
 ## 3. Evidências da validação da RC
 
 Execução local registrada em 18/11/2026:
 
 | Verificação | Resultado |
 |:---|:---|
-| Backend — `gradlew test jacocoTestReport --no-daemon` | 131 testes; 0 falhas, 0 erros, 0 ignorados; `BUILD SUCCESSFUL` |
-| Backend — cobertura JaCoCo de linhas | 95,38% |
-| Frontend — `npm test -- --run` | 29 testes aprovados em 3 arquivos |
+| Backend — `gradlew test jacocoTestReport --no-daemon` | 138 testes; 0 falhas, 0 erros, 0 ignorados; `BUILD SUCCESSFUL` |
+| Backend — cobertura JaCoCo | 95,24% de linhas; 81,53% de branches; 91,49% de métodos; 100% de classes |
+| Frontend — `npm test -- --run` | 35 testes aprovados em 4 arquivos |
 | Frontend — `npm run build` | Aprovado |
 | Frontend — `npm run lint` | Aprovado |
 | Playwright — `npm run test:e2e` | 3 cenários aprovados localmente |
@@ -105,8 +111,12 @@ externa de CEP. As evidências e ressalvas por caso estão detalhadas em
 - Não há, nesta validação, teste automatizado que comprove a consulta real à API
   externa ViaCEP; há testes de cadastro/listagem do endereço e preenchimento
   manual no E2E.
-- `npm run test:coverage` não foi executado nesta RC; não há percentual atual de
-  cobertura do frontend reportado aqui.
+- A cobertura do frontend é medida localmente em **20,81% de linhas** (`npm run
+  test:coverage`, execução da auditoria da Entrega 9) e não é executada pelo CI; o
+  detalhamento por arquivo está em [COBERTURA-JACOCO.md](./COBERTURA-JACOCO.md).
+- A consulta ao ViaCEP tem teste unitário com `fetch` mockado
+  (`ServiceHub/tests/cep.test.ts`); a chamada real ao serviço externo continua sem
+  teste automatizado e é verificada manualmente conforme [CEP.md](./CEP.md).
 - Os testes aprovam o fluxo de proposta, aceite e conclusão; recusa de proposta
   e notificações ativas permanecem limitações, conforme a matriz de aceitação.
 - A integração de pagamentos Asaas não tem evidência de teste nesta validação.
