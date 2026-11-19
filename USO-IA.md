@@ -263,3 +263,14 @@ Validação: Revisado por João Vitor Schmitt; `./gradlew test jacocoTestReport 
 foram executados, com ajuste do teste de autorização correspondente. A validação frontend depende da instalação
 das dependências com `npm ci`.
 ```
+
+```
+Registro de uso 23
+
+Data: 18/11/2026
+Ferramenta: AbacusAI
+Uso: Conferência de afirmações da documentação com o código e com a execução real de build, testes e cobertura;
+reconciliação de métricas; correção do pipeline e da configuração Playwright; auxílio na criação dos testes e documentos faltantes.
+Artefatos: back-end/src/test/java/com/es/servicehub/service/JwtTokenServiceTest.java, back-end/src/test/java/com/es/servicehub/LoginContratoIntegrationTest.java, ServiceHub/tests/cep.test.ts, ServiceHub/tests/servicos.test.ts (ajuste de robustez) ServiceHub/playwright.config.ts, .github/workflows/ci.yml README.md, docs/CEP.md, docs/DEPLOY.md, docs/PLANO-DE-TESTES.md, docs/METRICAS.md, docs/riscos.md, docs/RETROSPECTIVA.md, docs/COBERTURA-JACOCO.md, docs/ci.md, docs/entregas/release-candidate.md, docs/adrs/ADR-0002-integracao-pagamentos-asaas.md
+Validação: Revisado e adaptado por Ana Clara Teixeira Ronzani
+```
