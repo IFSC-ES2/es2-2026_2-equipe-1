@@ -145,8 +145,8 @@ A revisão considera as prioridades da Sprint 4: estabilização do deploy, vali
 | ID | Risco | Situação ao final da Sprint 4 | Evidência / justificativa | Ação ou acompanhamento |
 |:---|:---|:---|:---|:---|
 | **R13** | Erros de permissões, CORS e CSRF | **MITIGADO** | Ajustes em `SecurityConfig.java` (rotas públicas de cadastro/login, CSRF, `XSRF-TOKEN`, cookie de sessão `HttpOnly`) e em `WebConfig.java` (CORS restrito a `http://localhost:5173` e ao domínio do frontend publicado). Coberto por `SecurityIntegrationTest` (18 casos) e `SolicitacaoPropostaIntegrationTest` (11 casos, incluindo requisição mutável sem CSRF). | Manter testes de segurança para rotas públicas e protegidas e reavaliar a configuração a cada novo endpoint. |
-| **R04** | Falhas no CI | **MITIGADO PARCIALMENTE** | O pipeline executa verificação de arquivos, backend com JaCoCo, build/testes/lint do frontend e validação do Compose. E2E e varredura dedicada de segredos permanecem validações locais/operacionais. | Acompanhar os checks nos PRs e adicionar E2E ao CI somente com provisionamento reprodutível. |
-| **R05** | Baixa cobertura de testes | **MITIGADO no backend, ativo no frontend** | Backend: 129 testes e 93,37% de linhas (era 77,35%). Frontend: 29 testes e 25,22% de linhas, com as páginas cobertas apenas pelo E2E. | Criar testes de componente para `DashboardCliente`, `DashboardPrestador`, `Cadastro`, `Home` e `SelecaoUser`. |
+| **R04** | Falhas no CI | **MITIGADO PARCIALMENTE** | O pipeline executa verificação de arquivos, backend com JaCoCo, build/testes/lint do frontend e validação do Compose. **Não executa Playwright, não mede cobertura do frontend e não faz varredura de segredos** — essas três verificações são locais/operacionais. | Acompanhar os checks nos PRs e adicionar E2E ao CI somente com provisionamento reprodutível. |
+| **R05** | Baixa cobertura de testes | **MITIGADO no backend, ativo no frontend** | Backend: 138 testes e 95,24% de linhas (era 77,35%). Frontend: 35 testes e **20,81% de linhas** na medição da auditoria da Entrega 9, com as páginas cobertas apenas pelo E2E. | Criar testes de componente para `DashboardCliente`, `DashboardPrestador`, `Cadastro`, `Home` e `SelecaoUser`. |
 
 ### 8.1 Riscos residuais após a Sprint 4
 
@@ -154,7 +154,7 @@ A revisão considera as prioridades da Sprint 4: estabilização do deploy, vali
 |:---|:---|:---:|:---:|:---:|:---|
 | **R12** | Migração de dados H2 → PostgreSQL | 2 | 2 | 4 - Média | O Compose local continua em H2; a migração não foi executada nesta entrega. |
 | **R14** | Divergência entre staging e execução local | 2 | 2 | 4 - Média | O Compose não reproduz o PostgreSQL de staging e usa portas diferentes. Mitigação: checklist de validação em `docs/DEPLOY.md`. |
-| **R15** | Build do frontend com `VITE_API_URL` incorreta | 2 | 3 | 6 - Alta | A variável é embutida no bundle pelo Vite; valor errado aponta o frontend para uma API inacessível. Mitigação: `.env.example` versionado e verificação no checklist de deploy. |
+| **R15** | Build do frontend com `VITE_API_URL` incorreta | 2 | 3 | 6 - Alta | A variável é embutida no bundle pelo Vite; valor errado aponta o frontend para uma API inacessível. Mitigação: definir `VITE_API_URL` antes do build (variável de ambiente local ou *build arg* do Compose) e executar o item 2 do checklist pós-deploy em `docs/DEPLOY.md`. O repositório não versiona arquivo de variáveis de ambiente. |
 | **R16** | Banco de staging limpo periodicamente | 3 | 2 | 6 - Alta | Contas e registros de demonstração podem desaparecer; os cenários E2E usam dados sintéticos e recriáveis. |
 
 ---
@@ -175,9 +175,31 @@ A revisão considera as prioridades da Sprint 4: estabilização do deploy, vali
 | **R15** | `VITE_API_URL` incorreta no build | **RESIDUAL - MÉDIO/ALTO** | A URL é incorporada pelo Vite no bundle. Um valor incorreto impede o frontend de alcançar a API. | Manter checklist de deploy e teste de acesso real após cada build publicado. |
 | **R16** | Dados do staging podem ser limpos | **RESIDUAL - MÉDIO** | Contas e solicitações sintéticas podem desaparecer quando o banco for reiniciado ou limpo. | Documentar período de limpeza e preparar script de seed antes das demonstrações. |
 
+### 9.0 Revisão do pipeline e das métricas na auditoria da Entrega 9 (18/11/2026)
+
+Correções aplicadas para alinhar este registro ao que o repositório realmente executa:
+
+- **Escopo do CI:** `.github/workflows/ci.yml` roda em `pull_request` para `main` e executa quatro
+  jobs — `check_files` (arquivos obrigatórios), `backend` (`./gradlew test jacocoTestReport`),
+  `frontend` (`npm ci`, `npm run build`, `npm test -- --run`, `npm run lint`) e `configuration`
+  (`docker compose config --quiet`). **Não** há job de Playwright/E2E, **não** há
+  `npm run test:coverage` (cobertura do frontend) e **não** há varredura de segredos. O E2E e a
+  cobertura do frontend são medições locais, registradas em `docs/PLANO-DE-TESTES.md`.
+- **Métricas da execução desta auditoria:** backend com **138 testes**, 0 falhas, e JaCoCo de
+  **95,24% de linhas, 81,53% de branches, 91,49% de métodos e 100% de classes**; frontend com
+  **35 testes** e **20,81% de linhas**; build, lint e testes do frontend aprovados; 3 cenários
+  Playwright aprovados em execução local.
+- **`.env.example`:** o arquivo **não existe** no repositório. Ele é citado no job `check_files` do
+  workflow e em `docs/DEPLOY.md`; por isso, não pode ser tratado como mitigação de nenhum risco até
+  ser versionado (ou até que o workflow e a documentação deixem de exigi-lo).
+- **Reprodutibilidade do E2E:** `ServiceHub/playwright.config.ts` iniciava o backend com
+  `..\back-end\gradlew.bat`, comando dependente de Windows. A configuração foi ajustada para
+  escolher o wrapper do sistema e executá-lo em `back-end/`, o que torna os três cenários
+  reproduzíveis em Windows, Linux e macOS.
+
 ### 9.1 Conclusão da gestão de risco
 
 A Release Candidate pode ser considerada estável para os fluxos entregues, desde que os riscos
 residuais sejam apresentados na demonstração e não sejam confundidos com funcionalidades concluídas.
-Deploy, CORS e a migração para JWT estão mitigados por configuração e testes; payment Asaas e
-notificação ativa permanecem fora do escopo entregue.
+Deploy, CORS e a migração para JWT estão mitigados por configuração e testes; o pagamento via Asaas e
+a notificação ativa permanecem fora do escopo entregue.
