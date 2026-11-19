@@ -1,8 +1,17 @@
-# Deploy e validação — Entrega 8 (Sprint 4)
+# Deploy e validação — Entrega 8 (Sprint 4) e Release Candidate v1.0.0-rc.1
 
 ## 1. Visão geral do ambiente
 
-O ambiente de staging informado para a Entrega 8 publica o frontend em <https://frontservicehub.jvs.dev.br> e a API por um endereço configurado no Coolify. O endereço público exato da API não está versionado; o frontend deve recebê-lo em `VITE_API_URL`, incluindo o sufixo `/api`.
+O ambiente de staging publica:
+
+| Recurso | Endereço público | Base das chamadas |
+|:---|:---|:---|
+| Frontend (SPA) | <https://frontservicehub.jvs.dev.br> | — |
+| API (Spring Boot) | <https://servicehub.jvs.dev.br> | `https://servicehub.jvs.dev.br/api` |
+
+O domínio da API **está versionado** neste documento, no `README.md`, no registro da RC e nas labels
+do Traefik em `docker-compose.yml` (`traefik.http.routers.servicehub-api.rule=Host(\`servicehub.jvs.dev.br\`)`).
+O frontend recebe esse endereço em `VITE_API_URL`, incluindo o sufixo `/api`.
 
 A publicação foi declarada como feita via Coolify, a partir da branch `main`, com um banco PostgreSQL de staging. A configuração do Coolify, do proxy e do banco fica fora deste repositório; as etapas abaixo registram o procedimento operacional informado e apontam o que precisa ser conferido no painel.
 
@@ -137,17 +146,30 @@ O procedimento abaixo registra a publicação operacional informada pela equipe.
 
 O repositório não configura Spring Boot Actuator nem uma rota dedicada `/actuator/health`. Para a API, use login e a chamada autenticada a `/usuarios/me` como smoke checks; não interprete apenas a resposta do frontend como prova de API ou persistência.
 
+### Contas de teste e dados de demonstração
+
+| Ambiente | Onde obter a conta | Observação |
+|:---|:---|:---|
+| Staging | Cadastro público em <https://frontservicehub.jvs.dev.br> ou `POST https://servicehub.jvs.dev.br/api/usuarios/cadastro` | A equipe não mantém contas fixas no staging. Os dados podem ser limpos periodicamente (risco R16); recrie a conta se necessário. |
+| Local | As contas sintéticas da suíte E2E (`servicehub.e2e.cliente@example.test` / `servicehub.e2e.prestador@example.test`, senha `ServiceHubE2E!2026`) | São criadas pela própria suíte na base H2 local. **São credenciais locais**: não existem no staging e não devem ser reutilizadas nele. |
+
+Para a demonstração, cadastre um cliente e um prestador no ambiente escolhido, publique uma
+solicitação com especialidade `Eletricista` e deixe uma solicitação sem proposta para o passo de envio
+de orçamento do roteiro.
+
 ## 4. Testes locais e CI
 
 ### Testes executados pelo CI
 
 O workflow `.github/workflows/ci.yml` roda em pull requests direcionados a `main`:
 
-- Backend: `./gradlew test jacocoTestReport --no-daemon`, incluindo testes JUnit unitários e de integração.
-- Frontend: `npm run build`, `npm test -- --run` (Vitest) e `npm run lint`.
-- Configuração: validação sintática do Compose.
+- Arquivos obrigatórios: `check_files` verifica a presença dos documentos essenciais.
+- Backend: `./gradlew test jacocoTestReport --no-daemon`, incluindo testes JUnit unitários e de integração, com publicação do relatório HTML como artefato.
+- Frontend: `npm ci`, `npm run build`, `npm test -- --run` (Vitest) e `npm run lint`.
+- Configuração: validação sintática do Compose (`docker compose config --quiet`).
 
-O CI **não** executa Playwright/E2E e não publica o staging.
+O CI **não** executa Playwright/E2E, **não** roda `npm run test:coverage` (cobertura do frontend) e
+**não** faz varredura de segredos. Ele também não publica o staging.
 
 ### Testes End-to-End locais com Playwright
 
@@ -164,6 +186,14 @@ npm run test:e2e
 ```
 
 Os cenários usam contas sintéticas e as cadastram quando ainda não existem. Eles criam e alteram dados; a base H2 de teste é descartada ao reiniciar o backend. Para ver o navegador, execute `npm run test:e2e:visivel`. Não use esses testes contra o staging ou uma base com dados reais.
+
+`ServiceHub/playwright.config.ts` sobe o frontend (`npm run dev`) e o backend a partir de `back-end/`,
+escolhendo o wrapper do sistema: `gradlew.bat bootRun` no Windows e `./gradlew bootRun` no
+Linux/macOS. Se `JWT_SECRET` não estiver definido, a configuração usa um segredo local só para os
+testes. Em Linux/macOS, o wrapper precisa estar executável (`chmod +x back-end/gradlew`, já garantido
+pelo Git em clones novos). Se o backend já estiver em execução em `http://localhost:8081`, o Playwright
+o reaproveita. Para apontar para outra API, defina `PLAYWRIGHT_API_URL`; para outro frontend, defina
+`PLAYWRIGHT_BASE_URL`.
 
 ## 5. Variáveis de ambiente e autenticação
 
@@ -209,7 +239,7 @@ O workflow `.github/workflows/ci.yml` não faz deploy. Os resultados de testes r
 - **Frontend em execução direta:** `npm run dev` usa Vite para desenvolvimento; no Compose o
   Dockerfile compila o bundle e o serve com Nginx.
 - **Execução direta do backend:** sem variáveis `SPRING_DATASOURCE_*`, usa H2 em memória para desenvolvimento e testes; essa configuração não é o perfil recomendado para staging.
-- **Coolify:** a configuração do serviço, os gatilhos, o domínio da API e os valores de ambiente não estão versionados. O procedimento depende de conferência no painel e registro do SHA implantado.
+- **Coolify:** a configuração do serviço, os gatilhos e os valores de ambiente não estão versionados (o domínio público da API, `https://servicehub.jvs.dev.br`, está versionado neste documento e nas labels do Compose). O procedimento depende de conferência no painel e registro do SHA implantado.
 - **Playwright:** os testes E2E são locais, alteram dados e não fazem parte do pipeline CI; execute-os somente com a base H2 isolada.
 - **Staging:** a disponibilidade depende do servidor e do proxy mantidos pela equipe; não presuma que a URL pública ou a persistência estejam operacionais sem repetir o checklist pós-deploy.
-- **Cobertura do frontend:** o CI executa Vitest, mas não Playwright; a cobertura informada na Sprint 4 não é produzida pelo workflow atual.
+- **Cobertura do frontend:** o CI executa Vitest, mas não Playwright nem `npm run test:coverage`; a cobertura do frontend (20,81% de linhas na auditoria da RC) é uma medição local e não é produzida pelo workflow atual.
