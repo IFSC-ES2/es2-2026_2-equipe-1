@@ -6,7 +6,7 @@
 
 ## 1. Comparativo Planejado vs. Entregue
 
-O planejamento original incluía os 88 horas do MVP, entre elas a integração do pagamento via Asaas.
+O planejamento original incluía as 88 horas do MVP, entre elas a integração do pagamento via Asaas.
 Durante o desenvolvimento, a equipe fez replanejamento explícito do escopo e deixou registrada a
 integração financeira como pendência de uma etapa futura. A tabela abaixo apresenta a situação real
 do Release Candidate.
@@ -55,9 +55,11 @@ O processo se beneficiou de:
 - replanejamento do backlog para retirar itens de maior dependência externa quando necessário.
 
 O uso de PRs e CI reduziu riscos de integração, mas o lead time continua dependente da revisão dos
-registros reais do GitHub. O pipeline atual é suficiente como gate básico; o E2E precisa ser mantido
-como check explícito e estável para evitar que a validação de navegador dependa apenas de execução
-manual.
+registros reais do GitHub. O pipeline atual é suficiente como gate básico, mas cobre apenas arquivos
+obrigatórios, testes do backend com JaCoCo, build/testes/lint do frontend e validação do Compose:
+ele **não** executa Playwright, **não** mede cobertura do frontend e **não** faz varredura de
+segredos. O E2E segue como validação local e precisa ser estabilizado para virar check explícito de
+CI.
 
 ### Decisões arquiteturais
 
@@ -77,15 +79,19 @@ O histórico já registra correções nessa área e ela deve ser revisada em fut
 ### Qualidade e testes
 
 A qualidade evoluiu de cobertura não medida para uma suíte relevante no backend e em partes do
-frontend. A última evidência registrada na entrega anterior informa:
+frontend. A evidência da auditoria da Entrega 9 (18/11/2026) informa:
 
-- 129 testes backend aprovados;
-- 93,37% de cobertura de linhas no backend e 80,80% de branches;
-- 29 testes frontend aprovados e 25,22% de cobertura de linhas;
+- 138 testes backend aprovados, sem falhas;
+- 95,24% de cobertura de linhas no backend, 81,53% de branches, 91,49% de métodos e 100% de classes;
+- 35 testes frontend aprovados e 20,81% de cobertura de linhas;
 - 3 cenários E2E relatados como aprovados;
 - build e lint do frontend sem erros;
 - testes de integração cobrindo login, autorização, proposta, aceite, conclusão e proteção contra
   requisições sem controle JWT/CSRF conforme a arquitetura vigente.
+
+O E2E, que antes só era reproduzível no Windows por causa do comando `..\back-end\gradlew.bat` no
+`playwright.config.ts`, passou a escolher o wrapper do sistema (`gradlew.bat` no Windows, `./gradlew`
+no Linux/macOS) e a executá-lo em `back-end/`; os três cenários passaram a rodar sem ajuste manual.
 
 Os principais pontos positivos são a cobertura das regras de cadastro e do fluxo HTTP de negociação
 e a detecção de regressões em sessão, CORS e perfil. Os pontos a melhorar são testes de componente
