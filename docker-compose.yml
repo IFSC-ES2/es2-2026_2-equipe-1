@@ -23,11 +23,11 @@ services:
       - "8081:8081"
     environment:
       JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET com pelo menos 32 bytes aleatórios}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-servicehub}
-      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-servicehub}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD para o banco local}
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/${POSTGRES_DB:-servicehub}}
+      SPRING_DATASOURCE_DRIVER: ${SPRING_DATASOURCE_DRIVER:-org.postgresql.Driver}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-${POSTGRES_USER:-servicehub}}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD para o banco local}}
+      SPRING_JPA_DATABASE_PLATFORM: ${SPRING_JPA_DATABASE_PLATFORM:-org.hibernate.dialect.PostgreSQLDialect}
     depends_on:
       db:
         condition: service_healthy
