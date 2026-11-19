@@ -19,6 +19,13 @@ services:
       context: ./back-end
       dockerfile: Dockerfile
     container_name: servicehub_backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.servicehub-api.rule=Host(`servicehub.jvs.dev.br`)"
+      - "traefik.http.routers.servicehub-api.entrypoints=https"
+      - "traefik.http.routers.servicehub-api.tls=true"
+      - "traefik.http.routers.servicehub-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.servicehub-api.loadbalancer.server.port=8081"
     ports:
       - "8081:8081"
     environment:
@@ -39,6 +46,13 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL:-http://localhost:8081/api}
     container_name: servicehub_frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.servicehub-front.rule=Host(`frontservicehub.jvs.dev.br`)"
+      - "traefik.http.routers.servicehub-front.entrypoints=https"
+      - "traefik.http.routers.servicehub-front.tls=true"
+      - "traefik.http.routers.servicehub-front.tls.certresolver=letsencrypt"
+      - "traefik.http.services.servicehub-front.loadbalancer.server.port=5173"
     ports:
       - "5173:5173"
     depends_on:
