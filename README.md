@@ -66,6 +66,21 @@ export JWT_SECRET=$(openssl rand -base64 32)
 
 O backend fica disponível em <http://localhost:8081>.
 
+### Execução reproduzível com Docker Compose
+
+```bash
+cp .env.example .env
+# substitua JWT_SECRET e POSTGRES_PASSWORD por valores locais
+docker compose up --build -d
+```
+
+O Compose inicia PostgreSQL com volume persistente, a API em `http://localhost:8081` e o
+frontend compilado para produção em `http://localhost:5173`. Para encerrar sem remover os dados:
+
+```bash
+docker compose down
+```
+
 ### Frontend
 
 ```bash

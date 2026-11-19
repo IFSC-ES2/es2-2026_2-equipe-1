@@ -97,13 +97,15 @@ confiança em comparações numéricas isoladas.
 
 O registro de riscos mostrou aprendizagem ao longo das sprints: atraso e aumento de escopo foram
 trabalhados por priorização do MVP; falhas de CI foram mitigadas com checks no PR; autorização,
-CSRF/CORS e exposição de dados receberam testes de integração; Docker e staging foram estabilizados;
+CSRF/CORS e exposição de dados receberam testes de integração; o Docker local foi alinhado ao
+PostgreSQL persistente e ao frontend de produção, enquanto a publicação continua dependente da
+infraestrutura externa de staging;
 e a integração Asaas foi explicitamente postergada em vez de anunciada como concluída.
 
 Os riscos restantes mais relevantes são:
 
-- migração e equivalência entre H2 e PostgreSQL;
-- divergência entre ambiente local e staging;
+- validação do comportamento do PostgreSQL no ambiente de staging após a publicação;
+- configuração do proxy e do serviço de deploy do staging, que permanecem externos ao repositório;
 - URL da API incorreta embutida no bundle do frontend;
 - limpeza periódica dos dados de demonstração no staging;
 - ausência de notificação ativa e recusa dedicada no fluxo de negociação;

@@ -103,7 +103,7 @@ Foram acrescentados nesta entrega:
   sobre cadastro (documentos, senha, perfil, especialidades, duplicidade), `atualizarPerfil`,
   `listarDisponiveis` e aceite de proposta;
 - `back-end/src/test/java/com/es/servicehub/SolicitacaoPropostaIntegrationTest.java` — 11 casos de
-  integração HTTP autenticados por sessão real (login + CSRF), cobrindo proposta, aceite, conclusão,
+  integração HTTP autenticados por login real e token JWT Bearer, cobrindo proposta, aceite, conclusão,
   autorização por proprietário, isolamento das listagens e cadastro inválido;
 - `ServiceHub/tests/InputSenha.test.tsx` — 5 casos do componente `InputSenha`;
 - cobertura de frontend configurada em `ServiceHub/vitest.config.ts` e script `npm run test:coverage`.

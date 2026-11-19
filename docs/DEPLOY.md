@@ -8,7 +8,7 @@ A publicação foi declarada como feita via Coolify, a partir da branch `main`, 
 
 O staging é destinado à validação da equipe e da disciplina. Não deve ser tratado como ambiente de produção nem receber dados pessoais ou credenciais reais.
 
-> **Diferença entre staging e o Compose deste repositório:** o Compose não declara PostgreSQL. O backend local usa `jdbc:h2:mem:testdb` e o container frontend executa Vite em modo de desenvolvimento. Portanto, o Compose não reproduz o banco, o proxy nem o modo de publicação do staging.
+> O Compose reproduz a topologia de aplicação e banco do staging (backend, frontend de produção e PostgreSQL com volume nomeado). Ele não reproduz o proxy HTTPS nem o domínio público, que continuam sendo responsabilidades do servidor de staging.
 
 ## 2. Execução local
 
@@ -53,7 +53,7 @@ O backend local fica disponível em <http://localhost:8081/api>. Gere um segredo
 
 ### Variáveis locais e Compose
 
-O repositório não utiliza nem contém `.env.example`; não há arquivo de exemplo para copiar. Defina as variáveis diretamente no terminal. `JWT_SECRET` é obrigatório para iniciar o backend. Para o Compose, defina também `VITE_API_URL` para que o frontend encontre a API local.
+Copie `.env.example` para `.env` e substitua os valores de exemplo. O `.env` não deve ser versionado. `JWT_SECRET` e `POSTGRES_PASSWORD` são obrigatórios para o Compose.
 
 No PowerShell, a partir da raiz do repositório:
 
@@ -95,16 +95,14 @@ De acordo com as portas configuradas atualmente no repositório:
 
 O endereço `http://localhost:8080/api` não corresponde ao mapeamento atual do Compose. Para usá-lo, seria necessário alterar a configuração de portas do backend e garantir que a URL da API do frontend também corresponda.
 
-### Limitações de reprodutibilidade do Compose atual
+### Topologia reproduzida pelo Compose
 
 O Compose é um ambiente local de desenvolvimento, não uma reprodução do staging:
 
-1. Não existe `.env.example`; variáveis são fornecidas pelo terminal.
-2. O Compose não declara um serviço PostgreSQL.
-3. O backend usa `jdbc:h2:mem:testdb`; os dados são voláteis e se perdem ao reiniciar o backend.
-4. O `back-end/build.gradle` inclui H2, mas não declara o driver JDBC do PostgreSQL. Definir variáveis `SPRING_DATASOURCE_*`, por si só, não habilita essa integração nesta versão.
-5. O container frontend executa `npm run dev -- --host` (Vite em modo de desenvolvimento), não um servidor de produção.
-6. As portas locais são `5173` (frontend) e `8081` (API).
+1. O serviço PostgreSQL usa o volume `servicehub_db_data`, portanto os dados sobrevivem a `docker compose restart`.
+2. O backend usa PostgreSQL no Compose e H2 apenas na execução direta e nos testes.
+3. O frontend é compilado com Vite e servido pelo Nginx na porta `5173`.
+4. As portas locais são `5173` (frontend) e `8081` (API).
 
 ## 3. Deploy no staging via Coolify
 
@@ -125,7 +123,7 @@ O procedimento abaixo registra a publicação operacional informada pela equipe.
 
 5. Dispare a publicação e confira o estado e os logs dos dois recursos. Registre no controle da entrega o SHA do commit efetivamente implantado e a data da publicação.
 
-> **Limitação importante:** a topologia informada para staging inclui PostgreSQL, mas este checkout ainda configura H2 em `application.properties` e não inclui o driver PostgreSQL em `build.gradle`. As variáveis de banco acima descrevem o que deve ser configurado no painel; elas não tornam o código atual compatível com PostgreSQL. Não declare a conexão validada até que a imagem implantada inclua o driver e o backend inicie usando a URL JDBC do staging.
+> O driver PostgreSQL e as propriedades parametrizadas estão versionados. No Coolify, configure as mesmas variáveis da tabela e confirme nos logs que o backend iniciou com a URL JDBC do banco de staging.
 
 ### Checklist pós-deploy
 
@@ -208,8 +206,9 @@ O workflow `.github/workflows/ci.yml` não faz deploy. Os resultados de testes r
 
 - **Sandbox financeiro (Asaas):** integração postergada nesta entrega para priorizar deploy e estabilidade. Não considerar pagamentos reais disponíveis ou validados.
 - **Compose local:** usa `jdbc:h2:mem:testdb` em memória e perde os dados ao reiniciar o backend; não reproduz o PostgreSQL de staging.
-- **Frontend local/Compose:** o `ServiceHub/Dockerfile` inicia Vite em modo de desenvolvimento; não representa um artefato de frontend de produção.
-- **PostgreSQL:** o `back-end/build.gradle` atual não declara o driver PostgreSQL. A existência de variáveis no painel não comprova que o backend implantado esteja usando esse banco.
+- **Frontend em execução direta:** `npm run dev` usa Vite para desenvolvimento; no Compose o
+  Dockerfile compila o bundle e o serve com Nginx.
+- **Execução direta do backend:** sem variáveis `SPRING_DATASOURCE_*`, usa H2 em memória para desenvolvimento e testes; essa configuração não é o perfil recomendado para staging.
 - **Coolify:** a configuração do serviço, os gatilhos, o domínio da API e os valores de ambiente não estão versionados. O procedimento depende de conferência no painel e registro do SHA implantado.
 - **Playwright:** os testes E2E são locais, alteram dados e não fazem parte do pipeline CI; execute-os somente com a base H2 isolada.
 - **Staging:** a disponibilidade depende do servidor e do proxy mantidos pela equipe; não presuma que a URL pública ou a persistência estejam operacionais sem repetir o checklist pós-deploy.

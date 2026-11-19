@@ -328,10 +328,17 @@ class SecurityIntegrationTest {
     }
 
     @Test
-    void qualquerUsuarioAutenticadoPodeListarSolicitacoes() throws Exception {
+    void apenasAdministradorPodeListarTodasAsSolicitacoes() throws Exception {
+        mockMvc.perform(get("/api/solicitacoes")
+                        .with(user("admin@example.com").roles("ADMIN")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void clienteNaoPodeListarTodasAsSolicitacoes() throws Exception {
         mockMvc.perform(get("/api/solicitacoes")
                         .with(user("cliente@example.com").roles("CLIENTE")))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
     }
 
     @Test

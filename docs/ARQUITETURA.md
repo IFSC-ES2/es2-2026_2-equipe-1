@@ -12,7 +12,7 @@
 
 O **ServiceHub** é uma aplicação web desenvolvida no modelo de arquitetura Cliente-Servidor (*Client-Server*) para a intermediação e gestão de serviços autônomos na região de São José e Grande Florianópolis[cite: 62].
 
-A arquitetura divide a solução em uma **Aplicação de Página Única (SPA)** no frontend e uma **API REST** no backend, conectada a persistência relacional. As chamadas protegidas usam JWT stateless no cabeçalho `Authorization: Bearer`; o perfil local de desenvolvimento usa H2 em memória.
+A arquitetura divide a solução em uma **Aplicação de Página Única (SPA)** no frontend e uma **API REST** no backend, conectada a persistência relacional. As chamadas protegidas usam JWT stateless no cabeçalho `Authorization: Bearer`; o Compose usa PostgreSQL com volume persistente e a execução direta/testes usam H2 em memória.
 
 ---
 
@@ -54,7 +54,7 @@ graph TB
     subgraph Ecossistema[" 🏢 Ecossistema ServiceHub "]
         Frontend["🌐 Web Frontend (SPA)<br/><b>React + TypeScript + Vite</b><br/><i>Interface responsiva e chamadas REST</i>"]:::container
         Backend["⚙️ API Backend (REST)<br/><b>Java + Spring Boot + Security</b><br/><i>Regras de negócio e autorização JWT stateless</i>"]:::container
-        Database[("🗄️ Banco de Dados<br/><b>H2 em memória</b><br/><i>Configuração atual do repositório</i>")]:::db
+        Database[("🗄️ Banco de Dados<br/><b>PostgreSQL persistente no Compose</b><br/><i>H2 em memória para testes</i>")]:::db
     end
 
     Usuario -->|"1. Acesse e interage (HTTPS)"| Frontend
@@ -104,9 +104,10 @@ Para fins de transparência acadêmica na Entrega 7, registram-se os ajustes fei
    - *Planejado:* O aceite do prestador vinculava o serviço imediatamente.
    - *Efetivo:* Introduziu-se a entidade `PropostaServico`. O prestador envia um orçamento e o cliente escolhe a proposta desejada antes de alterar o status para `EM_ANDAMENTO`.
 
-2. **Banco de Dados (Infraestrutura):** 
+2. **Banco de Dados (Infraestrutura):**
    - *Planejado:* Execução em PostgreSQL via Docker.
-   - *Efetivo no repositório:* `application.properties` usa `jdbc:h2:mem:testdb`; o Compose não declara PostgreSQL. Embora o staging tenha sido descrito como PostgreSQL, o código atual não inclui o driver JDBC desse banco nem comprova a conexão. A topologia de staging não é reproduzível a partir deste checkout.
+   - *Efetivo no repositório:* o Compose declara PostgreSQL com volume persistente e parametriza
+     as propriedades JDBC; H2 permanece como fallback para execução direta e testes.
 
 3. **Integração com Gateway de Pagamento (Asaas):** 
    - *Planejado:* Pagamento integrado no MVP.

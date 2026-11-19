@@ -32,7 +32,7 @@ branch `main`. Ele executa:
 O workflow **não executa Playwright**. Portanto, os resultados E2E desta RC são
 execuções locais e não devem ser apresentados como resultados do GitHub Actions.
 O CI também não executa `npm run test:coverage`; a cobertura JaCoCo é gerada
-para o backend, enquanto a cobertura do frontend não foi medida nesta validação.
+para o backend, enquanto a cobertura do frontend é uma medição local separada.
 
 ## 2. Execução local
 

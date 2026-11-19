@@ -29,7 +29,8 @@ A versão `v1.0.0-rc.1` consolida o fluxo funcional do MVP revisado:
 - **Perfil:** correção do fluxo de edição para permitir somente os campos pertinentes e preservar
   e-mail/tipo de perfil; o backend valida o usuário solicitante.
 - **CI:** checks do GitHub Actions para arquivos obrigatórios, testes JaCoCo do backend,
-  testes/lint/build/cobertura do frontend e validação do Docker Compose.
+  testes/lint/build do frontend e validação do Docker Compose. A cobertura do frontend é
+  uma medição local, não um resultado do workflow.
 
 ### Limitações conhecidas
 
@@ -38,7 +39,9 @@ A versão `v1.0.0-rc.1` consolida o fluxo funcional do MVP revisado:
 - não há notificação ativa em tempo real;
 - o logout remove o token do navegador, mas não possui blacklist nem revogação server-side;
 - o JWT continua válido até expirar em uma cópia já obtida;
-- o Compose local usa H2 em memória e não reproduz integralmente PostgreSQL/staging;
+- o Compose local usa PostgreSQL com volume persistente e reproduz a topologia de aplicação e
+  banco; a execução direta/testes usam H2 em memória e o proxy/configuração do staging permanecem
+  externos ao repositório;
 - a cobertura do frontend é menor que a cobertura do backend;
 - o staging depende da infraestrutura JVS e dos dados podem ser limpos periodicamente.
 

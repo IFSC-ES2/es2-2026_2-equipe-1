@@ -247,3 +247,19 @@ Uso: Auxilio na resolução do problema do carrossel
 Artefatos: resolução do problema do carrossel através do css + react
 Validação: Foi revisado pelo Davi.
 ```
+
+```
+Registro de uso 22
+
+Data: 18/11/2026
+Ferramenta: GitHub Copilot
+Uso: Correção da reprodutibilidade do ambiente e do controle de autorização após o feedback da Entrega 8.
+Artefatos: .env.example, docker-compose.yml, back-end/build.gradle, back-end/src/main/resources/application.properties,
+ServiceHub/Dockerfile, ServiceHub/nginx.conf, SecurityConfig.java, UsuarioController.java,
+SolicitacaoServicoController.java, SolicitacaoServicoService.java e documentação de deploy/arquitetura/riscos.
+Aproveitamento: PostgreSQL persistente no Compose, frontend compilado para produção, rotas genéricas administrativas
+restritas e atualização de solicitação validando o cliente proprietário.
+Validação: Revisado por João Vitor Schmitt; `./gradlew test jacocoTestReport --no-daemon` e validação do Compose
+foram executados, com ajuste do teste de autorização correspondente. A validação frontend depende da instalação
+das dependências com `npm ci`.
+```

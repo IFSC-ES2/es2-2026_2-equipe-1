@@ -102,8 +102,9 @@ public class SolicitacaoServicoService {
     }
 
     @Transactional
-    public SolicitacaoServicoRespostaDTO atualizarComoResposta(Long id, SolicitacaoServico solicitacao) {
-        return SolicitacaoServicoRespostaDTO.fromEntity(atualizar(id, solicitacao), true);
+    public SolicitacaoServicoRespostaDTO atualizarComoResposta(
+            Long id, Long clienteId, SolicitacaoServico solicitacao) {
+        return SolicitacaoServicoRespostaDTO.fromEntity(atualizarComoCliente(id, clienteId, solicitacao), true);
     }
 
     @Transactional
@@ -222,6 +223,13 @@ public class SolicitacaoServicoService {
         existente.setEspecialidadesRequiridas(solicitacao.getEspecialidadesRequiridas());
 
         return solicitacaoServiceRepository.save(existente);
+    }
+
+    @Transactional
+    public SolicitacaoServico atualizarComoCliente(Long id, Long clienteId, SolicitacaoServico solicitacao) {
+        SolicitacaoServico existente = buscarParaAlteracao(id);
+        validarClienteProprietario(existente, clienteId);
+        return atualizar(id, solicitacao);
     }
 
     public void deletar(Long id) {

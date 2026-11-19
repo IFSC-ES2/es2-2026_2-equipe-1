@@ -20,8 +20,12 @@ O workflow está localizado em:
 
 ## 5. Evidência local e do pull request
 
-Na validação local da Entrega 7, a suíte backend passou com 57 testes e a suíte frontend passou com 13 testes. O build e o lint frontend também passaram. O workflow publica o relatório HTML do JaCoCo como artefato `jacoco-backend`.
+Na validação local da Entrega 9, a suíte backend passou com 131 testes e a suíte frontend passou
+com 29 testes. O build e o lint frontend também passaram. O workflow publica o relatório HTML do
+JaCoCo como artefato `jacoco-backend`; ele não executa Playwright nem cobertura do frontend.
 
 ## 6. Evolução
 
-O workflow executa `./gradlew test jacocoTestReport --no-daemon` e gera o relatório JaCoCo. Na validação local registrada em `docs/COBERTURA-JACOCO.md`, a cobertura de linhas foi de 77,35%, acima da meta de 70%.
+O workflow executa `./gradlew test jacocoTestReport --no-daemon` e gera o relatório JaCoCo. Na
+validação local registrada em `docs/COBERTURA-JACOCO.md`, a cobertura de linhas foi de 95,38%,
+acima da meta de 70%.
