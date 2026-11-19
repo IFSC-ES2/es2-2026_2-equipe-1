@@ -4,7 +4,6 @@ import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.enums.StatusSolicitacao;
 import com.es.servicehub.enums.TipoPerfil;
 import com.es.servicehub.model.Endereco;
-import com.es.servicehub.model.PropostaServico;
 import com.es.servicehub.model.SolicitacaoServico;
 import com.es.servicehub.model.Usuario;
 import com.es.servicehub.repository.EnderecoRepository;

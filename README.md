@@ -37,17 +37,62 @@ Porque facilita a contratação de profissionais e ajuda prestadores autônomos 
 
 ### (f) Qual é a proposta do sistema?
 
-O ServiceHub permite que o cliente **solicite um serviço**, que prestadores possam **aceitar ou recusar o atendimento** e que o **pagamento seja realizado pela plataforma**, por meio da integração com o Asaas. Assim, o processo de contratação fica mais simples e organizado.
+O ServiceHub permite que o cliente **publique uma solicitação de serviço**, que os prestadores **enviem propostas** e que o cliente **aceite a proposta** que preferir, acompanhando o serviço até a conclusão. Assim, o processo de contratação fica mais simples e organizado.
+
+> **Escopo efetivo da versão `v1.0.0-rc.1`:** o **pagamento pela plataforma não está implementado**. A
+> integração com o Asaas foi removida do escopo desta entrega e a decisão está registrada como
+> **adiada** na [ADR-0002](docs/adrs/ADR-0002-integracao-pagamentos-asaas.md). O registro de recusa
+> formal pelo prestador também não está implementado; a negociação ocorre por propostas enviadas
+> pelo prestador e aceitas pelo cliente. Ver [limitações conhecidas](docs/entregas/release-candidate.md#limitações-conhecidas).
 
 
 ## Como executar
 
-```bash
-# Backend (JDK 25) - http://localhost:8081
-cd back-end && ./gradlew bootRun
+### Execução Local do Backend
 
-# Frontend (Node 24) - http://localhost:5173
-cd ServiceHub && npm ci && npm run dev
+O backend requer `JWT_SECRET` no ambiente antes de iniciar. Os comandos abaixo geram 32 bytes aleatórios e os exportam em Base64. Execute-os a partir da raiz do repositório.
+
+**PowerShell (Windows):**
+
+```powershell
+cd back-end
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
+.\gradlew.bat bootRun
+```
+
+**Bash (Linux/macOS):**
+
+```bash
+cd back-end
+export JWT_SECRET=$(openssl rand -base64 32)
+./gradlew bootRun
+```
+
+O backend fica disponível em <http://localhost:8081>.
+
+### Execução reproduzível com Docker Compose
+
+```bash
+cp .env.example .env
+# substitua JWT_SECRET e POSTGRES_PASSWORD por valores locais
+docker compose up --build -d
+```
+
+O Compose inicia PostgreSQL com volume persistente, a API em `http://localhost:8081` e o
+frontend compilado para produção em `http://localhost:5173`. Para encerrar sem remover os dados:
+
+```bash
+docker compose down
+```
+
+### Frontend
+
+```bash
+cd ServiceHub
+npm ci
+npm run dev
 ```
 
 ## Como testar
@@ -94,16 +139,20 @@ O projeto está relacionado à linha:
 
 ---
 
-## Tecnologias (previstas)
+## Tecnologias
 
-* Java
-* Spring Boot
-* React
-* PostgreSQL
-* WebSocket
-* Asaas API
-* Docker
-* Git e GitHub
+**Em uso na versão `v1.0.0-rc.1`:**
+
+* Java 25 e Spring Boot 4 (Web MVC, Spring Security com JWT stateless, Spring Data JPA)
+* React 19 + TypeScript + Vite (frontend SPA)
+* PostgreSQL 17 no Docker Compose; H2 em memória na execução direta e nos testes
+* Vitest + Testing Library (frontend), JUnit 5 + MockMvc + JaCoCo (backend), Playwright (E2E local)
+* Docker e Docker Compose
+* Git e GitHub (GitHub Actions no CI)
+
+**Planejadas e não implementadas nesta versão:** integração com o Asaas (pagamento) e WebSocket
+(notificação em tempo real). Ambas estão fora do escopo entregue, conforme a
+[retrospectiva](docs/RETROSPECTIVA.md).
 
 ## Política de Branches e Pull Requests
 
@@ -119,7 +168,7 @@ O projeto está relacionado à linha:
 - **Definition of Done (DoD):** [docs/dod.md](docs/dod.md)
 - **Decisões Arquiteturais (ADRs):**
   - [ADR-0001: Definição da Stack Tecnológica (Java Spring Boot, React, Postgres)](docs/adrs/ADR-0001-stack-tecnologica.md)
-  - [ADR-0002: Escolha do Gateway de Pagamentos Asaas](docs/adrs/ADR-0002-integracao-pagamentos-asaas.md)
+  - [ADR-0002: Escolha do Gateway de Pagamentos Asaas (decisão adiada, não implementada)](docs/adrs/ADR-0002-integracao-pagamentos-asaas.md)
 - **Uso de Inteligência Artificial:** [USO-IA.md](USO-IA.md)
 - **Quadro de Acompanhamento (Board & Backlog):** [Acessar GitHub Projects da Equipe](https://github.com/orgs/IFSC-ES2/projects/32/views/2)
 
@@ -153,12 +202,12 @@ O projeto está relacionado à linha:
 ---
 
 ## Entrega 6 - Sprint 2
-- **Relato da Sprint e situação do PR/release:** [docs/entregas/sprint-2.md](docs/entregas/sprint-2.md)
+- **Planejamento da Sprint 2:** [docs/entregas/sprint-2-planejamento.md](docs/entregas/sprint-2-planejamento.md)
 - **Métricas e lacunas de coleta:** [docs/METRICAS.md](docs/METRICAS.md)
 - **Revisão dos riscos:** [docs/riscos.md](docs/riscos.md)
 - **Padrões de projeto OO:** [docs/PADROES-DE-PROJETO.md](docs/PADROES-DE-PROJETO.md)
 - **ADR-0003: Autenticação:** [docs/adrs/ADR-0003-autenticacao.md](docs/adrs/ADR-0003-autenticacao.md)
-O relato documenta o escopo e as evidências da Sprint 2.
+O planejamento documenta o escopo definido para a Sprint 2.
 - **Registro de uso de IA:** [USO-IA.md](USO-IA.md)
 
 ---
@@ -170,18 +219,34 @@ O relato documenta o escopo e as evidências da Sprint 2.
 - **Acompanhamento de Métricas:** [docs/METRICAS.md](docs/METRICAS.md)
 - **Registro e Matriz de Riscos:** [docs/riscos.md](docs/riscos.md)
 - **Registro de Uso de IA:** [USO-IA.md](USO-IA.md)
-- **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-3.md](docs/contribuições/CONTRIBUICOES-SPRINT-3.md)
+- **Contribuições Individuais:** [docs/contribuições/CONTRIBUICOES-SPRINT-3.md](docs/contribuições/CONTRIBUICOES-SPRINT-3.md)
 
 ---
 ## Entrega 8 — Sprint 4 (Concluída)
 
-- **Planejamento da Sprint 4:** [docs/entregas/sprint-4.md](docs/entregas/sprint-4.md)
+- **Planejamento da Sprint 4:** [docs/entregas/sprint-4-planejamento.md](docs/entregas/sprint-4-planejamento.md)
+- **Consultas e integrações externas (CEP):** [docs/CEP.md](docs/CEP.md)
 - **Guia de Deploy e Staging:** [docs/DEPLOY.md](docs/DEPLOY.md)
-- **Variáveis de Ambiente:** [.env.example](.env.example)
+- **Execução local e variáveis de ambiente:** [docs/DEPLOY.md — Execução Local do Backend](docs/DEPLOY.md#execu%C3%A7%C3%A3o-local-do-backend)
 - **Plano de Testes e Resultados da Sprint 4:** [docs/PLANO-DE-TESTES.md](docs/PLANO-DE-TESTES.md)
 - **Evidência de Cobertura (backend e frontend):** [docs/COBERTURA-JACOCO.md](docs/COBERTURA-JACOCO.md)
 - **Métricas Finais do Projeto:** [docs/METRICAS.md](docs/METRICAS.md)
 - **Matriz de Riscos Atualizada:** [docs/riscos.md](docs/riscos.md)
 - **Registro de Uso de IA:** [USO-IA.md](USO-IA.md)
-- **Contribuições Individuais:** [docs/CONTRIBUICOES-SPRINT-4.md](docs/CONTRIBUICOES-SPRINT-4.md)
-- **Ambiente de Validação Online:** https://servicehub.jvs.dev.br
+- **Contribuições Individuais:** [docs/contribuições/CONTRIBUICOES-SPRINT-4.md](docs/contribuições/CONTRIBUICOES-SPRINT-4.md)
+- **Ambiente de Validação Online:** <https://servicehub.jvs.dev.br>
+
+---
+
+## Entrega 9 — Release Candidate v1.0.0-rc.1
+
+- **Release Candidate:** [docs/entregas/release-candidate.md](docs/entregas/release-candidate.md)
+- **Matriz de Aceitação:** [docs/ACEITACAO.md](docs/ACEITACAO.md)
+- **Retrospectiva da RC:** [docs/RETROSPECTIVA.md](docs/RETROSPECTIVA.md)
+- **Consultas e integrações externas (CEP):** [docs/CEP.md](docs/CEP.md)
+
+### Ambiente de demonstração
+
+- **Staging do frontend:** <https://frontservicehub.jvs.dev.br>
+- **API de staging:** <https://servicehub.jvs.dev.br> (base das chamadas: `https://servicehub.jvs.dev.br/api`)
+- **Validação e domínio da API:** [docs/DEPLOY.md](docs/DEPLOY.md)

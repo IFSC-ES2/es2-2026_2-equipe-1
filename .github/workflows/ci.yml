@@ -5,6 +5,9 @@ on:
     branches:
       - main
     types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -20,6 +23,7 @@ jobs:
       - name: Verificar arquivos
         run: |
           test -f README.md
+          test -f .env.example
           test -f USO-IA.md
           test -f docs/entregas/sprint-3-planejamento.md
           test -f docs/ARQUITETURA.md
@@ -47,6 +51,7 @@ jobs:
         run: ./gradlew test jacocoTestReport --no-daemon
 
       - name: Publicar relatório JaCoCo
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-backend
@@ -92,4 +97,5 @@ jobs:
       - name: Validate Docker Compose
         env:
           JWT_SECRET: ci-compose-validation-only-secret-not-for-runtime
+          POSTGRES_PASSWORD: ci-compose-validation-only-password
         run: docker compose -f docker-compose.yml config --quiet

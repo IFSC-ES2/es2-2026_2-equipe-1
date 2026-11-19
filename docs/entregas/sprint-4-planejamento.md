@@ -54,14 +54,13 @@ integração externa, tratamento de webhooks e homologação em sandbox. A decis
   Asaas. Os 100% não significam que as 88h do escopo original foram entregues.
 - **Ambiente de staging:** frontend e API publicados atrás de proxy reverso com HTTPS; o banco pode ser
   limpo periodicamente, então dados de demonstração são sintéticos e recriáveis.
-- **Execução local:** `docker-compose.yml` com backend em `8081` e frontend em `5173`, usando H2 em
-  memória. O Compose não reproduz o PostgreSQL de staging; a diferença está registrada em
-  `docs/DEPLOY.md`.
+- **Execução local:** `docker-compose.yml` com backend em `8081`, frontend em `5173` e PostgreSQL
+  persistente. H2 fica reservado à execução direta e aos testes.
 - **Configuração de ambiente:** o `.env.example` passa a ser versionado, com valores de exemplo e
   campos sensíveis comentados. O `.env` real permanece fora do controle de versão.
-- **Hardening:** sessão com cookie `HttpOnly`, CSRF habilitado para requisições mutáveis, CORS
-  restrito a `http://localhost:5173` e ao domínio do frontend publicado, e bloqueio de cadastro de
-  `ADMIN` pela rota pública.
+- **Hardening:** API stateless com JWT Bearer, CSRF desabilitado para não criar uma falsa proteção
+  baseada em sessão, CORS restrito a origens da aplicação e bloqueio de operações genéricas por
+  perfil/proprietário.
 - **Divisão de tarefas entre os integrantes:**
   - **João Vitor Schmitt (DevOps/Infra):** disponibilização do ambiente de staging, criação do
     `docker-compose.yml`, Dockerfiles, suporte a variáveis de ambiente (`.env.example`), CORS,
@@ -79,7 +78,7 @@ integração externa, tratamento de webhooks e homologação em sandbox. A decis
 Um item é considerado concluído quando:
 
 - o código está integrado à `main` via Pull Request revisado e aprovado;
-- os checks obrigatórios do CI passaram, incluindo o job de E2E;
+- os checks do CI passaram; E2E é executado localmente com banco isolado;
 - há testes automatizados cobrindo as regras principais do fluxo de contratação;
 - a aplicação é demonstrável no ambiente de staging, com o fluxo principal executado de ponta a ponta;
 - o `.env.example` versionado permite reproduzir a execução local;
@@ -102,7 +101,9 @@ Um item é considerado concluído quando:
 - Backend: **129 testes**, 0 falhas, 0 erros, 0 ignorados; **93,37%** de linhas e **80,80%** de branches.
 - Frontend: **29 testes**, 0 falhas; cobertura de **25,22%** de linhas (medida pela primeira vez).
 - E2E: **3 cenários** aprovados (login inválido, edição de perfil, publicação de solicitação + proposta).
-- Pipeline: verificação de arquivos obrigatórios, testes com cobertura, lint, E2E e validação do Compose.
+- Pipeline: verificação de arquivos obrigatórios, testes com cobertura, lint e validação do Compose.
+- E2E: executado localmente; não é declarado como check do CI enquanto o workflow não provisionar
+  banco e servidores de aplicação.
 
-**Pendências registradas para a próxima etapa:** integração de pagamento (Asaas), migração para
-PostgreSQL, pipeline de CD e testes de componente das páginas do frontend.
+**Pendências registradas para a próxima etapa:** integração de pagamento (Asaas), pipeline de CD e
+testes de componente das páginas do frontend.

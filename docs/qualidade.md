@@ -97,13 +97,19 @@ cobertura de linhas**, **80,80% de branches**, **87,22% de métodos** e **100% d
 frontend, **29 testes aprovados** (3 arquivos) e cobertura de **25,22% de linhas**; `tsc -b`, `vite
 build` e `eslint` sem erros; **3 cenários E2E aprovados**.
 
+> **Atualização da auditoria da Entrega 9 (18/11/2026):** a mesma bateria foi reexecutada e o
+> resultado atual é **138 testes backend**, com **95,24% de linhas**, **81,53% de branches**,
+> **91,49% de métodos** e **100% de classes**, e **35 testes frontend** com **20,81% de linhas**. Os
+> números de 11/11/2026 acima ficam como registro histórico daquela execução; os valores vigentes
+> estão em [METRICAS.md](./METRICAS.md) e [COBERTURA-JACOCO.md](./COBERTURA-JACOCO.md).
+
 Foram acrescentados nesta entrega:
 
 - `back-end/src/test/java/com/es/servicehub/service/UsuarioServiceRegrasAdicionaisTest.java` — 31 casos
   sobre cadastro (documentos, senha, perfil, especialidades, duplicidade), `atualizarPerfil`,
   `listarDisponiveis` e aceite de proposta;
 - `back-end/src/test/java/com/es/servicehub/SolicitacaoPropostaIntegrationTest.java` — 11 casos de
-  integração HTTP autenticados por sessão real (login + CSRF), cobrindo proposta, aceite, conclusão,
+  integração HTTP autenticados por login real e token JWT Bearer, cobrindo proposta, aceite, conclusão,
   autorização por proprietário, isolamento das listagens e cadastro inválido;
 - `ServiceHub/tests/InputSenha.test.tsx` — 5 casos do componente `InputSenha`;
 - cobertura de frontend configurada em `ServiceHub/vitest.config.ts` e script `npm run test:coverage`.

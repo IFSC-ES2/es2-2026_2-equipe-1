@@ -1,35 +1,39 @@
-# ADR-0004: Adoção dos padrões Adapter (frontend) e Strategy (CSRF no backend)
+# ADR-0004: Adaptadores de dados e componentização do frontend
 
-- **Status:** Implementada na Entrega 6
-- **Data:** 01/10/2026
+- **Status:** Implementada
+- **Data da revisão:** 18/11/2026
 
 ## Contexto
 
-Com a autenticação por sessão (ADR-0003), o frontend precisa (a) conviver com um contrato de API cujos nomes e tipos diferem do modelo das telas e (b) enviar o token CSRF de forma compatível com o Spring Security. Ambos os pontos estavam gerando acoplamento: páginas conhecendo detalhes HTTP e lógica de resolução de token sem lugar próprio.
+Os contratos JSON da API e os modelos consumidos pelas telas têm diferenças de nomes, tipos e campos opcionais. Além disso, formulários e modais usados por mais de uma página não devem depender diretamente de chamadas HTTP ou persistência.
 
 ## Decisão
 
-1. **Adapter** no frontend para converter dados da API em modelos de tela (`mapearUsuario`, `converterEndereco`, `formatarSolicitacao`).
-2. **Strategy** no backend para escolher o tratamento do token CSRF (`SpaCsrfTokenRequestHandler` delegando a `CsrfTokenRequestAttributeHandler` ou `XorCsrfTokenRequestAttributeHandler`).
+1. Manter adaptadores no frontend para converter os tipos da API em modelos adequados à interface, como `mapearUsuario`, `converterEndereco` e `formatarSolicitacao`.
+2. Reutilizar componentes React de interface, como `ModalPerfilUsuario`, passando dados e callbacks por props. As páginas chamadoras ficam responsáveis por integrar o componente ao serviço de API e controlar o salvamento.
+3. Manter as regras de autenticação e autorização na configuração Spring Security descrita em [ADR-0003](ADR-0003-autenticacao.md), sem introduzir estratégias de resolução de token no frontend.
 
 ## Alternativas consideradas
 
 | Alternativa | Por que não |
 |:---|:---|
-| Usar os tipos da API diretamente nas telas | Acopla UI ao contrato HTTP; cada mudança de campo afeta várias páginas |
-| Desabilitar CSRF | Remove proteção para requisições autenticadas por cookie |
-| Usar apenas o handler padrão (XOR) | Quebra o fluxo da SPA, que devolve o valor puro do cookie no cabeçalho |
-| Usar apenas o handler simples | Perde a proteção contra BREACH |
+| Usar os tipos da API diretamente nas telas | Acopla a UI ao contrato HTTP e espalha conversões e valores padrão pelas páginas. |
+| Fazer `ModalPerfilUsuario` chamar a API diretamente | Acopla apresentação à infraestrutura e impede que cada dashboard controle o fluxo de salvamento. |
+| Duplicar formulários de perfil nos dashboards | Produz regras e interface divergentes para clientes e prestadores. |
 
 ## Consequências
 
-- **Positivas:** menor acoplamento UI-API; proteção CSRF compatível com a SPA; pontos de mudança localizados.
-- **Negativas:** conversores precisam acompanhar o contrato; camada de delegação adicional no CSRF; ausência de testes automatizados desses dois pontos.
-- **Ações:** mover `formatarSolicitacao` para `servicos/api.ts`; criar teste `MockMvc` que valide requisição mutável com e sem token; avaliar o padrão State para `StatusSolicitacao` na Sprint 3.
+- **Positivas:** diferenças entre contratos ficam localizadas; componentes compartilhados reduzem duplicação; páginas controlam explicitamente as operações de persistência.
+- **Negativas:** adaptadores precisam acompanhar mudanças no contrato; `formatarSolicitacao` permanece dentro do dashboard cliente e não é compartilhado.
+- **Ações:** avaliar a extração de `formatarSolicitacao` para o módulo de serviços quando houver necessidade de reutilização.
 
 ## Código relacionado
 
-- `ServiceHub/src/servicos/autenticacao.ts`, `ServiceHub/src/servicos/api.ts`, `ServiceHub/src/paginas/DashboardCliente/index.tsx`
-- `back-end/src/main/java/com/es/servicehub/config/SecurityConfig.java`
+- `ServiceHub/src/servicos/autenticacao.ts` (`mapearUsuario`)
+- `ServiceHub/src/servicos/api.ts` (`converterEndereco`, chamadas REST)
+- `ServiceHub/src/paginas/DashboardCliente/index.tsx` (`formatarSolicitacao`)
+- `ServiceHub/src/componentes/modal/ModalPerfilUsuario.tsx`
+- `ServiceHub/src/paginas/DashboardCliente/index.tsx`
+- `ServiceHub/src/paginas/DashboardPrestador/index.tsx`
 
-Detalhamento completo: [`docs/PADROES-DE-PROJETO.md`](../PADROES-DE-PROJETO.md).
+Detalhamento: [`docs/PADROES-DE-PROJETO.md`](../PADROES-DE-PROJETO.md).

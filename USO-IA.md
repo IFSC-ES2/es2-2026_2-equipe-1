@@ -188,3 +188,89 @@ Uso: Elaboração da documentação da Release 0.3.0
 Artefatos: Criação da Documentação da Release 0.3.0, com a atualização do estado atual do projeto
 Validação: Precisa de Revisão e confimação final da equipe
 ```
+
+```
+Registro de uso 16
+
+Data: 11/11/2026
+Ferramenta: GitHub Copilot / Gemini
+Uso: Apoio na implementação do fluxo de autenticação JWT stateless, correções de CORS/CSRF, testes automatizados (JUnit, Vitest e Playwright) e documentação inicial da Sprint 4 (Entrega 8)
+Artefatos: SecurityConfig.java, ModalPerfilUsuario.tsx, ServiceHub/e2e/servicehub.spec.ts, docs/DEPLOY.md, docs/METRICAS.md, docs/riscos.md e docs/contribuições/CONTRIBUICOES-SPRINT-4.md
+Validação: Revisado e validado por Leonardo Victor Muller de Morais e Ana Clara Teixeira Ronzani por meio da execução local e no CI dos testes unitários/integração (.\gradlew.bat test e npm test) e cenários E2E no Playwright
+```
+
+```
+Registro de uso 17
+
+Data: 18/11/2026
+Ferramenta: GitHub Copilot / Gemini
+Uso: Atualização das instruções de execução local com geração de JWT_SECRET e reconciliação da documentação de implantação com o fluxo JWT stateless, Coolify e separação entre testes de CI e E2E local
+Artefatos: README.md e docs/DEPLOY.md
+Validação: Revisado e adaptado por Leonardo Victor Muller de Morais contra SecurityConfig.java, api.ts e .github/workflows/ci.yml, removendo referências ao .env.example inexistente e validado com git diff --check
+```
+```
+Registro de uso 18
+
+Data: 18/11/2026
+Ferramenta: GitHub Copilot / Gemini
+Uso: Atualização da documentação de arquitetura, decisões técnicas (ADR) e padrões OO para refletir a autenticação JWT stateless e a integração com a API externa de CEP
+Artefatos: docs/ARQUITETURA.md, docs/ADRs/ e docs/PADROES-DE-PROJETO.md
+Validação: Revisado por Leonardo Victor Muller de Morais para garantir coerência com os controladores, serviços e filtros de segurança implementados no backend
+```
+
+```
+Registro de uso 19
+
+Data: 18/11/2026
+Ferramenta: GitHub Copilot / Gemini
+Uso: Elaboração da matriz de testes de aceitação do MVP e atualização do plano de testes e evidências de cobertura JaCoCo para a Release Candidate (v1.0.0-rc.1)
+Artefatos: docs/ACEITACAO.md, docs/PLANO-DE-TESTES.md e docs/COBERTURA-JACOCO.md
+Validação: Validado localmente por Leonardo Victor Muller de Morais com os números reais da execução de .\gradlew.bat test jacocoTestReport --no-daemon (131 testes, 95,38% de linhas) e npm run test:e2e (3 cenários)
+```
+
+```
+Registro de uso 20
+
+Data: 18/11/2026
+Ferramenta: GitHub Copilot / Gemini
+Uso: Redação da revisão final de escopo (comparativo planejado vs. entregue), retrospectiva do projeto, consolidação de métricas finais, riscos residuais e roteiro da Release Candidate
+Artefatos: docs/RETROSPECTIVA.md, docs/METRICAS.md, docs/riscos.md, docs/entregas/release-candidate.md e USO-IA.md
+Validação: Revisado por Leonardo Victor Muller de Morais e Ana Clara Teixeira Ronzani antes da abertura do Pull Request da branch entrega-9 para main
+```
+
+```
+Registro de uso 21
+
+Data: 18/11/2026
+Ferramenta: Claude Code
+Uso: Auxilio na resolução do problema do carrossel
+Artefatos: resolução do problema do carrossel através do css + react
+Validação: Foi revisado pelo Davi.
+```
+
+```
+Registro de uso 22
+
+Data: 18/11/2026
+Ferramenta: GitHub Copilot
+Uso: Correção da reprodutibilidade do ambiente e do controle de autorização após o feedback da Entrega 8.
+Artefatos: .env.example, docker-compose.yml, back-end/build.gradle, back-end/src/main/resources/application.properties,
+ServiceHub/Dockerfile, ServiceHub/nginx.conf, SecurityConfig.java, UsuarioController.java,
+SolicitacaoServicoController.java, SolicitacaoServicoService.java e documentação de deploy/arquitetura/riscos.
+Aproveitamento: PostgreSQL persistente no Compose, frontend compilado para produção, rotas genéricas administrativas
+restritas e atualização de solicitação validando o cliente proprietário.
+Validação: Revisado por João Vitor Schmitt; `./gradlew test jacocoTestReport --no-daemon` e validação do Compose
+foram executados, com ajuste do teste de autorização correspondente. A validação frontend depende da instalação
+das dependências com `npm ci`.
+```
+
+```
+Registro de uso 23
+
+Data: 18/11/2026
+Ferramenta: AbacusAI
+Uso: Conferência de afirmações da documentação com o código e com a execução real de build, testes e cobertura;
+reconciliação de métricas; correção do pipeline e da configuração Playwright; auxílio na criação dos testes e documentos faltantes.
+Artefatos: back-end/src/test/java/com/es/servicehub/service/JwtTokenServiceTest.java, back-end/src/test/java/com/es/servicehub/LoginContratoIntegrationTest.java, ServiceHub/tests/cep.test.ts, ServiceHub/tests/servicos.test.ts (ajuste de robustez) ServiceHub/playwright.config.ts, .github/workflows/ci.yml README.md, docs/CEP.md, docs/DEPLOY.md, docs/PLANO-DE-TESTES.md, docs/METRICAS.md, docs/riscos.md, docs/RETROSPECTIVA.md, docs/COBERTURA-JACOCO.md, docs/ci.md, docs/entregas/release-candidate.md, docs/adrs/ADR-0002-integracao-pagamentos-asaas.md
+Validação: Revisado e adaptado por Ana Clara Teixeira Ronzani
+```

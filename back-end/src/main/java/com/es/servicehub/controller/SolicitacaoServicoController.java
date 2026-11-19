@@ -10,6 +10,7 @@ import com.es.servicehub.service.SolicitacaoServicoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -31,6 +32,7 @@ public class SolicitacaoServicoController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<SolicitacaoServicoRespostaDTO>> listarTodos() {
         return ResponseEntity.ok(solicitacaoServicoService.listarTodosComoResposta());
     }
@@ -116,9 +118,11 @@ public class SolicitacaoServicoController {
     @PutMapping("/{id}")
     public ResponseEntity<SolicitacaoServicoRespostaDTO> atualizar(
             @PathVariable Long id,
-            @RequestBody SolicitacaoServico solicitacao) {
-
-        return ResponseEntity.ok(solicitacaoServicoService.atualizarComoResposta(id, solicitacao));
+            @RequestBody SolicitacaoServico solicitacao,
+            Authentication authentication) {
+        Usuario cliente = usuarioAutenticado(authentication);
+        return ResponseEntity.ok(solicitacaoServicoService.atualizarComoResposta(
+                id, cliente.getId(), solicitacao));
     }
 
     @DeleteMapping("/{id}")

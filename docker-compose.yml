@@ -1,24 +1,62 @@
-version: '3.8'
-
 services:
+  db:
+    image: postgres:17-alpine
+    container_name: servicehub_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-servicehub}
+      POSTGRES_USER: ${POSTGRES_USER:-servicehub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD para o banco local}
+    volumes:
+      - servicehub_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ./back-end
       dockerfile: Dockerfile
     container_name: servicehub_backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.servicehub-api.rule=Host(`servicehub.jvs.dev.br`)"
+      - "traefik.http.routers.servicehub-api.entrypoints=https"
+      - "traefik.http.routers.servicehub-api.tls=true"
+      - "traefik.http.routers.servicehub-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.servicehub-api.loadbalancer.server.port=8081"
     ports:
       - "8081:8081"
     environment:
       JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET com pelo menos 32 bytes aleatórios}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/${POSTGRES_DB:-servicehub}}
+      SPRING_DATASOURCE_DRIVER: ${SPRING_DATASOURCE_DRIVER:-org.postgresql.Driver}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-${POSTGRES_USER:-servicehub}}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD para o banco local}}
+      SPRING_JPA_DATABASE_PLATFORM: ${SPRING_JPA_DATABASE_PLATFORM:-org.hibernate.dialect.PostgreSQLDialect}
+    depends_on:
+      db:
+        condition: service_healthy
 
   frontend:
     build:
       context: ./ServiceHub
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8081/api}
     container_name: servicehub_frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.servicehub-front.rule=Host(`frontservicehub.jvs.dev.br`)"
+      - "traefik.http.routers.servicehub-front.entrypoints=https"
+      - "traefik.http.routers.servicehub-front.tls=true"
+      - "traefik.http.routers.servicehub-front.tls.certresolver=letsencrypt"
+      - "traefik.http.services.servicehub-front.loadbalancer.server.port=5173"
     ports:
       - "5173:5173"
-    environment:
-      - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - backend
+
+volumes:
+  servicehub_db_data:

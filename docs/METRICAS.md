@@ -84,7 +84,7 @@ Para garantir a qualidade do software, a previsibilidade do processo de desenvol
 
 | Métrica | Baseline (20/08) | Sprint 1 (17/09) | Sprint 2 (01/10) | Sprint 3 (22/10) | Sprint 4 (Final) | Meta |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| M-01 Cobertura de testes | 0% | Não medida | Não medida | 77,35% de linhas | **93,37% de linhas** e **80,80% de branches** no backend (129 testes); frontend com 29 testes e 25,22% de linhas; E2E Playwright 3/3. | ≥ 70% |
+| M-01 Cobertura de testes | 0% | Não medida | Não medida | 77,35% de linhas | **95,24% de linhas** e **81,53% de branches** no backend (138 testes); frontend com 35 testes e **20,81% de linhas**; E2E Playwright 3/3 local. | ≥ 70% |
 | M-02 Lead time de PR | 0h | Não registrado | A medir | A confirmar no GitHub | **Média de aprovação mantida em menos de 24h**; confirmar pelos registros dos PRs no GitHub. | < 24h |
 | M-03 Progresso do MVP | 0% | 18,2% | 36,4% | 54,5% | **100% do escopo revisado**, com foco em staging, E2E, Docker e correções de perfil e segurança. A integração Asaas foi postergada e retirada do escopo desta entrega. | 100% do escopo revisado |
 
@@ -118,9 +118,9 @@ A suíte de testes foi estabilizada: os testes de integração de segurança do 
 
 O percentual de M-03 considera o escopo revisado para a entrega. A integração de pagamentos com Asaas foi postergada para uma etapa futura, para priorizar deploy e estabilidade. Portanto, os 100% não significam que todos os itens do escopo original de 88 horas — que incluía o Asaas — foram concluídos.
 
-A cobertura JaCoCo foi recalculada em 11/11/2026 para o fechamento da Sprint 4: **129 testes backend** aprovados, sem falhas, erros ou testes ignorados, com **93,37% de linhas**, **80,80% de branches**, **87,22% de métodos** e **100% de classes**. O detalhamento está em `docs/COBERTURA-JACOCO.md` e em `docs/PLANO-DE-TESTES.md`.
+A cobertura JaCoCo foi recalculada em 11/11/2026 e reconferida na auditoria da Entrega 9 (18/11/2026): **138 testes backend** aprovados, sem falhas, erros ou testes ignorados, com **95,24% de linhas**, **81,53% de branches**, **91,49% de métodos** e **100% de classes**. O detalhamento está em `docs/COBERTURA-JACOCO.md` e em `docs/PLANO-DE-TESTES.md`.
 
-A cobertura do frontend passou a ser medida nesta entrega (`npm run test:coverage`): 29 testes aprovados e 25,22% de linhas. A lacuna está nas páginas, cobertas apenas pelo E2E, e é registrada como melhoria para a próxima sprint.
+A cobertura do frontend foi medida com `npm run test:coverage`: 35 testes aprovados e **20,81% de linhas** na execução da auditoria da Entrega 9 (os valores de 29 testes e 25,22% registrados antes são mantidos apenas no histórico, como valores superados). A lacuna está nas páginas, cobertas apenas pelo E2E, e é registrada como melhoria para a próxima sprint. O CI não executa `npm run test:coverage`; esse percentual é uma medição local.
 
 ---
 
@@ -131,6 +131,7 @@ A cobertura do frontend passou a ser medida nesta entrega (`npm run test:coverag
 | 20/08/2026 | Entrega 3 — Baseline | 0% | Registro inicial durante a fase de planejamento |
 | 22/10/2026 | Entrega 7 — Sprint 3 | **77,35% de linhas** | 57 testes backend passaram; relatório gerado por `./gradlew test jacocoTestReport --no-daemon`; meta de 70% atingida |
 | 11/11/2026 | Entrega 8 — Sprint 4 (final) | **93,37% de linhas / 80,80% de branches** | 129 testes backend passaram (`UsuarioServiceRegrasAdicionaisTest` +31, `SolicitacaoPropostaIntegrationTest` +11); frontend com 29 testes e 25,22% de linhas; E2E 3/3 |
+| 18/11/2026 | Entrega 9 — auditoria da RC | **95,24% de linhas / 81,53% de branches / 91,49% de métodos / 100% de classes** | 138 testes backend (`./gradlew test jacocoTestReport --no-daemon`, incluindo `JwtTokenServiceTest` e `LoginContratoIntegrationTest`); frontend com 35 testes e **20,81% de linhas** (`npm run test:coverage`, incluindo `cep.test.ts`); build e lint aprovados; E2E 3/3 local |
 
 ## 6. Evidências
 
@@ -139,3 +140,49 @@ A cobertura do frontend passou a ser medida nesta entrega (`npm run test:coverag
 - Workflow de CI: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)
 - Testes backend: `back-end/src/test/`
 - Testes frontend: `ServiceHub/tests/`
+
+---
+
+## 7. Consolidação da Release Candidate - Entrega 9
+
+**Marco:** `v1.0.0-rc.1`  
+**Data da validação local registrada:** 18/11/2026  
+**Situação do escopo:** o Release Candidate consolida o fluxo funcional revisado e mantém integração
+de pagamento com Asaas fora do escopo entregue.
+
+### 7.1 Indicadores finais
+
+| Métrica | Resultado final da RC | Evidência vinculada | Responsável/participação |
+|:---|:---|:---|:---|
+| M-01 Backend | **138 testes aprovados**, 0 falhas; **95,24% de linhas**, **81,53% de branches**, **91,49% de métodos** e **100% de classes** | Execução JUnit/Spring Boot com JaCoCo registrada em `docs/COBERTURA-JACOCO.md`, `docs/PLANO-DE-TESTES.md` e `back-end/src/test/` | Ana Clara Teixeira Ronzani consolidou a medição; Leonardo participou da evolução e revisão dos testes de regra e integração |
+| M-01 Frontend | **35 testes Vitest aprovados**, cobertura medida em **20,81% de linhas** | `ServiceHub/tests/`, `ServiceHub/vitest.config.ts`, `npm run test:coverage` | Davi implementou o componente/filtro cobertos; Ana Clara mediu e consolidou o resultado |
+| M-01 E2E | **3 cenários Playwright aprovados** na validação local da RC | `docs/ACEITACAO.md`; Playwright para login inválido, edição de perfil e publicação/proposta | Leonardo participou da implementação e validação dos cenários; Ana Clara validou os resultados |
+| M-02 Pull Requests/CI | Fluxo por PR ativo; pipeline verifica arquivos, backend (testes + JaCoCo), frontend (build, testes e lint) e Compose — **sem Playwright, sem cobertura de frontend e sem varredura de segredos**. Lead time numérico ainda depende do registro histórico de abertura/aprovação/merge no GitHub | `.github/workflows/ci.yml`, `docs/PLANO-DE-TESTES.md` e histórico de merges | Davi acompanha o fluxo de PR; João mantém CI/infra; Ana Clara valida qualidade; Leonardo revisa arquitetura e integração |
+| M-03 Escopo revisado | **100% do escopo revisado entregue**; não corresponde às 88 horas integrais do backlog original | `docs/RETROSPECTIVA.md`, `docs/riscos.md` e planejamento da Sprint 4 | Equipe: Leonardo nas regras/arquitetura, Davi no frontend, João no staging/CI e Ana Clara nos testes/documentação |
+
+### 7.2 Participação da equipe na RC
+
+- **Leonardo Victor Muller De Morais:** arquitetura JWT stateless, regras de negociação, testes de
+  integração, autorização por proprietário e validação técnica da Release Candidate.
+- **João Vitor Schmitt:** ambiente de staging, Docker/Compose, CORS, configuração de variáveis,
+  pipeline de CI e validação da implantação.
+- **Davi Israel Quirino:** evolução dos dashboards, edição de perfil, filtros, integração REST no
+  frontend e correção de fluxo de interface.
+- **Ana Clara Teixeira Ronzani:** suítes/backend, cobertura JaCoCo, testes Vitest/E2E, matriz de
+  aceitação, métricas, riscos e consolidação da documentação da RC.
+
+### 7.3 Dados reais e limitações
+
+Os resultados acima são baseados em comandos e arquivos existentes no repositório. O backend conta
+com testes unitários e de integração de regras de usuário, solicitações, propostas, autenticação JWT
+e autorização. Os testes frontend cobrem componentes e serviços; as páginas são exercitadas
+principalmente pelos três cenários E2E. A matriz de aceitação registra cadastro/login, CEP/endereço,
+perfil, publicação/filtro, proposta, aceite e conclusão.
+
+Limitações verificáveis da RC:
+
+- não há integração concluída com o gateway Asaas;
+- não há recusa formal persistida pelo prestador nem notificação ativa em tempo real;
+- a cobertura do frontend permanece inferior à cobertura do backend e não é medida pelo CI;
+- o lead time médio de PR não deve ser apresentado como métrica numérica até a coleta de timestamps
+  individuais no GitHub.
