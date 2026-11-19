@@ -150,6 +150,9 @@ O projeto está relacionado à linha:
 * Docker e Docker Compose
 * Git e GitHub (GitHub Actions no CI)
 
+**Planejadas e não implementadas nesta versão:** integração com o Asaas (pagamento) e WebSocket
+(notificação em tempo real). Ambas estão fora do escopo entregue, conforme a
+[retrospectiva](docs/RETROSPECTIVA.md).
 
 ## Política de Branches e Pull Requests
 
