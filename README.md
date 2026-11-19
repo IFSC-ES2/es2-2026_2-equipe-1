@@ -37,7 +37,13 @@ Porque facilita a contratação de profissionais e ajuda prestadores autônomos 
 
 ### (f) Qual é a proposta do sistema?
 
-O ServiceHub permite que o cliente **solicite um serviço**, que prestadores possam **aceitar ou recusar o atendimento** e que o **pagamento seja realizado pela plataforma**, por meio da integração com o Asaas. Assim, o processo de contratação fica mais simples e organizado.
+O ServiceHub permite que o cliente **publique uma solicitação de serviço**, que os prestadores **enviem propostas** e que o cliente **aceite a proposta** que preferir, acompanhando o serviço até a conclusão. Assim, o processo de contratação fica mais simples e organizado.
+
+> **Escopo efetivo da versão `v1.0.0-rc.1`:** o **pagamento pela plataforma não está implementado**. A
+> integração com o Asaas foi removida do escopo desta entrega e a decisão está registrada como
+> **adiada** na [ADR-0002](docs/adrs/ADR-0002-integracao-pagamentos-asaas.md). O registro de recusa
+> formal pelo prestador também não está implementado; a negociação ocorre por propostas enviadas
+> pelo prestador e aceitas pelo cliente. Ver [limitações conhecidas](docs/entregas/release-candidate.md#limitações-conhecidas).
 
 
 ## Como executar
@@ -133,16 +139,17 @@ O projeto está relacionado à linha:
 
 ---
 
-## Tecnologias (previstas)
+## Tecnologias
 
-* Java
-* Spring Boot
-* React
-* PostgreSQL
-* WebSocket
-* Asaas API
-* Docker
-* Git e GitHub
+**Em uso na versão `v1.0.0-rc.1`:**
+
+* Java 25 e Spring Boot 4 (Web MVC, Spring Security com JWT stateless, Spring Data JPA)
+* React 19 + TypeScript + Vite (frontend SPA)
+* PostgreSQL 17 no Docker Compose; H2 em memória na execução direta e nos testes
+* Vitest + Testing Library (frontend), JUnit 5 + MockMvc + JaCoCo (backend), Playwright (E2E local)
+* Docker e Docker Compose
+* Git e GitHub (GitHub Actions no CI)
+
 
 ## Política de Branches e Pull Requests
 
@@ -158,7 +165,7 @@ O projeto está relacionado à linha:
 - **Definition of Done (DoD):** [docs/dod.md](docs/dod.md)
 - **Decisões Arquiteturais (ADRs):**
   - [ADR-0001: Definição da Stack Tecnológica (Java Spring Boot, React, Postgres)](docs/adrs/ADR-0001-stack-tecnologica.md)
-  - [ADR-0002: Escolha do Gateway de Pagamentos Asaas](docs/adrs/ADR-0002-integracao-pagamentos-asaas.md)
+  - [ADR-0002: Escolha do Gateway de Pagamentos Asaas (decisão adiada, não implementada)](docs/adrs/ADR-0002-integracao-pagamentos-asaas.md)
 - **Uso de Inteligência Artificial:** [USO-IA.md](USO-IA.md)
 - **Quadro de Acompanhamento (Board & Backlog):** [Acessar GitHub Projects da Equipe](https://github.com/orgs/IFSC-ES2/projects/32/views/2)
 
@@ -215,6 +222,7 @@ O planejamento documenta o escopo definido para a Sprint 2.
 ## Entrega 8 — Sprint 4 (Concluída)
 
 - **Planejamento da Sprint 4:** [docs/entregas/sprint-4-planejamento.md](docs/entregas/sprint-4-planejamento.md)
+- **Consultas e integrações externas (CEP):** [docs/CEP.md](docs/CEP.md)
 - **Guia de Deploy e Staging:** [docs/DEPLOY.md](docs/DEPLOY.md)
 - **Execução local e variáveis de ambiente:** [docs/DEPLOY.md — Execução Local do Backend](docs/DEPLOY.md#execu%C3%A7%C3%A3o-local-do-backend)
 - **Plano de Testes e Resultados da Sprint 4:** [docs/PLANO-DE-TESTES.md](docs/PLANO-DE-TESTES.md)
@@ -232,5 +240,10 @@ O planejamento documenta o escopo definido para a Sprint 2.
 - **Release Candidate:** [docs/entregas/release-candidate.md](docs/entregas/release-candidate.md)
 - **Matriz de Aceitação:** [docs/ACEITACAO.md](docs/ACEITACAO.md)
 - **Retrospectiva da RC:** [docs/RETROSPECTIVA.md](docs/RETROSPECTIVA.md)
+- **Consultas e integrações externas (CEP):** [docs/CEP.md](docs/CEP.md)
+
+### Ambiente de demonstração
+
 - **Staging do frontend:** <https://frontservicehub.jvs.dev.br>
-- **API de staging:** <https://servicehub.jvs.dev.br>
+- **API de staging:** <https://servicehub.jvs.dev.br> (base das chamadas: `https://servicehub.jvs.dev.br/api`)
+- **Validação e domínio da API:** [docs/DEPLOY.md](docs/DEPLOY.md)
