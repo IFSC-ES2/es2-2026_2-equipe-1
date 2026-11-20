@@ -6,6 +6,7 @@ import com.es.servicehub.enums.Especialidades;
 import com.es.servicehub.model.SolicitacaoServico;
 import com.es.servicehub.model.Usuario;
 import com.es.servicehub.repository.UsuarioRepository;
+import com.es.servicehub.service.EnderecoService;
 import com.es.servicehub.service.SolicitacaoServicoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,12 +24,15 @@ public class SolicitacaoServicoController {
 
     private final SolicitacaoServicoService solicitacaoServicoService;
     private final UsuarioRepository usuarioRepository;
+    private final EnderecoService enderecoService;
 
     public SolicitacaoServicoController(
             SolicitacaoServicoService solicitacaoServicoService,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository,
+            EnderecoService enderecoService) {
         this.solicitacaoServicoService = solicitacaoServicoService;
         this.usuarioRepository = usuarioRepository;
+        this.enderecoService = enderecoService;
     }
 
     @GetMapping
@@ -78,6 +82,14 @@ public class SolicitacaoServicoController {
     public ResponseEntity<SolicitacaoServicoRespostaDTO> criar(
             @RequestBody SolicitacaoServico solicitacao, Authentication authentication) {
         solicitacao.setCliente(usuarioAutenticado(authentication));
+        if (solicitacao.getEnderecoAtendimento() != null
+                && solicitacao.getEnderecoAtendimento().getId() != null) {
+            Usuario cliente = solicitacao.getCliente();
+            solicitacao.setEnderecoAtendimento(enderecoService
+                    .buscarDoUsuario(solicitacao.getEnderecoAtendimento().getId(), cliente.getId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.FORBIDDEN, "Você só pode usar seus próprios endereços.")));
+        }
         solicitacao.setPrestador(null);
         solicitacao.setPropostas(new ArrayList<>());
         solicitacao.setStatusSolicitacao(null);

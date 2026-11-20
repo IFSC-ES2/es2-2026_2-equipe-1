@@ -371,7 +371,7 @@ class SolicitacaoPropostaIntegrationTest {
     }
 
     @Test
-    @DisplayName("endereço cadastrado por um cliente fica visível na listagem usada pelo modal")
+    @DisplayName("endereço cadastrado por um cliente fica visível apenas para ele")
     void enderecoCadastrado_deveAparecerNaListagem() throws Exception {
         String tokenCliente = autenticar(cliente);
 
@@ -388,5 +388,10 @@ class SolicitacaoPropostaIntegrationTest {
                         .header("Authorization", "Bearer " + tokenCliente))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.logradouro == 'Rua Nova')]").isNotEmpty());
+
+        mockMvc.perform(get("/api/enderecos")
+                        .header("Authorization", "Bearer " + autenticar(outroCliente)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.logradouro == 'Rua Nova')]").isEmpty());
     }
 }
